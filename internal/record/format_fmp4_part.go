@@ -14,6 +14,10 @@ import (
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
+var drives []interface{}
+
+var free string
+
 func writePart(
 	f io.Writer,
 	sequenceNumber uint32,
@@ -67,15 +71,22 @@ func newFormatFMP4Part(
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
+
 		if p.s.f.a.stor.Use {
-			drives, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
+			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
 
 			if err != nil {
 				return err
 			}
-			fmt.Println(drives)
+			for _, line := range data {
+				drives = append(drives, line[0].(string))
+			}
+			free = getMostFreeDisk(drives)
+
 		}
-		p.s.path = path(p.created).encode(p.s.f.a.pathFormat)
+
+		p.s.path = free + path(p.created).encode(p.s.f.a.pathFormat)
+		fmt.Println(p.s.path)
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 
 		err := os.MkdirAll(filepath.Dir(p.s.path), 0o755)
