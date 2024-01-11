@@ -14,6 +14,7 @@ type Database struct {
 type Sql struct {
 	InsertPath string `json:"insertPath"`
 	UpdateSize string `json:"updateSize"`
+	GetDrives  string `json:"getDrives"`
 }
 
 func (db *Database) setDefaults() {
@@ -28,6 +29,7 @@ func (db *Database) setDefaults() {
 	db.Sql = Sql{
 		InsertPath: "",
 		UpdateSize: "",
+		GetDrives:  "",
 	}
 
 }

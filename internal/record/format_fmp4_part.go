@@ -67,6 +67,14 @@ func newFormatFMP4Part(
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
+		if p.s.f.a.stor.Use {
+			drives, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
+
+			if err != nil {
+				return err
+			}
+			fmt.Println(drives)
+		}
 		p.s.path = path(p.created).encode(p.s.f.a.pathFormat)
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 

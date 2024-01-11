@@ -301,7 +301,7 @@ pathDefaults:
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
-  recordPath: /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordPath: /home/major/go/src/github.com/major1ink/bluenviron/recordings/%path/%Y-%m-%d_%H-%M-%S-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: fmp4
@@ -587,3 +587,5 @@ database:
     # SQL query to update video record
     # EXAMPLE updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'" 
     updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"end_record_time\"='%s' WHERE \"fileName\"='%s'"
+    #
+    getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='1' AND sd.\"state\"='1' AND sd.\"status\"='1' ORDER BY sd.\"mount_point\""
