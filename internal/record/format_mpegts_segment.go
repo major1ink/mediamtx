@@ -72,10 +72,33 @@ func (s *formatMPEGTSSegment) close() error {
 
 func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 	if s.fi == nil {
-		s.path = path(s.created).encode(s.f.a.pathFormat)
+		var pathStream string
+		var err error
+		if s.f.a.stor.DbDrives {
+
+			pathStream, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetPathStream, s.f.a.agent.StreamName))
+
+			if err != nil {
+				return 0, err
+			}
+
+			data, err := s.f.a.stor.Req.SelectData(s.f.a.stor.Sql.GetDrives)
+
+			if err != nil {
+				return 0, err
+			}
+			for _, line := range data {
+				drives = append(drives, line[0].(string))
+			}
+			free = getMostFreeDisk(drives)
+			s.path = fmt.Sprintf(free+path(s.created).encode(s.f.a.pathFormat), pathStream)
+		} else {
+			s.path = path(s.created).encode(s.f.a.pathFormat)
+		}
+
 		s.f.a.agent.Log(logger.Debug, "creating segment %s", s.path)
 
-		err := os.MkdirAll(filepath.Dir(s.path), 0o755)
+		err = os.MkdirAll(filepath.Dir(s.path), 0o755)
 		if err != nil {
 			return 0, err
 		}
@@ -94,7 +117,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 					pathRec+"/",
 					paths[len(paths)-1],
 					time.Now().Format("2006-01-02 15:04:05"),
-					s.f.a.agent.StreamName,
+					pathStream,
 				),
 			)
 			if err != nil {
