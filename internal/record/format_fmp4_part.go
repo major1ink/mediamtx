@@ -71,8 +71,16 @@ func newFormatFMP4Part(
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
+		var pathStream string
+		var err error
+		if p.s.f.a.stor.DbDrives {
 
-		if p.s.f.a.stor.Use {
+			pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
+
+			if err != nil {
+				return err
+			}
+
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
 
 			if err != nil {
@@ -82,14 +90,14 @@ func (p *formatFMP4Part) close() error {
 				drives = append(drives, line[0].(string))
 			}
 			free = getMostFreeDisk(drives)
-
+			p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), pathStream)
+		} else {
+			p.s.path = path(p.created).encode(p.s.f.a.pathFormat)
 		}
 
-		p.s.path = free + path(p.created).encode(p.s.f.a.pathFormat)
-		fmt.Println(p.s.path)
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 
-		err := os.MkdirAll(filepath.Dir(p.s.path), 0o755)
+		err = os.MkdirAll(filepath.Dir(p.s.path), 0o755)
 		if err != nil {
 			return err
 		}
@@ -108,7 +116,7 @@ func (p *formatFMP4Part) close() error {
 					pathRec+"/",
 					paths[len(paths)-1],
 					time.Now().Format("2006-01-02 15:04:05"),
-					p.s.f.a.agent.StreamName,
+					pathStream,
 				),
 			)
 			if err != nil {

@@ -301,7 +301,7 @@ pathDefaults:
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
-  recordPath: /%path/%Y-%m-%d_%H-%M-%S-%f
+  recordPath: /cctv/rec/%v/%Y-%m-%d/%path-%s-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: fmp4
@@ -579,11 +579,15 @@ database:
   dbPassword: "980601"
   # Maximum number of connections
   maxConnections: 1
+  dbDrives: yes
   # SQL queryes 
   sql:
     # SQL query to insert video record
     # EXAMPLE insertPath: "INSERT INTO \"videoRecord\" (\"stream\", \"path_record\", \"file_name\", \"date_time_start\") VALUES ('%s', '%s', '%s', '%s')" 
-    insertPath: "INSERT INTO \"videoRecord\" (\"pathRecord\", \"fileName\", \"recordTime\", \"pathStream\") VALUES ('%s', '%s', '%s',(SELECT \"codeMP\" FROM \"DataDevice\" WHERE \"UID\" = '%s'))"
+    insertPath: "INSERT INTO \"videoRecord\" (\"pathRecord\", \"fileName\", \"recordTime\", \"pathStream\") VALUES ('%s', '%s', '%s', '%s')"
+    #
+    getPathStream: "SELECT \"codeMP\" FROM \"DataDevice\" WHERE \"UID\" = '%s'"
+    
     # SQL query to update video record
     # EXAMPLE updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'" 
     updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"end_record_time\"='%s' WHERE \"fileName\"='%s'"

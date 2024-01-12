@@ -47,3 +47,30 @@ func (r *Req) SelectData(query string) ([][]interface{}, error) {
 
 	return result, nil
 }
+
+func (r *Req) SelectPathStream(query string) (string, error) {
+	if r.ctx.Err() != nil {
+		return "", r.ctx.Err()
+	}
+
+	rows, err := r.pool.Query(r.ctx, query)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	var result string
+
+	for rows.Next() {
+		err := rows.Scan(&result)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if rows.Err() != nil {
+		return "", rows.Err()
+	}
+
+	return result, nil
+}
