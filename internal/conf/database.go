@@ -9,12 +9,14 @@ type Database struct {
 	DbPassword     string `json:"dbPassword"`
 	MaxConnections int    `json:"maxConnections"`
 	DbDrives       bool   `json:"dbDrives"`
+	DbUseCodeMP    bool   `json:"dbUseCodeMP"`
 	Sql            Sql    `json:"sql"`
 }
 
 type Sql struct {
 	InsertPath    string `json:"insertPath"`
 	GetPathStream string `json:"getPathStream"`
+	GetCodeMP     string `json:"getCodeMP"`
 	UpdateSize    string `json:"updateSize"`
 	GetDrives     string `json:"getDrives"`
 }

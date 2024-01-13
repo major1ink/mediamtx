@@ -72,7 +72,7 @@ func (s *formatMPEGTSSegment) close() error {
 
 func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 	if s.fi == nil {
-		var pathStream, free string
+		var pathStream, codeMp, free string
 		var err error
 		var drives []interface{}
 		if s.f.a.stor.DbDrives {
@@ -92,7 +92,16 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				drives = append(drives, line[0].(string))
 			}
 			free = getMostFreeDisk(drives)
-			s.path = fmt.Sprintf(free+path(s.created).encode(s.f.a.pathFormat), pathStream)
+			if s.f.a.stor.DbUseCodeMP {
+				codeMp, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetCodeMP, s.f.a.agent.StreamName))
+				if err != nil {
+					return 0, err
+				}
+				s.path = fmt.Sprintf(free+path(s.created).encode(s.f.a.pathFormat), codeMp, pathStream)
+			} else {
+				s.path = fmt.Sprintf(free+path(s.created).encode(s.f.a.pathFormat), pathStream)
+			}
+
 		} else {
 			s.path = path(s.created).encode(s.f.a.pathFormat)
 		}

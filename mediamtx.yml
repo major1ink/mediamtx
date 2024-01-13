@@ -304,7 +304,7 @@ pathDefaults:
   recordPath: /cctv/%v/%Y-%m-%d/%path-%s-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
-  recordFormat: mpegts
+  recordFormat: fmp4
   # fMP4 segments are concatenation of small MP4 files (parts), each with this duration.
   # MPEG-TS segments are concatenation of 188-bytes packets, flushed to disk with this period.
   # When a system failure occurs, the last part gets lost.
@@ -580,6 +580,7 @@ database:
   # Maximum number of connections
   maxConnections: 1
   dbDrives: yes
+  dbUseCodeMP: no
   # SQL queryes 
   sql:
     # SQL query to insert video record
@@ -587,7 +588,8 @@ database:
     insertPath: "INSERT INTO \"videoRecord\" (\"pathRecord\", \"fileName\", \"recordTime\", \"pathStream\") VALUES ('%s', '%s', '%s', '%s')"
     #
     getPathStream: "SELECT \"codeMP\" FROM \"DataDevice\" WHERE \"UID\" = '%s'"
-    
+    #
+    getCodeMP: "SELECT \"code_mp_contract\" FROM \"public\".\"mount_place_cam\" WHERE \"code_mp_cam\" = '%s'"
     # SQL query to update video record
     # EXAMPLE updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'" 
     updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"end_record_time\"='%s' WHERE \"fileName\"='%s'"

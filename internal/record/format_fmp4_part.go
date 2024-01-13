@@ -71,7 +71,7 @@ func newFormatFMP4Part(
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
-		var pathStream, free string
+		var pathStream, codeMp, free string
 		var err error
 		var drives []interface{}
 
@@ -92,7 +92,17 @@ func (p *formatFMP4Part) close() error {
 				drives = append(drives, line[0].(string))
 			}
 			free = getMostFreeDisk(drives)
-			p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), pathStream)
+
+			if p.s.f.a.stor.DbUseCodeMP {
+				codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
+				if err != nil {
+					return err
+				}
+				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), codeMp, pathStream)
+			} else {
+				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), pathStream)
+			}
+
 		} else {
 			p.s.path = path(p.created).encode(p.s.f.a.pathFormat)
 		}

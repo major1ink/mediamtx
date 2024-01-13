@@ -326,10 +326,11 @@ func (p *Core) createResources(initial bool) error {
 	if p.pathManager == nil {
 		req := psql.NewReq(p.ctx, p.dbPool)
 		stor := storage.Storage{
-			Use:      p.conf.Database.Use,
-			Req:      req,
-			DbDrives: p.conf.Database.DbDrives,
-			Sql:      p.conf.Database.Sql,
+			Use:         p.conf.Database.Use,
+			Req:         req,
+			DbDrives:    p.conf.Database.DbDrives,
+			DbUseCodeMP: p.conf.Database.DbUseCodeMP,
+			Sql:         p.conf.Database.Sql,
 		}
 
 		p.pathManager = newPathManager(
