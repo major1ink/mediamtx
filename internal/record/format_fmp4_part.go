@@ -71,8 +71,10 @@ func newFormatFMP4Part(
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
-		var pathStream string
+		var pathStream, free string
 		var err error
+		var drives []interface{}
+
 		if p.s.f.a.stor.DbDrives {
 
 			pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))

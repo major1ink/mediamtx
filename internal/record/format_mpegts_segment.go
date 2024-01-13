@@ -72,8 +72,9 @@ func (s *formatMPEGTSSegment) close() error {
 
 func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 	if s.fi == nil {
-		var pathStream string
+		var pathStream, free string
 		var err error
+		var drives []interface{}
 		if s.f.a.stor.DbDrives {
 
 			pathStream, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetPathStream, s.f.a.agent.StreamName))
