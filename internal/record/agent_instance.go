@@ -32,6 +32,9 @@ type agentInstance struct {
 
 	stor        storage.Storage
 	recordAudio bool
+	free        string
+	pathStream  string
+	codeMp      string
 }
 
 func (a *agentInstance) initialize() {

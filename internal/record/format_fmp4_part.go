@@ -71,13 +71,12 @@ func newFormatFMP4Part(
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
-		var pathStream, codeMp, free string
+
 		var err error
-		var drives []interface{}
 
 		if p.s.f.a.stor.DbDrives {
 
-			pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
+			p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
 
 			if err != nil {
 				return err
@@ -94,13 +93,13 @@ func (p *formatFMP4Part) close() error {
 			free = getMostFreeDisk(drives)
 
 			if p.s.f.a.stor.DbUseCodeMP {
-				codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
+				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
 				if err != nil {
 					return err
 				}
-				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), codeMp, pathStream)
+				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
 			} else {
-				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), pathStream)
+				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
 			}
 
 		} else {
@@ -128,7 +127,7 @@ func (p *formatFMP4Part) close() error {
 					pathRec+"/",
 					paths[len(paths)-1],
 					time.Now().Format("2006-01-02 15:04:05"),
-					pathStream,
+					p.s.f.a.pathStream,
 				),
 			)
 			if err != nil {

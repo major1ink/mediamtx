@@ -72,12 +72,12 @@ func (s *formatMPEGTSSegment) close() error {
 
 func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 	if s.fi == nil {
-		var pathStream, codeMp, free string
+
 		var err error
-		var drives []interface{}
+
 		if s.f.a.stor.DbDrives {
 
-			pathStream, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetPathStream, s.f.a.agent.StreamName))
+			s.f.a.pathStream, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetPathStream, s.f.a.agent.StreamName))
 
 			if err != nil {
 				return 0, err
@@ -91,15 +91,15 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 			for _, line := range data {
 				drives = append(drives, line[0].(string))
 			}
-			free = getMostFreeDisk(drives)
+			s.f.a.free = getMostFreeDisk(drives)
 			if s.f.a.stor.DbUseCodeMP {
-				codeMp, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetCodeMP, s.f.a.agent.StreamName))
+				s.f.a.codeMp, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetCodeMP, s.f.a.agent.StreamName))
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(free+path(s.created).encode(s.f.a.pathFormat), codeMp, pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+path(s.created).encode(s.f.a.pathFormat), s.f.a.codeMp, s.f.a.pathStream)
 			} else {
-				s.path = fmt.Sprintf(free+path(s.created).encode(s.f.a.pathFormat), pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+path(s.created).encode(s.f.a.pathFormat), s.f.a.pathStream)
 			}
 
 		} else {
@@ -127,7 +127,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 					pathRec+"/",
 					paths[len(paths)-1],
 					time.Now().Format("2006-01-02 15:04:05"),
-					pathStream,
+					s.f.a.pathStream,
 				),
 			)
 			if err != nil {
