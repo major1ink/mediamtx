@@ -72,15 +72,7 @@ func newFormatFMP4Part(
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
 
-		var err error
-
 		if p.s.f.a.stor.DbDrives {
-
-			p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
-
-			if err != nil {
-				return err
-			}
 
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
 
@@ -92,23 +84,40 @@ func (p *formatFMP4Part) close() error {
 			}
 			free = getMostFreeDisk(drives)
 
+			if p.s.f.a.stor.DbUseCodeMP && p.s.f.a.stor.UseDbPathStream {
+				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
+				if err != nil {
+					return err
+				}
+				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
+				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
+			}
+
+			if p.s.f.a.stor.UseDbPathStream {
+				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
+				if err != nil {
+					return err
+				}
+				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
+			}
+
 			if p.s.f.a.stor.DbUseCodeMP {
 				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
 				if err != nil {
 					return err
 				}
-				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
-			} else {
-				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
+				p.s.path = fmt.Sprintf(free+path(p.created).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp)
 			}
 
+			if !p.s.f.a.stor.DbUseCodeMP && !p.s.f.a.stor.UseDbPathStream {
+				p.s.path = fmt.Sprintf(free + path(p.created).encode(p.s.f.a.pathFormat))
+			}
 		} else {
 			p.s.path = path(p.created).encode(p.s.f.a.pathFormat)
 		}
-
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 
-		err = os.MkdirAll(filepath.Dir(p.s.path), 0o755)
+		err := os.MkdirAll(filepath.Dir(p.s.path), 0o755)
 		if err != nil {
 			return err
 		}
@@ -164,8 +173,8 @@ func (p *formatFMP4Part) close() error {
 		}
 
 		p.s.fi = fi
-	}
 
+	}
 	return writePart(p.s.fi, p.sequenceNumber, p.partTracks)
 }
 

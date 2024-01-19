@@ -301,7 +301,7 @@ pathDefaults:
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
-  recordPath: /cctv/%v/%Y-%m-%d/%path-%s-%f
+  recordPath: /test_dkeys/%path/%Y-%m-%d/%path-%s-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: fmp4
@@ -595,6 +595,6 @@ database:
     # EXAMPLE updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'" 
     updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"end_record_time\"='%s' WHERE \"fileName\"='%s'"
     #
-    getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='1' AND sd.\"state\"='1' AND sd.\"status\"='1' ORDER BY sd.\"mount_point\""
+    getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='0' AND sd.\"state\"='0' AND sd.\"status\"='0' ORDER BY sd.\"mount_point\""
     #
     updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"
