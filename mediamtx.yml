@@ -581,6 +581,7 @@ database:
   maxConnections: 1
   dbDrives: yes
   dbUseCodeMP: no
+  useDbPathStream: yes
   # SQL queryes 
   sql:
     # SQL query to insert video record
@@ -595,3 +596,5 @@ database:
     updateSize: "UPDATE \"videoRecord\" SET \"file_size\"='%s', \"end_record_time\"='%s' WHERE \"fileName\"='%s'"
     #
     getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='1' AND sd.\"state\"='1' AND sd.\"status\"='1' ORDER BY sd.\"mount_point\""
+    #
+    updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"

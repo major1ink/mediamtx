@@ -121,19 +121,36 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 		if s.f.a.stor.Use {
 			paths := strings.Split(s.path, "/")
 			pathRec := strings.Join(paths[:len(paths)-1], "/")
-			err := s.f.a.stor.Req.ExecQuery(
-				fmt.Sprintf(
-					s.f.a.stor.Sql.InsertPath,
-					pathRec+"/",
-					paths[len(paths)-1],
-					time.Now().Format("2006-01-02 15:04:05"),
-					s.f.a.pathStream,
-				),
-			)
-			if err != nil {
-				os.Remove(s.path)
-				return 0, err
+			if s.f.a.stor.UseDbPathStream {
+				err := s.f.a.stor.Req.ExecQuery(
+					fmt.Sprintf(
+						s.f.a.stor.Sql.InsertPath,
+						pathRec+"/",
+						paths[len(paths)-1],
+						time.Now().Format("2006-01-02 15:04:05"),
+						s.f.a.pathStream,
+					),
+				)
+				if err != nil {
+					os.Remove(s.path)
+					return 0, err
+				}
+			} else {
+				err := s.f.a.stor.Req.ExecQuery(
+					fmt.Sprintf(
+						s.f.a.stor.Sql.InsertPath,
+						pathRec+"/",
+						paths[len(paths)-1],
+						time.Now().Format("2006-01-02 15:04:05"),
+						s.f.a.agent.PathName,
+					),
+				)
+				if err != nil {
+					os.Remove(s.path)
+					return 0, err
+				}
 			}
+
 		}
 
 		s.f.a.agent.OnSegmentCreate(s.path)
