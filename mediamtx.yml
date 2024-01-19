@@ -581,12 +581,12 @@ database:
   maxConnections: 1
   dbDrives: yes
   dbUseCodeMP: no
-  useDbPathStream: yes
+  useDbPathStream: no
   # SQL queryes 
   sql:
     # SQL query to insert video record
     # EXAMPLE insertPath: "INSERT INTO \"videoRecord\" (\"stream\", \"path_record\", \"file_name\", \"date_time_start\") VALUES ('%s', '%s', '%s', '%s')" 
-    insertPath: "INSERT INTO \"videoRecord\" (\"pathRecord\", \"fileName\", \"recordTime\", \"pathStream\") VALUES ('%s', '%s', '%s', '%s')"
+    insertPath: "INSERT INTO \"videoRecord\" (\"pathRecord\", \"fileName\", \"recordTime\", \"%s\") VALUES ('%s', '%s', '%s', '%s')"
     #
     getPathStream: "SELECT \"codeMP\" FROM \"DataDevice\" WHERE \"UID\" = '%s'"
     #

@@ -125,6 +125,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				err := s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
 						s.f.a.stor.Sql.InsertPath,
+						"pathStream",
 						pathRec+"/",
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),
@@ -139,6 +140,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				err := s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
 						s.f.a.stor.Sql.InsertPath,
+						"stream",
 						pathRec+"/",
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),
