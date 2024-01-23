@@ -1,17 +1,18 @@
 package conf
 
 type Database struct {
-	Use             bool   `json:"use"`
-	DbAddress       string `json:"dbAddress"`
-	DbPort          int    `json:"dbPort"`
-	DbName          string `json:"dbName"`
-	DbUser          string `json:"dbUser"`
-	DbPassword      string `json:"dbPassword"`
-	MaxConnections  int    `json:"maxConnections"`
-	DbDrives        bool   `json:"dbDrives"`
-	DbUseCodeMP     bool   `json:"dbUseCodeMP"`
-	UseDbPathStream bool   `json:"useDbPathStream"`
-	Sql             Sql    `json:"sql"`
+	Use              bool   `json:"use"`
+	DbAddress        string `json:"dbAddress"`
+	DbPort           int    `json:"dbPort"`
+	DbName           string `json:"dbName"`
+	DbUser           string `json:"dbUser"`
+	DbPassword       string `json:"dbPassword"`
+	MaxConnections   int    `json:"maxConnections"`
+	DbDrives         bool   `json:"dbDrives"`
+	DbUseCodeMP      bool   `json:"dbUseCodeMP"`
+	UseDbPathStream  bool   `json:"useDbPathStream"`
+	UseUpdaterStatus bool   `json:"useUpdaterStatus"`
+	Sql              Sql    `json:"sql"`
 }
 
 type Sql struct {
@@ -35,6 +36,7 @@ func (db *Database) setDefaults() {
 	db.DbDrives = false
 	db.DbUseCodeMP = false
 	db.UseDbPathStream = false
+	db.UseUpdaterStatus = false
 	db.Sql = Sql{
 		InsertPath:    "",
 		GetPathStream: "",

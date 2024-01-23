@@ -295,7 +295,7 @@ pathDefaults:
   # Default path settings -> Recording
 
   # Record streams to disk.
-  record: yes
+  record: no
   # Save audio from stream.
   recordAudio: no
   # Path of recording segments.
@@ -582,6 +582,7 @@ database:
   dbDrives: yes
   dbUseCodeMP: no
   useDbPathStream: no
+  useUpdaterStatus: yes
   # SQL queryes 
   sql:
     # SQL query to insert video record

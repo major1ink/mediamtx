@@ -10,6 +10,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/storage"
 )
 
 type serverAPIMuxersListRes struct {
@@ -69,12 +70,14 @@ type Server struct {
 	chCloseMuxer    chan *muxer
 	chAPIMuxerList  chan serverAPIMuxersListReq
 	chAPIMuxerGet   chan serverAPIMuxersGetReq
+
+	stor storage.Storage
 }
 
 // Initialize initializes the server.
-func (s *Server) Initialize() error {
+func (s *Server) Initialize(stor storage.Storage) error {
 	ctx, ctxCancel := context.WithCancel(context.Background())
-
+	s.stor = stor
 	s.ctx = ctx
 	s.ctxCancel = ctxCancel
 	s.muxers = make(map[string]*muxer)
@@ -96,6 +99,7 @@ func (s *Server) Initialize() error {
 		pathManager:    s.PathManager,
 		parent:         s,
 	}
+
 	err := s.httpServer.initialize()
 	if err != nil {
 		ctxCancel()
@@ -129,6 +133,15 @@ outer:
 	for {
 		select {
 		case pa := <-s.chPathReady:
+			if s.stor.UseUpdaterStatus {
+				fmt.Println("ready", pa.Name())
+				query := fmt.Sprintf(s.stor.Sql.UpdateStatus, 1, pa.Name())
+				err := s.stor.Req.ExecQuery(query)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+
 			if s.AlwaysRemux && !pa.SafeConf().SourceOnDemand {
 				if _, ok := s.muxers[pa.Name()]; !ok {
 					s.createMuxer(pa.Name(), "")
@@ -136,6 +149,14 @@ outer:
 			}
 
 		case pa := <-s.chPathNotReady:
+			if s.stor.UseUpdaterStatus {
+				fmt.Println("ready", pa.Name())
+				query := fmt.Sprintf(s.stor.Sql.UpdateStatus, 0, pa.Name())
+				err := s.stor.Req.ExecQuery(query)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
 			c, ok := s.muxers[pa.Name()]
 			if ok && c.remoteAddr == "" { // created with "always remux"
 				c.Close()

@@ -6,10 +6,11 @@ import (
 )
 
 type Storage struct {
-	Use             bool
-	Req             psql.Requests
-	DbDrives        bool
-	DbUseCodeMP     bool
-	UseDbPathStream bool
-	Sql             conf.Sql
+	Use              bool
+	Req              psql.Requests
+	DbDrives         bool
+	DbUseCodeMP      bool
+	UseDbPathStream  bool
+	UseUpdaterStatus bool
+	Sql              conf.Sql
 }
