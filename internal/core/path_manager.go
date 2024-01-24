@@ -436,6 +436,14 @@ func (pm *pathManager) removePath(pa *path) {
 	if len(pm.pathsByConf[pa.confName]) == 0 {
 		delete(pm.pathsByConf, pa.confName)
 	}
+	if pm.stor.UseUpdaterStatus {
+		query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+		pm.Log(logger.Debug, "SQL status %s", query)
+		err := pm.stor.Req.ExecQuery(query)
+		if err != nil {
+			pm.Log(logger.Error, "%s", err)
+		}
+	}
 	delete(pm.paths, pa.name)
 }
 
@@ -451,6 +459,14 @@ func (pm *pathManager) confReload(pathConfs map[string]*conf.Path) {
 func (pm *pathManager) pathReady(pa *path) {
 	select {
 	case pm.chPathReady <- pa:
+		if pm.stor.UseUpdaterStatus {
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 1, pa.Name())
+			pm.Log(logger.Debug, "SQL status %s", query)
+			err := pm.stor.Req.ExecQuery(query)
+			if err != nil {
+				pm.Log(logger.Error, "%s", err)
+			}
+		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
 	}
@@ -460,6 +476,14 @@ func (pm *pathManager) pathReady(pa *path) {
 func (pm *pathManager) pathNotReady(pa *path) {
 	select {
 	case pm.chPathNotReady <- pa:
+		if pm.stor.UseUpdaterStatus {
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+			pm.Log(logger.Debug, "SQL status %s", query)
+			err := pm.stor.Req.ExecQuery(query)
+			if err != nil {
+				pm.Log(logger.Error, "%s", err)
+			}
+		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
 	}
@@ -469,6 +493,14 @@ func (pm *pathManager) pathNotReady(pa *path) {
 func (pm *pathManager) closePath(pa *path) {
 	select {
 	case pm.chClosePath <- pa:
+		if pm.stor.UseUpdaterStatus {
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+			pm.Log(logger.Debug, "SQL status %s", query)
+			err := pm.stor.Req.ExecQuery(query)
+			if err != nil {
+				pm.Log(logger.Error, "%s", err)
+			}
+		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
 	}

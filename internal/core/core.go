@@ -225,6 +225,16 @@ outer:
 
 		case <-interrupt:
 			p.Log(logger.Info, "shutting down gracefully")
+			if p.pathManager.stor.UseUpdaterStatus {
+				for key := range p.pathManager.paths {
+					query := fmt.Sprintf(p.pathManager.stor.Sql.UpdateStatus, 0, key)
+					err := p.pathManager.stor.Req.ExecQuery(query)
+					if err != nil {
+						fmt.Println(err)
+					}
+				}
+
+			}
 			break outer
 
 		case <-p.ctx.Done():

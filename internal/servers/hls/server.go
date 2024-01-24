@@ -133,15 +133,6 @@ outer:
 	for {
 		select {
 		case pa := <-s.chPathReady:
-			if s.stor.UseUpdaterStatus {
-				fmt.Println("ready", pa.Name())
-				query := fmt.Sprintf(s.stor.Sql.UpdateStatus, 1, pa.Name())
-				err := s.stor.Req.ExecQuery(query)
-				if err != nil {
-					fmt.Println(err)
-				}
-			}
-
 			if s.AlwaysRemux && !pa.SafeConf().SourceOnDemand {
 				if _, ok := s.muxers[pa.Name()]; !ok {
 					s.createMuxer(pa.Name(), "")
@@ -149,14 +140,6 @@ outer:
 			}
 
 		case pa := <-s.chPathNotReady:
-			if s.stor.UseUpdaterStatus {
-				fmt.Println("ready", pa.Name())
-				query := fmt.Sprintf(s.stor.Sql.UpdateStatus, 0, pa.Name())
-				err := s.stor.Req.ExecQuery(query)
-				if err != nil {
-					fmt.Println(err)
-				}
-			}
 			c, ok := s.muxers[pa.Name()]
 			if ok && c.remoteAddr == "" { // created with "always remux"
 				c.Close()
