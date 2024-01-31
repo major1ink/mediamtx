@@ -342,6 +342,7 @@ func (p *Core) createResources(initial bool) error {
 			DbUseCodeMP:      p.conf.Database.DbUseCodeMP,
 			UseDbPathStream:  p.conf.Database.UseDbPathStream,
 			UseUpdaterStatus: p.conf.Database.UseUpdaterStatus,
+			UseSrise:         p.conf.Database.UseSrise,
 			Sql:              p.conf.Database.Sql,
 		}
 

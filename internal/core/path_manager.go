@@ -188,8 +188,12 @@ func (pm *pathManager) Log(level logger.Level, format string, args ...interface{
 
 func (pm *pathManager) run() {
 	defer pm.wg.Done()
+	if pm.stor.UseSrise {
+		fmt.Println(pm.stor.Sql.GetData)
+	}
 
 outer:
+
 	for {
 		select {
 		case newPaths := <-pm.chReloadConf:

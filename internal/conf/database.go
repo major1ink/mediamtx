@@ -12,16 +12,19 @@ type Database struct {
 	DbUseCodeMP      bool   `json:"dbUseCodeMP"`
 	UseDbPathStream  bool   `json:"useDbPathStream"`
 	UseUpdaterStatus bool   `json:"useUpdaterStatus"`
+	UseSrise         bool   `json:"useSrise"`
 	Sql              Sql    `json:"sql"`
 }
 
 type Sql struct {
-	InsertPath    string `json:"insertPath"`
-	GetPathStream string `json:"getPathStream"`
-	GetCodeMP     string `json:"getCodeMP"`
-	UpdateSize    string `json:"updateSize"`
-	GetDrives     string `json:"getDrives"`
-	UpdateStatus  string `json:"updateStatus"`
+	InsertPath      string `json:"insertPath"`
+	GetPathStream   string `json:"getPathStream"`
+	GetCodeMP       string `json:"getCodeMP"`
+	UpdateSize      string `json:"updateSize"`
+	GetDrives       string `json:"getDrives"`
+	UpdateStatus    string `json:"updateStatus"`
+	GetData         string `json:"getData"`
+	GetDataContract string `json:"getDataContract"`
 }
 
 func (db *Database) setDefaults() {

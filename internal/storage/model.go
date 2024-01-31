@@ -12,5 +12,6 @@ type Storage struct {
 	DbUseCodeMP      bool
 	UseDbPathStream  bool
 	UseUpdaterStatus bool
+	UseSrise         bool
 	Sql              conf.Sql
 }
