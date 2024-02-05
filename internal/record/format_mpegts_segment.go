@@ -143,6 +143,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),
 						s.f.a.pathStream,
+						s.f.a.free,
 					),
 				)
 				if err != nil {
@@ -158,6 +159,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),
 						s.f.a.agent.PathName,
+						s.f.a.free,
 					),
 				)
 				if err != nil {

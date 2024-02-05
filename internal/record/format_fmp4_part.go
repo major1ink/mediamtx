@@ -139,6 +139,7 @@ func (p *formatFMP4Part) close() error {
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),
 						p.s.f.a.pathStream,
+						p.s.f.a.free,
 					),
 				)
 				if err != nil {
@@ -154,6 +155,7 @@ func (p *formatFMP4Part) close() error {
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),
 						p.s.f.a.agent.PathName,
+						p.s.f.a.free,
 					),
 				)
 				if err != nil {
