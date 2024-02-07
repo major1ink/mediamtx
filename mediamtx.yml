@@ -582,10 +582,15 @@ database:
   dbPassword: "980601"
   # Maximum number of connections
   maxConnections: 1
+  # Enable/disable discs from the database for recording
   dbDrives: yes
+  # Enable/disable the code_mp_contract field to create a record path
   dbUseCodeMP: no
+  #
   useDbPathStream: no
+  # Enable/disable updating the status of a stream in the database
   useUpdaterStatus: yes
+  # Enable/disable the server start with streams from the database
   useSrise: yes
   # SQL queryes 
   sql:
@@ -594,16 +599,16 @@ database:
     insertPath: "INSERT INTO \"video_record\" (\"pathRecord\", \"fileName\", \"date_time_start\", \"%s\", \"id_storage\") VALUES ('%s', '%s', '%s', '%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))"
     #
     getPathStream: "SELECT \"codeMP\" FROM \"DataDevice\" WHERE \"UID\" = '%s'"
-    #
+    # equest to get a code_mp_contract
     getCodeMP: "SELECT \"code_mp_contract\" FROM \"public\".\"mount_place_cam\" WHERE \"code_mp_cam\" = '%s'"
     # SQL query to update video record
     # EXAMPLE updateSize: "UPDATE \"video_record\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'" 
     updateSize: "UPDATE \"video_record\" SET \"file_size\"='%s', \"end_record_time\"='%s' WHERE \"fileName\"='%s'"
-    #
+    # request to get a list of discs to burn
     getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='0' AND sd.\"state\"='0' AND sd.\"status\"='0' ORDER BY sd.\"mount_point\""
-    #
+    # request to update stream statuses
     updateStatus: "UPDATE public.\"videocameras\" SET \"status_public\"='%d' WHERE \"code_mp\"='%s'"
-    #
+    # request for a list of streams
     getData: "SELECT \"id\", (CASE WHEN \"login\" ISNULL THEN '' ELSE \"login\" END), (CASE WHEN \"pass\" ISNULL THEN '' ELSE \"pass\" END), \"ip_address_out\", (CASE WHEN \"cam_path\" ISNULL THEN '' ELSE \"cam_path\" END), \"code_mp\", (CASE WHEN \"state_public\" ISNULL THEN '0' ELSE \"state_public\" END),(CASE WHEN \"status_public\" ISNULL THEN '0' ELSE \"status_public\" END) FROM public.\"videocameras\" WHERE \"cam_path\" IS NOT null AND \"state_public\" = '1'"
-    #
-    getDataContract: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" ISNULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" ISNULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" ISNULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" ISNULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" ISNULL THEN '0' ELSE vc.\"status_public\" END), mpc.\"code_mp_contract\" FROM \"public\".\"videocameras\" vc JOIN \"public\".\"mount_place_cam\" mpc ON vc.\"code_mp\"=mpc.\"code_mp_cam\" WHERE vc.\"cam_path\" NOTNULL AND vc.\"state_public\" = '1'"
+    
+    
