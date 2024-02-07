@@ -3,6 +3,8 @@ package core
 import (
 	"context"
 	"fmt"
+	"net/netip"
+	"reflect"
 	"sort"
 	"sync"
 
@@ -112,7 +114,12 @@ type pathManager struct {
 	chAPIPathsList   chan pathAPIPathsListReq
 	chAPIPathsGet    chan pathAPIPathsGetReq
 
-	stor storage.Storage
+	stor      storage.Storage
+	publisher MaxPub
+}
+
+type MaxPub struct {
+	Max int
 }
 
 func newPathManager(
@@ -159,6 +166,7 @@ func newPathManager(
 		chAPIPathsList:            make(chan pathAPIPathsListReq),
 		chAPIPathsGet:             make(chan pathAPIPathsGetReq),
 		stor:                      stor,
+		publisher:                 MaxPub{Max: 0},
 	}
 
 	for pathConfName, pathConf := range pm.pathConfs {
@@ -175,6 +183,37 @@ func newPathManager(
 	return pm
 }
 
+type bdTable struct {
+	Id             int
+	Login          string
+	Pass           string
+	Ip_address_out netip.Prefix
+	Cam_path       string
+	Code_mp        string
+	State_public   int
+	Status_public  int
+	Contract       string
+}
+
+func getTypeInt(item interface{}) int {
+
+	t := reflect.TypeOf(item)
+
+	if t.Kind() == reflect.Int8 {
+		return int(item.(int8))
+	}
+
+	if t.Kind() == reflect.Int16 {
+		return int(item.(int16))
+	}
+
+	if t.Kind() == reflect.Int32 {
+		return int(item.(int32))
+	}
+
+	return int(item.(int64))
+}
+
 func (pm *pathManager) close() {
 	pm.Log(logger.Debug, "path manager is shutting down")
 	pm.ctxCancel()
@@ -188,9 +227,6 @@ func (pm *pathManager) Log(level logger.Level, format string, args ...interface{
 
 func (pm *pathManager) run() {
 	defer pm.wg.Done()
-	if pm.stor.UseSrise {
-		fmt.Println(pm.stor.Sql.GetData)
-	}
 
 outer:
 
@@ -425,7 +461,9 @@ func (pm *pathManager) createPath(
 		&pm.wg,
 		pm.externalCmdPool,
 		pm,
-		pm.stor)
+		pm.stor,
+		&pm.publisher,
+	)
 
 	pm.paths[name] = pa
 

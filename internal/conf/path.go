@@ -59,6 +59,7 @@ type Path struct {
 	SourceOnDemandStartTimeout StringDuration `json:"sourceOnDemandStartTimeout"`
 	SourceOnDemandCloseAfter   StringDuration `json:"sourceOnDemandCloseAfter"`
 	MaxReaders                 int            `json:"maxReaders"`
+	MaxPublishers              int            `json:"maxPublishers"`
 	SRTReadPassphrase          string         `json:"srtReadPassphrase"`
 	Fallback                   string         `json:"fallback"`
 

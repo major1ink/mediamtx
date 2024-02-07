@@ -79,17 +79,18 @@ type path struct {
 	externalCmdPool   *externalcmd.Pool
 	parent            pathParent
 
-	ctx                            context.Context
-	ctxCancel                      func()
-	confMutex                      sync.RWMutex
-	source                         defs.Source
-	publisherQuery                 string
-	stream                         *stream.Stream
-	recordAgent                    *record.Agent
-	readyTime                      time.Time
-	onUnDemandHook                 func(string)
-	onNotReadyHook                 func()
-	readers                        map[defs.Reader]struct{}
+	ctx            context.Context
+	ctxCancel      func()
+	confMutex      sync.RWMutex
+	source         defs.Source
+	publisherQuery string
+	stream         *stream.Stream
+	recordAgent    *record.Agent
+	readyTime      time.Time
+	onUnDemandHook func(string)
+	onNotReadyHook func()
+	readers        map[defs.Reader]struct{}
+
 	describeRequestsOnHold         []defs.PathDescribeReq
 	readerAddRequestsOnHold        []defs.PathAddReaderReq
 	onDemandStaticSourceState      pathOnDemandState
@@ -115,7 +116,8 @@ type path struct {
 	// out
 	done chan struct{}
 
-	stor storage.Storage
+	stor      storage.Storage
+	publisher *MaxPub
 }
 
 func newPath(
@@ -134,6 +136,8 @@ func newPath(
 	externalCmdPool *externalcmd.Pool,
 	parent pathParent,
 	stor storage.Storage,
+	publisher *MaxPub,
+
 ) *path {
 	ctx, ctxCancel := context.WithCancel(parentCtx)
 
@@ -171,6 +175,7 @@ func newPath(
 		chAPIPathsGet:                  make(chan pathAPIPathsGetReq),
 		done:                           make(chan struct{}),
 		stor:                           stor,
+		publisher:                      publisher,
 	}
 
 	pa.Log(logger.Debug, "created")
@@ -182,6 +187,7 @@ func newPath(
 }
 
 func (pa *path) close() {
+	pa.publisher.Max--
 	pa.ctxCancel()
 }
 
@@ -988,8 +994,13 @@ func (pa *path) RemovePublisher(req defs.PathRemovePublisherReq) {
 // StartPublisher is called by a publisher.
 func (pa *path) StartPublisher(req defs.PathStartPublisherReq) defs.PathStartPublisherRes {
 	req.Res = make(chan defs.PathStartPublisherRes)
+	if pa.conf.MaxPublishers != 0 && pa.publisher.Max >= pa.conf.MaxPublishers {
+		return defs.PathStartPublisherRes{Err: fmt.Errorf("maximum publisher count reached")}
+	}
+
 	select {
 	case pa.chStartPublisher <- req:
+		pa.publisher.Max++
 		return <-req.Res
 	case <-pa.ctx.Done():
 		return defs.PathStartPublisherRes{Err: fmt.Errorf("terminated")}

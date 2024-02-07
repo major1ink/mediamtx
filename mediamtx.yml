@@ -285,6 +285,8 @@ pathDefaults:
   sourceOnDemandCloseAfter: 10s
   # Maximum number of readers. Zero means no limit.
   maxReaders: 0
+  # Maximum number of publishers. Zero means no limit.
+  maxPublishers: 2
   # SRT encryption passphrase require to read from this path
   srtReadPassphrase:
   # If the stream is not available, redirect readers to this path.
@@ -301,7 +303,7 @@ pathDefaults:
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
-  recordPath: /test_dkeys/%path/%Y-%m-%d/%path-%s-%f
+  recordPath: /%path/%Y-%m-%d/%path-%s-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -584,7 +586,7 @@ database:
   dbUseCodeMP: no
   useDbPathStream: no
   useUpdaterStatus: yes
-  useSrise: no
+  useSrise: yes
   # SQL queryes 
   sql:
     # SQL query to insert video record

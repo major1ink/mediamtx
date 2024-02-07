@@ -2,8 +2,11 @@
 package core
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/netip"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -344,6 +347,64 @@ func (p *Core) createResources(initial bool) error {
 			UseUpdaterStatus: p.conf.Database.UseUpdaterStatus,
 			UseSrise:         p.conf.Database.UseSrise,
 			Sql:              p.conf.Database.Sql,
+		}
+
+		if stor.UseSrise {
+			data, err := stor.Req.SelectData(stor.Sql.GetData)
+			if err != nil {
+				fmt.Println("FFFFFFFFF", err)
+				// return nil, err
+			}
+			var result []bdTable
+
+			for _, line := range data {
+				result = append(result, bdTable{
+					Id:             getTypeInt(line[0]),
+					Login:          line[1].(string),
+					Pass:           line[2].(string),
+					Ip_address_out: line[3].(netip.Prefix),
+					Cam_path:       line[4].(string),
+					Code_mp:        line[5].(string),
+					State_public:   getTypeInt(line[6]),
+					Status_public:  getTypeInt(line[7]),
+					// Contract:       line[8].(string),
+				})
+			}
+			for _, i := range result {
+				// newPath := &conf.Path{
+				// 	Name:   i.Code_mp,
+				// 	Source: fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path),
+				// }
+				// p.conf.Paths[i.Code_mp] = newPath
+				var s conf.OptionalPath
+
+				postJson := []byte(fmt.Sprintf(`
+				{	
+					"name": "%s",
+					"source": "%s",
+					"sourceProtocol": "tcp",
+					"sourceOnDemandCloseAfter": "10s",
+					"sourceOnDemandStartTimeout": "10s",
+					"readPass": "",
+					"readUser": "",
+					"runOnDemandCloseAfter": "10s",
+					"runOnDemandStartTimeout": "10s",
+					"runOnReadyRestart": true,
+					"runOnReady": "",
+					"runOnReadRestart": false
+				}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path)))
+				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
+				if err != nil {
+					return err
+				}
+				p.conf.AddPath(i.Code_mp, &s)
+				err = p.conf.Check()
+				if err != nil {
+					return err
+				}
+
+			}
+
 		}
 
 		p.pathManager = newPathManager(
