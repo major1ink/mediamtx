@@ -87,7 +87,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+path(s.startNTP).encode(s.f.a.pathFormat), s.f.a.codeMp, s.f.a.pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+Path(s.startNTP).Encode(s.f.a.pathFormat), s.f.a.codeMp, s.f.a.pathStream)
 			}
 
 			if s.f.a.stor.DbUseCodeMP {
@@ -95,20 +95,20 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+path(s.startNTP).encode(s.f.a.pathFormat), s.f.a.codeMp)
+				s.path = fmt.Sprintf(s.f.a.free+Path(s.startNTP).Encode(s.f.a.pathFormat), s.f.a.codeMp)
 			}
 			if s.f.a.stor.UseDbPathStream {
 				s.f.a.pathStream, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetPathStream, s.f.a.agent.StreamName))
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+path(s.startNTP).encode(s.f.a.pathFormat), s.f.a.pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+Path(s.startNTP).Encode(s.f.a.pathFormat), s.f.a.pathStream)
 			}
 			if !s.f.a.stor.DbUseCodeMP && !s.f.a.stor.UseDbPathStream {
-				s.path = fmt.Sprintf(s.f.a.free + path(s.startNTP).encode(s.f.a.pathFormat))
+				s.path = fmt.Sprintf(s.f.a.free + Path(s.startNTP).Encode(s.f.a.pathFormat))
 			}
 		} else {
-			s.path = path(s.startNTP).encode(s.f.a.pathFormat)
+			s.path = Path(s.startNTP).Encode(s.f.a.pathFormat)
 		}
 
 		s.f.a.agent.Log(logger.Debug, "creating segment %s", s.path)

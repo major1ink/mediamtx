@@ -66,7 +66,7 @@ type pathManager struct {
 	hlsManager  pathManagerHLSServer
 	paths       map[string]*path
 	pathsByConf map[string]map[*path]struct{}
- 
+
 	// in
 
 	chReloadConf   chan map[string]*conf.Path
@@ -80,11 +80,11 @@ type pathManager struct {
 	chAddPublisher chan defs.PathAddPublisherReq
 	chAPIPathsList chan pathAPIPathsListReq
 	chAPIPathsGet  chan pathAPIPathsGetReq
-  
-  stor      storage.Storage
+
+	stor      storage.Storage
 	publisher MaxPub
 }
-  
+
 type MaxPub struct {
 	Max int
 }
@@ -107,9 +107,7 @@ func (pm *pathManager) initialize() {
 	pm.chAddPublisher = make(chan defs.PathAddPublisherReq)
 	pm.chAPIPathsList = make(chan pathAPIPathsListReq)
 	pm.chAPIPathsGet = make(chan pathAPIPathsGetReq)
-  pm.stor= stor
-  pm.publisher =  MaxPub{Max: len(pathConfs) - 1}
-
+	pm.publisher = MaxPub{Max: len(pm.pathConfs) - 1}
 
 	for pathConfName, pathConf := range pm.pathConfs {
 		if pathConf.Regexp == nil {
@@ -402,12 +400,10 @@ func (pm *pathManager) createPath(
 		wg:                &pm.wg,
 		externalCmdPool:   pm.externalCmdPool,
 		parent:            pm,
-    stor:              pm.stor,
-    publisher:         &pm.publisher
-    
+		stor:              pm.stor,
+		publisher:         &pm.publisher,
 	}
-	pa.initialize()
-
+	pa.initialize(pm.stor, &pm.publisher)
 
 	pm.paths[name] = pa
 

@@ -68,9 +68,9 @@ runOnDisconnect:
 # Global settings -> API
 
 # Enable controlling the server through the API.
-api: no
+api: yes
 # Address of the API listener.
-apiAddress: 127.0.0.1:9997
+apiAddress: 192.168.250.40:9997
 
 ###############################################
 # Global settings -> Playback server

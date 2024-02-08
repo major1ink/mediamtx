@@ -121,7 +121,6 @@ type path struct {
 	publisher *MaxPub
 }
 
-
 func (pa *path) initialize(stor storage.Storage,
 	publisher *MaxPub) {
 	ctx, ctxCancel := context.WithCancel(pa.parentCtx)
@@ -145,9 +144,8 @@ func (pa *path) initialize(stor storage.Storage,
 	pa.chRemoveReader = make(chan defs.PathRemoveReaderReq)
 	pa.chAPIPathsGet = make(chan pathAPIPathsGetReq)
 	pa.done = make(chan struct{})
-  pa.stor= stor
-  pa.publisher = publisher
-
+	pa.stor = stor
+	pa.publisher = publisher
 
 	pa.Log(logger.Debug, "created")
 
