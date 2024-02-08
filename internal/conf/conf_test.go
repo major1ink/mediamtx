@@ -54,6 +54,7 @@ func TestConfFromFile(t *testing.T) {
 			SourceOnDemandCloseAfter:   10 * StringDuration(time.Second),
 			Playback:                   true,
 			RecordPath:                 "./recordings/%path/%Y-%m-%d_%H-%M-%S-%f",
+			RecordAudio:                true,
 			RecordFormat:               RecordFormatFMP4,
 			RecordPartDuration:         100000000,
 			RecordSegmentDuration:      3600000000000,

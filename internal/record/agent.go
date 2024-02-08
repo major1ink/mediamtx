@@ -5,6 +5,7 @@ import (
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
@@ -16,6 +17,7 @@ type Agent struct {
 	PartDuration      time.Duration
 	SegmentDuration   time.Duration
 	PathName          string
+	StreamName        string
 	Stream            *stream.Stream
 	OnSegmentCreate   OnSegmentFunc
 	OnSegmentComplete OnSegmentFunc
@@ -27,6 +29,9 @@ type Agent struct {
 
 	terminate chan struct{}
 	done      chan struct{}
+
+	Stor        storage.Storage
+	RecordAudio bool
 }
 
 // Initialize initializes Agent.
@@ -47,7 +52,9 @@ func (w *Agent) Initialize() {
 	w.done = make(chan struct{})
 
 	w.currentInstance = &agentInstance{
-		agent: w,
+		agent:       w,
+		stor:        w.Stor,
+		recordAudio: w.RecordAudio,
 	}
 	w.currentInstance.initialize()
 
@@ -85,7 +92,9 @@ func (w *Agent) run() {
 		}
 
 		w.currentInstance = &agentInstance{
-			agent: w,
+			agent:       w,
+			stor:        w.Stor,
+			recordAudio: w.RecordAudio,
 		}
 		w.currentInstance.initialize()
 	}

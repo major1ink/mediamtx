@@ -2,8 +2,11 @@
 package core
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/netip"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -15,10 +18,12 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/bluenviron/gortsplib/v4"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/bluenviron/mediamtx/internal/api"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/confwatcher"
+	"github.com/bluenviron/mediamtx/internal/database"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/metrics"
@@ -31,6 +36,8 @@ import (
 	"github.com/bluenviron/mediamtx/internal/servers/rtsp"
 	"github.com/bluenviron/mediamtx/internal/servers/srt"
 	"github.com/bluenviron/mediamtx/internal/servers/webrtc"
+	"github.com/bluenviron/mediamtx/internal/storage"
+	"github.com/bluenviron/mediamtx/internal/storage/psql"
 )
 
 var version = "v0.0.0"
@@ -102,6 +109,7 @@ type Core struct {
 	srtServer       *srt.Server
 	api             *api.API
 	confWatcher     *confwatcher.ConfWatcher
+	dbPool          *pgxpool.Pool
 
 	// in
 	chAPIConfigSet chan *conf.Conf
@@ -225,6 +233,16 @@ outer:
 
 		case <-interrupt:
 			p.Log(logger.Info, "shutting down gracefully")
+			if p.pathManager.stor.UseUpdaterStatus {
+				for key := range p.pathManager.paths {
+					query := fmt.Sprintf(p.pathManager.stor.Sql.UpdateStatus, 0, key)
+					err := p.pathManager.stor.Req.ExecQuery(query)
+					if err != nil {
+						fmt.Println(err)
+					}
+				}
+
+			}
 			break outer
 
 		case <-p.ctx.Done():
@@ -316,6 +334,97 @@ func (p *Core) createResources(initial bool) error {
 		p.recordCleaner.Initialize()
 	}
 
+
+	p.dbPool, err = database.CreateDbPool(
+		p.ctx,
+		database.CreatePgxConf(
+			p.conf.Database,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	if p.pathManager == nil {
+		req := psql.NewReq(p.ctx, p.dbPool)
+		stor := storage.Storage{
+			Use:              p.conf.Database.Use,
+			Req:              req,
+			DbDrives:         p.conf.Database.DbDrives,
+			DbUseCodeMP:      p.conf.Database.DbUseCodeMP,
+			UseDbPathStream:  p.conf.Database.UseDbPathStream,
+			UseUpdaterStatus: p.conf.Database.UseUpdaterStatus,
+			UseSrise:         p.conf.Database.UseSrise,
+			Sql:              p.conf.Database.Sql,
+		}
+
+		if stor.UseSrise {
+			data, err := stor.Req.SelectData(stor.Sql.GetData)
+			if err != nil {
+				return err
+			}
+			var result []bdTable
+
+			for _, line := range data {
+				result = append(result, bdTable{
+					Id:             getTypeInt(line[0]),
+					Login:          line[1].(string),
+					Pass:           line[2].(string),
+					Ip_address_out: line[3].(netip.Prefix),
+					Cam_path:       line[4].(string),
+					Code_mp:        line[5].(string),
+					State_public:   getTypeInt(line[6]),
+					Status_public:  getTypeInt(line[7]),
+				})
+			}
+			for _, i := range result {
+
+				var s conf.OptionalPath
+
+				postJson := []byte(fmt.Sprintf(`
+				{	
+					"name": "%s",
+					"source": "%s",
+					"sourceProtocol": "tcp",
+					"sourceOnDemandCloseAfter": "10s",
+					"sourceOnDemandStartTimeout": "10s",
+					"readPass": "",
+					"readUser": "",
+					"runOnDemandCloseAfter": "10s",
+					"runOnDemandStartTimeout": "10s",
+					"runOnReadyRestart": true,
+					"runOnReady": "",
+					"runOnReadRestart": false
+				}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path)))
+				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
+				if err != nil {
+					return err
+				}
+				p.conf.AddPath(i.Code_mp, &s)
+				err = p.conf.Check()
+				if err != nil {
+					return err
+				}
+
+			}
+
+		}
+
+		p.pathManager = newPathManager(
+			p.conf.LogLevel,
+			p.conf.ExternalAuthenticationURL,
+			p.conf.RTSPAddress,
+			p.conf.AuthMethods,
+			p.conf.ReadTimeout,
+			p.conf.WriteTimeout,
+			p.conf.WriteQueueSize,
+			p.conf.UDPMaxPayloadSize,
+			p.conf.Paths,
+			p.externalCmdPool,
+			p,
+			stor,
+		)
+
 	if p.conf.Playback &&
 		p.playbackServer == nil {
 		i := &playback.Server{
@@ -346,6 +455,7 @@ func (p *Core) createResources(initial bool) error {
 			parent:                    p,
 		}
 		p.pathManager.initialize()
+
 
 		if p.metrics != nil {
 			p.metrics.SetPathManager(p.pathManager)
@@ -519,7 +629,9 @@ func (p *Core) createResources(initial bool) error {
 			PathManager:               p.pathManager,
 			Parent:                    p,
 		}
-		err := i.Initialize()
+
+		err := i.Initialize(p.pathManager.stor)
+
 		if err != nil {
 			return err
 		}
@@ -813,6 +925,18 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		closeSRTServer ||
 		closeLogger
 
+	closeDB := newConf == nil ||
+		newConf.Database.Use != p.conf.Database.Use ||
+		newConf.Database.DbAddress != p.conf.Database.DbAddress ||
+		newConf.Database.DbPort != p.conf.Database.DbPort ||
+		newConf.Database.DbName != p.conf.Database.DbName ||
+		newConf.Database.DbUser != p.conf.Database.DbUser ||
+		newConf.Database.DbPassword != p.conf.Database.DbPassword ||
+		newConf.Database.MaxConnections != p.conf.Database.MaxConnections ||
+		newConf.Database.Sql.InsertPath != p.conf.Database.Sql.InsertPath ||
+		newConf.Database.Sql.UpdateSize != p.conf.Database.Sql.UpdateSize ||
+		closePathManager
+
 	if newConf == nil && p.confWatcher != nil {
 		p.confWatcher.Close()
 		p.confWatcher = nil
@@ -929,6 +1053,10 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 	if closeLogger && p.logger != nil {
 		p.logger.Close()
 		p.logger = nil
+	}
+
+	if closeDB && p.dbPool != nil {
+		database.ClosePool(p.dbPool)
 	}
 }
 

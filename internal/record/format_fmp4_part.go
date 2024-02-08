@@ -1,9 +1,11 @@
 package record
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
@@ -11,6 +13,10 @@ import (
 
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
+
+var drives []interface{}
+
+var free string
 
 func writePart(
 	f io.Writer,
@@ -54,7 +60,52 @@ func (p *formatFMP4Part) initialize() {
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
-		p.s.path = Path(p.s.startNTP).Encode(p.s.f.a.pathFormat)
+
+
+		if p.s.f.a.stor.DbDrives {
+
+			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
+
+			if err != nil {
+				return err
+			}
+			for _, line := range data {
+				drives = append(drives, line[0].(string))
+			}
+			free = getMostFreeDisk(drives)
+
+			if p.s.f.a.stor.DbUseCodeMP && p.s.f.a.stor.UseDbPathStream {
+				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
+				if err != nil {
+					return err
+				}
+				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
+				p.s.path = fmt.Sprintf(free+path(p.s.startNTP).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
+			}
+
+			if p.s.f.a.stor.UseDbPathStream {
+				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
+				if err != nil {
+					return err
+				}
+				p.s.path = fmt.Sprintf(free+path(p.s.startNTP).encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
+			}
+
+			if p.s.f.a.stor.DbUseCodeMP {
+				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
+				if err != nil {
+					return err
+				}
+				p.s.path = fmt.Sprintf(free+path(p.s.startNTP).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp)
+			}
+
+			if !p.s.f.a.stor.DbUseCodeMP && !p.s.f.a.stor.UseDbPathStream {
+				p.s.path = fmt.Sprintf(free + path(p.s.startNTP).encode(p.s.f.a.pathFormat))
+			}
+		} else {
+			p.s.path = path(p.s.startNTP).encode(p.s.f.a.pathFormat)
+		}
+
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 
 		err := os.MkdirAll(filepath.Dir(p.s.path), 0o755)
@@ -67,6 +118,45 @@ func (p *formatFMP4Part) close() error {
 			return err
 		}
 
+		if p.s.f.a.stor.Use {
+			paths := strings.Split(p.s.path, "/")
+			pathRec := strings.Join(paths[:len(paths)-1], "/")
+			if p.s.f.a.stor.UseDbPathStream {
+				err := p.s.f.a.stor.Req.ExecQuery(
+					fmt.Sprintf(
+						p.s.f.a.stor.Sql.InsertPath,
+						"pathStream",
+						pathRec+"/",
+						paths[len(paths)-1],
+						time.Now().Format("2006-01-02 15:04:05"),
+						p.s.f.a.pathStream,
+						p.s.f.a.free,
+					),
+				)
+				if err != nil {
+					os.Remove(p.s.path)
+					return err
+				}
+			} else {
+				err := p.s.f.a.stor.Req.ExecQuery(
+					fmt.Sprintf(
+						p.s.f.a.stor.Sql.InsertPath,
+						"stream",
+						pathRec+"/",
+						paths[len(paths)-1],
+						time.Now().Format("2006-01-02 15:04:05"),
+						p.s.f.a.agent.PathName,
+						p.s.f.a.free,
+					),
+				)
+				if err != nil {
+					os.Remove(p.s.path)
+					return err
+				}
+			}
+
+		}
+
 		p.s.f.a.agent.OnSegmentCreate(p.s.path)
 
 		err = writeInit(fi, p.s.f.tracks)
@@ -76,8 +166,8 @@ func (p *formatFMP4Part) close() error {
 		}
 
 		p.s.fi = fi
-	}
 
+	}
 	return writePart(p.s.fi, p.sequenceNumber, p.partTracks)
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/storage"
 )
 
 // ErrMuxerNotFound is returned when a muxer is not found.
@@ -73,12 +74,14 @@ type Server struct {
 	chCloseMuxer    chan *muxer
 	chAPIMuxerList  chan serverAPIMuxersListReq
 	chAPIMuxerGet   chan serverAPIMuxersGetReq
+
+	stor storage.Storage
 }
 
 // Initialize initializes the server.
-func (s *Server) Initialize() error {
+func (s *Server) Initialize(stor storage.Storage) error {
 	ctx, ctxCancel := context.WithCancel(context.Background())
-
+	s.stor = stor
 	s.ctx = ctx
 	s.ctxCancel = ctxCancel
 	s.muxers = make(map[string]*muxer)
@@ -100,6 +103,7 @@ func (s *Server) Initialize() error {
 		pathManager:    s.PathManager,
 		parent:         s,
 	}
+
 	err := s.httpServer.initialize()
 	if err != nil {
 		ctxCancel()
