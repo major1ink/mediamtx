@@ -79,9 +79,9 @@ type Server struct {
 }
 
 // Initialize initializes the server.
-func (s *Server) Initialize(stor storage.Storage) error {
+func (s *Server) Initialize() error {
 	ctx, ctxCancel := context.WithCancel(context.Background())
-	s.stor = stor
+
 	s.ctx = ctx
 	s.ctxCancel = ctxCancel
 	s.muxers = make(map[string]*muxer)

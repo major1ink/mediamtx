@@ -334,7 +334,6 @@ func (p *Core) createResources(initial bool) error {
 		p.recordCleaner.Initialize()
 	}
 
-
 	p.dbPool, err = database.CreateDbPool(
 		p.ctx,
 		database.CreatePgxConf(
@@ -401,7 +400,7 @@ func (p *Core) createResources(initial bool) error {
 					return err
 				}
 				p.conf.AddPath(i.Code_mp, &s)
-				err = p.conf.Check()
+				err = p.conf.Validate()
 				if err != nil {
 					return err
 				}
@@ -410,37 +409,21 @@ func (p *Core) createResources(initial bool) error {
 
 		}
 
-		p.pathManager = newPathManager(
-			p.conf.LogLevel,
-			p.conf.ExternalAuthenticationURL,
-			p.conf.RTSPAddress,
-			p.conf.AuthMethods,
-			p.conf.ReadTimeout,
-			p.conf.WriteTimeout,
-			p.conf.WriteQueueSize,
-			p.conf.UDPMaxPayloadSize,
-			p.conf.Paths,
-			p.externalCmdPool,
-			p,
-			stor,
-		)
-
-	if p.conf.Playback &&
-		p.playbackServer == nil {
-		i := &playback.Server{
-			Address:     p.conf.PlaybackAddress,
-			ReadTimeout: p.conf.ReadTimeout,
-			PathConfs:   p.conf.Paths,
-			Parent:      p,
+		if p.conf.Playback &&
+			p.playbackServer == nil {
+			i := &playback.Server{
+				Address:     p.conf.PlaybackAddress,
+				ReadTimeout: p.conf.ReadTimeout,
+				PathConfs:   p.conf.Paths,
+				Parent:      p,
+			}
+			err := i.Initialize()
+			if err != nil {
+				return err
+			}
+			p.playbackServer = i
 		}
-		err := i.Initialize()
-		if err != nil {
-			return err
-		}
-		p.playbackServer = i
-	}
 
-	if p.pathManager == nil {
 		p.pathManager = &pathManager{
 			logLevel:                  p.conf.LogLevel,
 			externalAuthenticationURL: p.conf.ExternalAuthenticationURL,
@@ -453,9 +436,9 @@ func (p *Core) createResources(initial bool) error {
 			pathConfs:                 p.conf.Paths,
 			externalCmdPool:           p.externalCmdPool,
 			parent:                    p,
+			stor:                      stor,
 		}
 		p.pathManager.initialize()
-
 
 		if p.metrics != nil {
 			p.metrics.SetPathManager(p.pathManager)
@@ -630,7 +613,7 @@ func (p *Core) createResources(initial bool) error {
 			Parent:                    p,
 		}
 
-		err := i.Initialize(p.pathManager.stor)
+		err := i.Initialize()
 
 		if err != nil {
 			return err

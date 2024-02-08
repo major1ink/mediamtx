@@ -61,7 +61,6 @@ func (p *formatFMP4Part) initialize() {
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
 
-
 		if p.s.f.a.stor.DbDrives {
 
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
@@ -80,7 +79,7 @@ func (p *formatFMP4Part) close() error {
 					return err
 				}
 				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
-				p.s.path = fmt.Sprintf(free+path(p.s.startNTP).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
+				p.s.path = fmt.Sprintf(free+Path(p.s.startNTP).Encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
 			}
 
 			if p.s.f.a.stor.UseDbPathStream {
@@ -88,7 +87,7 @@ func (p *formatFMP4Part) close() error {
 				if err != nil {
 					return err
 				}
-				p.s.path = fmt.Sprintf(free+path(p.s.startNTP).encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
+				p.s.path = fmt.Sprintf(free+Path(p.s.startNTP).Encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
 			}
 
 			if p.s.f.a.stor.DbUseCodeMP {
@@ -96,14 +95,14 @@ func (p *formatFMP4Part) close() error {
 				if err != nil {
 					return err
 				}
-				p.s.path = fmt.Sprintf(free+path(p.s.startNTP).encode(p.s.f.a.pathFormat), p.s.f.a.codeMp)
+				p.s.path = fmt.Sprintf(free+Path(p.s.startNTP).Encode(p.s.f.a.pathFormat), p.s.f.a.codeMp)
 			}
 
 			if !p.s.f.a.stor.DbUseCodeMP && !p.s.f.a.stor.UseDbPathStream {
-				p.s.path = fmt.Sprintf(free + path(p.s.startNTP).encode(p.s.f.a.pathFormat))
+				p.s.path = fmt.Sprintf(free + Path(p.s.startNTP).Encode(p.s.f.a.pathFormat))
 			}
 		} else {
-			p.s.path = path(p.s.startNTP).encode(p.s.f.a.pathFormat)
+			p.s.path = Path(p.s.startNTP).Encode(p.s.f.a.pathFormat)
 		}
 
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
