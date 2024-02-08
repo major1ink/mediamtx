@@ -352,8 +352,7 @@ func (p *Core) createResources(initial bool) error {
 		if stor.UseSrise {
 			data, err := stor.Req.SelectData(stor.Sql.GetData)
 			if err != nil {
-				fmt.Println("FFFFFFFFF", err)
-				// return nil, err
+				return err
 			}
 			var result []bdTable
 
@@ -367,15 +366,10 @@ func (p *Core) createResources(initial bool) error {
 					Code_mp:        line[5].(string),
 					State_public:   getTypeInt(line[6]),
 					Status_public:  getTypeInt(line[7]),
-					// Contract:       line[8].(string),
 				})
 			}
 			for _, i := range result {
-				// newPath := &conf.Path{
-				// 	Name:   i.Code_mp,
-				// 	Source: fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path),
-				// }
-				// p.conf.Paths[i.Code_mp] = newPath
+
 				var s conf.OptionalPath
 
 				postJson := []byte(fmt.Sprintf(`

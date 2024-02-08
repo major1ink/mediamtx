@@ -166,7 +166,7 @@ func newPathManager(
 		chAPIPathsList:            make(chan pathAPIPathsListReq),
 		chAPIPathsGet:             make(chan pathAPIPathsGetReq),
 		stor:                      stor,
-		publisher:                 MaxPub{Max: 0},
+		publisher:                 MaxPub{Max: len(pathConfs) - 1},
 	}
 
 	for pathConfName, pathConf := range pm.pathConfs {
