@@ -2,6 +2,7 @@ package webrtc
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -111,7 +112,7 @@ func (s *httpServer) checkAuthOutsideSession(ctx *gin.Context, path string, publ
 	remoteAddr := net.JoinHostPort(ip, port)
 	user, pass, hasCredentials := ctx.Request.BasicAuth()
 
-	res := s.pathManager.GetConfForPath(defs.PathGetConfForPathReq{
+	res := s.pathManager.FindPathConf(defs.PathFindPathConfReq{
 		AccessRequest: defs.PathAccessRequest{
 			Name:    path,
 			Query:   ctx.Request.URL.RawQuery,
@@ -123,7 +124,8 @@ func (s *httpServer) checkAuthOutsideSession(ctx *gin.Context, path string, publ
 		},
 	})
 	if res.Err != nil {
-		if terr, ok := res.Err.(*defs.ErrAuthentication); ok {
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
 			if !hasCredentials {
 				ctx.Header("WWW-Authenticate", `Basic realm="mediamtx"`)
 				ctx.Writer.WriteHeader(http.StatusUnauthorized)
@@ -132,8 +134,8 @@ func (s *httpServer) checkAuthOutsideSession(ctx *gin.Context, path string, publ
 
 			s.Log(logger.Info, "connection %v failed to authenticate: %v", remoteAddr, terr.Message)
 
-			// wait some seconds to stop brute force attacks
-			<-time.After(webrtcPauseAfterAuthError)
+			// wait some seconds to mitigate brute force attacks
+			<-time.After(pauseAfterAuthError)
 
 			writeError(ctx, http.StatusUnauthorized, terr)
 			return false

@@ -1,6 +1,7 @@
 package formatprocessor //nolint:dupl
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -53,13 +54,12 @@ func (t *formatProcessorMJPEG) ProcessUnit(uu unit.Unit) error { //nolint:dupl
 	if err != nil {
 		return err
 	}
+	u.RTPPackets = pkts
 
 	ts := uint32(multiplyAndDivide(u.PTS, time.Duration(t.format.ClockRate()), time.Second))
-	for _, pkt := range pkts {
+	for _, pkt := range u.RTPPackets {
 		pkt.Timestamp += ts
 	}
-
-	u.RTPPackets = pkts
 
 	return nil
 }
@@ -99,7 +99,8 @@ func (t *formatProcessorMJPEG) ProcessRTPPacket( //nolint:dupl
 
 		frame, err := t.decoder.Decode(pkt)
 		if err != nil {
-			if err == rtpmjpeg.ErrNonStartingPacketAndNoPrevious || err == rtpmjpeg.ErrMorePacketsNeeded {
+			if errors.Is(err, rtpmjpeg.ErrNonStartingPacketAndNoPrevious) ||
+				errors.Is(err, rtpmjpeg.ErrMorePacketsNeeded) {
 				return u, nil
 			}
 			return nil, err

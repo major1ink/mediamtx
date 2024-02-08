@@ -1,6 +1,7 @@
 package formatprocessor //nolint:dupl
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -53,13 +54,12 @@ func (t *formatProcessorMPEG1Video) ProcessUnit(uu unit.Unit) error { //nolint:d
 	if err != nil {
 		return err
 	}
+	u.RTPPackets = pkts
 
 	ts := uint32(multiplyAndDivide(u.PTS, time.Duration(t.format.ClockRate()), time.Second))
-	for _, pkt := range pkts {
+	for _, pkt := range u.RTPPackets {
 		pkt.Timestamp += ts
 	}
-
-	u.RTPPackets = pkts
 
 	return nil
 }
@@ -99,7 +99,8 @@ func (t *formatProcessorMPEG1Video) ProcessRTPPacket( //nolint:dupl
 
 		frame, err := t.decoder.Decode(pkt)
 		if err != nil {
-			if err == rtpmpeg1video.ErrNonStartingPacketAndNoPrevious || err == rtpmpeg1video.ErrMorePacketsNeeded {
+			if errors.Is(err, rtpmpeg1video.ErrNonStartingPacketAndNoPrevious) ||
+				errors.Is(err, rtpmpeg1video.ErrMorePacketsNeeded) {
 				return u, nil
 			}
 			return nil, err

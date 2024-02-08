@@ -2,6 +2,7 @@ package formatprocessor
 
 import (
 	"bytes"
+	"errors"
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
@@ -223,13 +224,12 @@ func (t *formatProcessorH264) ProcessUnit(uu unit.Unit) error {
 		if err != nil {
 			return err
 		}
+		u.RTPPackets = pkts
 
 		ts := uint32(multiplyAndDivide(u.PTS, time.Duration(t.format.ClockRate()), time.Second))
-		for _, pkt := range pkts {
+		for _, pkt := range u.RTPPackets {
 			pkt.Timestamp += ts
 		}
-
-		u.RTPPackets = pkts
 	}
 
 	return nil
@@ -284,7 +284,8 @@ func (t *formatProcessorH264) ProcessRTPPacket( //nolint:dupl
 		}
 
 		if err != nil {
-			if err == rtph264.ErrNonStartingPacketAndNoPrevious || err == rtph264.ErrMorePacketsNeeded {
+			if errors.Is(err, rtph264.ErrNonStartingPacketAndNoPrevious) ||
+				errors.Is(err, rtph264.ErrMorePacketsNeeded) {
 				return u, nil
 			}
 			return nil, err
@@ -304,12 +305,11 @@ func (t *formatProcessorH264) ProcessRTPPacket( //nolint:dupl
 		if err != nil {
 			return nil, err
 		}
+		u.RTPPackets = pkts
 
-		for _, newPKT := range pkts {
+		for _, newPKT := range u.RTPPackets {
 			newPKT.Timestamp = pkt.Timestamp
 		}
-
-		u.RTPPackets = pkts
 	}
 
 	return u, nil

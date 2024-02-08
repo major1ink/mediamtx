@@ -53,13 +53,32 @@ func TestAgent(t *testing.T) {
 				IndexDeltaLength: 3,
 			}},
 		},
+		{
+			Type: description.MediaTypeAudio,
+			Formats: []rtspformat.Format{&rtspformat.G711{
+				PayloadTyp:   8,
+				MULaw:        false,
+				SampleRate:   8000,
+				ChannelCount: 1,
+			}},
+		},
+		{
+			Type: description.MediaTypeAudio,
+			Formats: []rtspformat.Format{&rtspformat.G711{
+				PayloadTyp:   0,
+				MULaw:        true,
+				SampleRate:   8000,
+				ChannelCount: 1,
+			}},
+		},
 	}}
 
-	writeToStream := func(stream *stream.Stream) {
+	writeToStream := func(stream *stream.Stream, ntp time.Time) {
 		for i := 0; i < 3; i++ {
 			stream.WriteUnit(desc.Medias[0], desc.Medias[0].Formats[0], &unit.H265{
 				Base: unit.Base{
 					PTS: (50 + time.Duration(i)) * time.Second,
+					NTP: ntp.Add(time.Duration(i) * 60 * time.Second),
 				},
 				AU: [][]byte{
 					{ // VPS
@@ -107,29 +126,25 @@ func TestAgent(t *testing.T) {
 				},
 				AUs: [][]byte{{1, 2, 3, 4}},
 			})
+
+			stream.WriteUnit(desc.Medias[3], desc.Medias[3].Formats[0], &unit.G711{
+				Base: unit.Base{
+					PTS: (50 + time.Duration(i)) * time.Second,
+				},
+				Samples: []byte{1, 2, 3, 4},
+			})
+
+			stream.WriteUnit(desc.Medias[4], desc.Medias[4].Formats[0], &unit.G711{
+				Base: unit.Base{
+					PTS: (50 + time.Duration(i)) * time.Second,
+				},
+				Samples: []byte{1, 2, 3, 4},
+			})
 		}
 	}
 
 	for _, ca := range []string{"fmp4", "mpegts"} {
 		t.Run(ca, func(t *testing.T) {
-			n := 0
-			timeNow = func() time.Time {
-				n++
-				switch n {
-				case 1:
-					return time.Date(2008, 0o5, 20, 22, 15, 25, 0, time.UTC)
-
-				case 2:
-					return time.Date(2009, 0o5, 20, 22, 15, 25, 0, time.UTC)
-
-				case 3:
-					return time.Date(2010, 0o5, 20, 22, 15, 25, 0, time.UTC)
-
-				default:
-					return time.Date(2011, 0o5, 20, 22, 15, 25, 0, time.UTC)
-				}
-			}
-
 			stream, err := stream.New(
 				1460,
 				desc,
@@ -174,7 +189,7 @@ func TestAgent(t *testing.T) {
 			}
 			w.Initialize()
 
-			writeToStream(stream)
+			writeToStream(stream, time.Date(2008, 0o5, 20, 22, 15, 25, 0, time.UTC))
 
 			// simulate a write error
 			stream.WriteUnit(desc.Medias[1], desc.Medias[1].Formats[0], &unit.H264{
@@ -201,12 +216,12 @@ func TestAgent(t *testing.T) {
 			_, err = os.Stat(filepath.Join(dir, "mypath", "2008-05-20_22-15-25-000000."+ext))
 			require.NoError(t, err)
 
-			_, err = os.Stat(filepath.Join(dir, "mypath", "2009-05-20_22-15-25-000000."+ext))
+			_, err = os.Stat(filepath.Join(dir, "mypath", "2008-05-20_22-16-25-000000."+ext))
 			require.NoError(t, err)
 
 			time.Sleep(50 * time.Millisecond)
 
-			writeToStream(stream)
+			writeToStream(stream, time.Date(2010, 0o5, 20, 22, 15, 25, 0, time.UTC))
 
 			time.Sleep(50 * time.Millisecond)
 
@@ -215,7 +230,7 @@ func TestAgent(t *testing.T) {
 			_, err = os.Stat(filepath.Join(dir, "mypath", "2010-05-20_22-15-25-000000."+ext))
 			require.NoError(t, err)
 
-			_, err = os.Stat(filepath.Join(dir, "mypath", "2011-05-20_22-15-25-000000."+ext))
+			_, err = os.Stat(filepath.Join(dir, "mypath", "2010-05-20_22-16-25-000000."+ext))
 			require.NoError(t, err)
 		})
 	}
@@ -245,10 +260,6 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 			}},
 		},
 	}}
-
-	timeNow = func() time.Time {
-		return time.Date(2008, 0o5, 20, 22, 15, 25, 0, time.UTC)
-	}
 
 	stream, err := stream.New(
 		1460,
@@ -282,6 +293,7 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 		stream.WriteUnit(desc.Medias[0], desc.Medias[0].Formats[0], &unit.H264{
 			Base: unit.Base{
 				PTS: -50*time.Millisecond + (time.Duration(i) * 200 * time.Millisecond),
+				NTP: time.Date(2008, 0o5, 20, 22, 15, 25, 0, time.UTC),
 			},
 			AU: [][]byte{
 				{ // SPS

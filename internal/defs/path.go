@@ -13,13 +13,13 @@ import (
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
-// ErrPathNoOnePublishing is returned when no one is publishing.
-type ErrPathNoOnePublishing struct {
+// PathNoOnePublishingError is returned when no one is publishing.
+type PathNoOnePublishingError struct {
 	PathName string
 }
 
 // Error implements the error interface.
-func (e ErrPathNoOnePublishing) Error() string {
+func (e PathNoOnePublishingError) Error() string {
 	return fmt.Sprintf("no one is publishing to path '%s'", e.PathName)
 }
 
@@ -52,16 +52,16 @@ type PathAccessRequest struct {
 	RTSPNonce   string
 }
 
-// PathGetConfForPathRes contains the response of GetConfForPath().
-type PathGetConfForPathRes struct {
+// PathFindPathConfRes contains the response of FindPathConf().
+type PathFindPathConfRes struct {
 	Conf *conf.Path
 	Err  error
 }
 
-// PathGetConfForPathReq contains arguments of GetConfForPath().
-type PathGetConfForPathReq struct {
+// PathFindPathConfReq contains arguments of FindPathConf().
+type PathFindPathConfReq struct {
 	AccessRequest PathAccessRequest
-	Res           chan PathGetConfForPathRes
+	Res           chan PathFindPathConfRes
 }
 
 // PathDescribeRes contains the response of Describe().

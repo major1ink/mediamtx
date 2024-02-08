@@ -1,6 +1,7 @@
 package rtsp
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	rtspPauseAfterAuthError = 2 * time.Second
+	pauseAfterAuthError = 2 * time.Second
 )
 
 type conn struct {
@@ -138,21 +139,22 @@ func (c *conn) onDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 	})
 
 	if res.Err != nil {
-		switch terr := res.Err.(type) {
-		case *defs.ErrAuthentication:
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
 			res, err := c.handleAuthError(terr)
 			return res, nil, err
+		}
 
-		case defs.ErrPathNoOnePublishing:
+		var terr2 defs.PathNoOnePublishingError
+		if errors.As(res.Err, &terr2) {
 			return &base.Response{
 				StatusCode: base.StatusNotFound,
 			}, nil, res.Err
-
-		default:
-			return &base.Response{
-				StatusCode: base.StatusBadRequest,
-			}, nil, res.Err
 		}
+
+		return &base.Response{
+			StatusCode: base.StatusBadRequest,
+		}, nil, res.Err
 	}
 
 	if res.Redirect != "" {
@@ -194,8 +196,8 @@ func (c *conn) handleAuthError(authErr error) (*base.Response, error) {
 		}, nil
 	}
 
-	// wait some seconds to stop brute force attacks
-	<-time.After(rtspPauseAfterAuthError)
+	// wait some seconds to mitigate brute force attacks
+	<-time.After(pauseAfterAuthError)
 
 	return &base.Response{
 		StatusCode: base.StatusUnauthorized,

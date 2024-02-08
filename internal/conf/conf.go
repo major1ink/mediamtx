@@ -4,6 +4,7 @@ package conf
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -20,6 +21,9 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf/yaml"
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
+
+// ErrPathNotFound is returned when a path is not found.
+var ErrPathNotFound = errors.New("path not found")
 
 func sortedKeys(paths map[string]*OptionalPath) []string {
 	ret := make([]string, len(paths))
@@ -90,8 +94,6 @@ type Conf struct {
 	WriteQueueSize            int             `json:"writeQueueSize"`
 	UDPMaxPayloadSize         int             `json:"udpMaxPayloadSize"`
 	ExternalAuthenticationURL string          `json:"externalAuthenticationURL"`
-	API                       bool            `json:"api"`
-	APIAddress                string          `json:"apiAddress"`
 	Metrics                   bool            `json:"metrics"`
 	MetricsAddress            string          `json:"metricsAddress"`
 	PPROF                     bool            `json:"pprof"`
@@ -99,6 +101,14 @@ type Conf struct {
 	RunOnConnect              string          `json:"runOnConnect"`
 	RunOnConnectRestart       bool            `json:"runOnConnectRestart"`
 	RunOnDisconnect           string          `json:"runOnDisconnect"`
+
+	// API
+	API        bool   `json:"api"`
+	APIAddress string `json:"apiAddress"`
+
+	// Playback
+	Playback        bool   `json:"playback"`
+	PlaybackAddress string `json:"playbackAddress"`
 
 	// RTSP server
 	RTSP              bool        `json:"rtsp"`
@@ -195,11 +205,16 @@ func (conf *Conf) setDefaults() {
 	conf.WriteTimeout = 10 * StringDuration(time.Second)
 	conf.WriteQueueSize = 512
 	conf.UDPMaxPayloadSize = 1472
-	conf.APIAddress = "127.0.0.1:9997"
 	conf.MetricsAddress = "127.0.0.1:9998"
 	conf.PPROFAddress = "127.0.0.1:9999"
 
-	// RTSP
+	// API
+	conf.APIAddress = "127.0.0.1:9997"
+
+	// Playback server
+	conf.PlaybackAddress = ":9996"
+
+	// RTSP server
 	conf.RTSP = true
 	conf.Protocols = Protocols{
 		Protocol(gortsplib.TransportUDP):          {},
@@ -217,7 +232,7 @@ func (conf *Conf) setDefaults() {
 	conf.ServerCert = "server.crt"
 	conf.AuthMethods = AuthMethods{headers.AuthBasic}
 
-	// RTMP
+	// RTMP server
 	conf.RTMP = true
 	conf.RTMPAddress = ":1935"
 	conf.RTMPSAddress = ":1936"
@@ -236,7 +251,7 @@ func (conf *Conf) setDefaults() {
 	conf.HLSSegmentMaxSize = 50 * 1024 * 1024
 	conf.HLSAllowOrigin = "*"
 
-	// WebRTC
+	// WebRTC server
 	conf.WebRTC = true
 	conf.WebRTCAddress = ":8889"
 	conf.WebRTCServerKey = "server.key"
@@ -248,7 +263,7 @@ func (conf *Conf) setDefaults() {
 	conf.WebRTCAdditionalHosts = []string{}
 	conf.WebRTCICEServers2 = []WebRTCICEServer{}
 
-	// SRT
+	// SRT server
 	conf.SRT = true
 	conf.SRTAddress = ":8890"
 
@@ -276,7 +291,7 @@ func Load(fpath string, defaultConfPaths []string) (*Conf, string, error) {
 		return nil, "", err
 	}
 
-	err = conf.Check()
+	err = conf.Validate()
 	if err != nil {
 		return nil, "", err
 	}
@@ -339,8 +354,8 @@ func (conf Conf) Clone() *Conf {
 	return &dest
 }
 
-// Check checks the configuration for errors.
-func (conf *Conf) Check() error {
+// Validate checks the configuration for errors.
+func (conf *Conf) Validate() error {
 	// General
 
 	if conf.ReadBufferCount != nil {
@@ -438,7 +453,7 @@ func (conf *Conf) Check() error {
 		}
 	}
 
-	// Record
+	// Record (deprecated)
 	if conf.Record != nil {
 		conf.PathDefaults.Record = *conf.Record
 	}
@@ -484,7 +499,7 @@ func (conf *Conf) Check() error {
 		pconf := newPath(&conf.PathDefaults, optional)
 		conf.Paths[name] = pconf
 
-		err := pconf.check(conf, name)
+		err := pconf.validate(conf, name)
 		if err != nil {
 			return err
 		}
@@ -540,7 +555,7 @@ func (conf *Conf) AddPath(name string, p *OptionalPath) error {
 func (conf *Conf) PatchPath(name string, optional2 *OptionalPath) error {
 	optional, ok := conf.OptionalPaths[name]
 	if !ok {
-		return fmt.Errorf("path not found")
+		return ErrPathNotFound
 	}
 
 	copyStructFields(optional.Values, optional2.Values)
@@ -551,7 +566,7 @@ func (conf *Conf) PatchPath(name string, optional2 *OptionalPath) error {
 func (conf *Conf) ReplacePath(name string, optional2 *OptionalPath) error {
 	_, ok := conf.OptionalPaths[name]
 	if !ok {
-		return fmt.Errorf("path not found")
+		return ErrPathNotFound
 	}
 
 	conf.OptionalPaths[name] = optional2
@@ -561,7 +576,7 @@ func (conf *Conf) ReplacePath(name string, optional2 *OptionalPath) error {
 // RemovePath removes a path.
 func (conf *Conf) RemovePath(name string) error {
 	if _, ok := conf.OptionalPaths[name]; !ok {
-		return fmt.Errorf("path not found")
+		return ErrPathNotFound
 	}
 
 	delete(conf.OptionalPaths, name)

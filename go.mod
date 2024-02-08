@@ -4,19 +4,19 @@ go 1.21
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0
-	github.com/abema/go-mp4 v1.1.1
+	github.com/abema/go-mp4 v1.2.0
 	github.com/alecthomas/kong v0.8.1
-	github.com/aler9/writerseeker v1.1.0
-	github.com/bluenviron/gohlslib v1.0.6
-	github.com/bluenviron/gortsplib/v4 v4.6.2
-	github.com/bluenviron/mediacommon v1.5.1
-	github.com/datarhei/gosrt v0.5.5
+	github.com/bluenviron/gohlslib v1.2.1
+	github.com/bluenviron/gortsplib/v4 v4.7.1
+	github.com/bluenviron/mediacommon v1.9.0
+	github.com/datarhei/gosrt v0.5.7
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.5.4
 	github.com/gorilla/websocket v1.5.1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+	github.com/matthewhartstonge/argon2 v1.0.0
 	github.com/notedit/rtmp v0.0.2
 	github.com/pion/ice/v2 v2.3.11
 	github.com/pion/interceptor v0.1.25
@@ -26,8 +26,8 @@ require (
 	github.com/pion/sdp/v3 v3.0.6
 	github.com/pion/webrtc/v3 v3.2.22
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.17.0
-	golang.org/x/term v0.15.0
+	golang.org/x/crypto v0.18.0
+	golang.org/x/term v0.16.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

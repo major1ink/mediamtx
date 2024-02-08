@@ -20,7 +20,7 @@ import (
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
 	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4audio"
 	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
-	"github.com/datarhei/gosrt"
+	srt "github.com/datarhei/gosrt"
 	"github.com/google/uuid"
 	"github.com/pion/rtp"
 	"github.com/stretchr/testify/require"
@@ -100,38 +100,6 @@ func httpRequest(t *testing.T, hc *http.Client, method string, ur string, in int
 
 	err = json.NewDecoder(res.Body).Decode(out)
 	require.NoError(t, err)
-}
-
-func TestPagination(t *testing.T) {
-	items := make([]int, 5)
-	for i := 0; i < 5; i++ {
-		items[i] = i
-	}
-
-	pageCount, err := paginate(&items, "1", "1")
-	require.NoError(t, err)
-	require.Equal(t, 5, pageCount)
-	require.Equal(t, []int{1}, items)
-
-	items = make([]int, 5)
-	for i := 0; i < 5; i++ {
-		items[i] = i
-	}
-
-	pageCount, err = paginate(&items, "3", "2")
-	require.NoError(t, err)
-	require.Equal(t, 2, pageCount)
-	require.Equal(t, []int{}, items)
-
-	items = make([]int, 6)
-	for i := 0; i < 6; i++ {
-		items[i] = i
-	}
-
-	pageCount, err = paginate(&items, "4", "1")
-	require.NoError(t, err)
-	require.Equal(t, 2, pageCount)
-	require.Equal(t, []int{4, 5}, items)
 }
 
 func TestAPIConfigGlobalGet(t *testing.T) {
@@ -406,7 +374,7 @@ func TestAPIConfigPathsDelete(t *testing.T) {
 		require.NoError(t, err)
 		defer res.Body.Close()
 
-		require.Equal(t, http.StatusInternalServerError, res.StatusCode)
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 		checkError(t, "path configuration not found", res.Body)
 	}()
 }
@@ -662,7 +630,7 @@ func TestAPIPathsGet(t *testing.T) {
 				require.NoError(t, err)
 				defer res.Body.Close()
 
-				require.Equal(t, http.StatusInternalServerError, res.StatusCode)
+				require.Equal(t, http.StatusNotFound, res.StatusCode)
 				checkError(t, "path not found", res.Body)
 			}
 		})
@@ -720,7 +688,7 @@ func TestAPIProtocolList(t *testing.T) {
 			case "rtsp conns", "rtsp sessions":
 				source := gortsplib.Client{}
 
-				err := source.StartRecording("rtsp://localhost:8554/mypath",
+				err := source.StartRecording("rtsp://localhost:8554/mypath?key=val",
 					&description.Session{Medias: []*description.Media{medi}})
 				require.NoError(t, err)
 				defer source.Close()
@@ -730,7 +698,7 @@ func TestAPIProtocolList(t *testing.T) {
 					TLSConfig: &tls.Config{InsecureSkipVerify: true},
 				}
 
-				err := source.StartRecording("rtsps://localhost:8322/mypath",
+				err := source.StartRecording("rtsps://localhost:8322/mypath?key=val",
 					&description.Session{Medias: []*description.Media{medi}})
 				require.NoError(t, err)
 				defer source.Close()
@@ -743,7 +711,7 @@ func TestAPIProtocolList(t *testing.T) {
 					port = "1936"
 				}
 
-				u, err := url.Parse("rtmp://127.0.0.1:" + port + "/mypath")
+				u, err := url.Parse("rtmp://127.0.0.1:" + port + "/mypath?key=val")
 				require.NoError(t, err)
 
 				nconn, err := func() (net.Conn, error) {
@@ -827,7 +795,7 @@ func TestAPIProtocolList(t *testing.T) {
 				require.NoError(t, err)
 				defer source.Close()
 
-				u, err := url.Parse("http://localhost:8889/mypath/whep")
+				u, err := url.Parse("http://localhost:8889/mypath/whep?key=val")
 				require.NoError(t, err)
 
 				go func() {
@@ -858,7 +826,7 @@ func TestAPIProtocolList(t *testing.T) {
 
 			case "srt":
 				conf := srt.DefaultConfig()
-				conf.StreamId = "publish:mypath"
+				conf.StreamId = "publish:mypath:::key=val"
 
 				conn, err := srt.Dial("srt", "localhost:8890", conf)
 				require.NoError(t, err)
@@ -910,6 +878,7 @@ func TestAPIProtocolList(t *testing.T) {
 				type item struct {
 					State string `json:"state"`
 					Path  string `json:"path"`
+					Query string `json:"query"`
 				}
 
 				var out struct {
@@ -922,6 +891,7 @@ func TestAPIProtocolList(t *testing.T) {
 					require.Equal(t, item{
 						State: "publish",
 						Path:  "mypath",
+						Query: "key=val",
 					}, out.Items[0])
 				}
 
@@ -946,6 +916,7 @@ func TestAPIProtocolList(t *testing.T) {
 					PeerConnectionEstablished bool   `json:"peerConnectionEstablished"`
 					State                     string `json:"state"`
 					Path                      string `json:"path"`
+					Query                     string `json:"query"`
 				}
 
 				var out struct {
@@ -958,6 +929,7 @@ func TestAPIProtocolList(t *testing.T) {
 					PeerConnectionEstablished: true,
 					State:                     "read",
 					Path:                      "mypath",
+					Query:                     "key=val",
 				}, out.Items[0])
 			}
 		})
@@ -1345,7 +1317,7 @@ func TestAPIProtocolGetNotFound(t *testing.T) {
 				require.NoError(t, err)
 				defer res.Body.Close()
 
-				require.Equal(t, http.StatusInternalServerError, res.StatusCode)
+				require.Equal(t, http.StatusNotFound, res.StatusCode)
 
 				switch ca {
 				case "rtsp conns", "rtsps conns", "rtmp", "rtmps", "srt":
@@ -1569,7 +1541,7 @@ func TestAPIProtocolKickNotFound(t *testing.T) {
 				require.NoError(t, err)
 				defer res.Body.Close()
 
-				require.Equal(t, http.StatusInternalServerError, res.StatusCode)
+				require.Equal(t, http.StatusNotFound, res.StatusCode)
 
 				switch ca {
 				case "rtsp conns", "rtsps conns", "rtmp", "rtmps", "srt":

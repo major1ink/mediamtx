@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	rtmpPauseAfterAuthError = 2 * time.Second
+	pauseAfterAuthError = 2 * time.Second
 )
 
 func pathNameAndQuery(inURL *url.URL) (string, url.Values, string) {
@@ -71,6 +71,7 @@ type conn struct {
 	rconn     *rtmp.Conn
 	state     connState
 	pathName  string
+	query     string
 }
 
 func (c *conn) initialize() {
@@ -178,9 +179,10 @@ func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 	})
 
 	if res.Err != nil {
-		if terr, ok := res.Err.(*defs.ErrAuthentication); ok {
-			// wait some seconds to stop brute force attacks
-			<-time.After(rtmpPauseAfterAuthError)
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
+			// wait some seconds to mitigate brute force attacks
+			<-time.After(pauseAfterAuthError)
 			return terr
 		}
 		return res.Err
@@ -191,6 +193,7 @@ func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 	c.mutex.Lock()
 	c.state = connStateRead
 	c.pathName = pathName
+	c.query = rawQuery
 	c.mutex.Unlock()
 
 	writer := asyncwriter.New(c.writeQueueSize, c)
@@ -215,7 +218,7 @@ func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 	}
 
 	c.Log(logger.Info, "is reading from path '%s', %s",
-		res.Path.Name(), defs.MediasInfo(res.Stream.MediasForReader(writer)))
+		res.Path.Name(), defs.FormatsInfo(res.Stream.FormatsForReader(writer)))
 
 	onUnreadHook := hooks.OnRead(hooks.OnReadParams{
 		Logger:          c,
@@ -408,9 +411,10 @@ func (c *conn) runPublish(conn *rtmp.Conn, u *url.URL) error {
 	})
 
 	if res.Err != nil {
-		if terr, ok := res.Err.(*defs.ErrAuthentication); ok {
-			// wait some seconds to stop brute force attacks
-			<-time.After(rtmpPauseAfterAuthError)
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
+			// wait some seconds to mitigate brute force attacks
+			<-time.After(pauseAfterAuthError)
 			return terr
 		}
 		return res.Err
@@ -421,6 +425,7 @@ func (c *conn) runPublish(conn *rtmp.Conn, u *url.URL) error {
 	c.mutex.Lock()
 	c.state = connStatePublish
 	c.pathName = pathName
+	c.query = rawQuery
 	c.mutex.Unlock()
 
 	r, err := rtmp.NewReader(conn)
@@ -519,6 +524,28 @@ func (c *conn) runPublish(conn *rtmp.Conn, u *url.URL) error {
 				})
 			})
 
+		case *format.G711:
+			r.OnDataG711(func(pts time.Duration, samples []byte) {
+				stream.WriteUnit(audioMedia, audioFormat, &unit.G711{
+					Base: unit.Base{
+						NTP: time.Now(),
+						PTS: pts,
+					},
+					Samples: samples,
+				})
+			})
+
+		case *format.LPCM:
+			r.OnDataLPCM(func(pts time.Duration, samples []byte) {
+				stream.WriteUnit(audioMedia, audioFormat, &unit.LPCM{
+					Base: unit.Base{
+						NTP: time.Now(),
+						PTS: pts,
+					},
+					Samples: samples,
+				})
+			})
+
 		default:
 			return fmt.Errorf("unsupported audio codec: %T", audioFormat)
 		}
@@ -594,6 +621,7 @@ func (c *conn) apiItem() *defs.APIRTMPConn {
 			}
 		}(),
 		Path:          c.pathName,
+		Query:         c.query,
 		BytesReceived: bytesReceived,
 		BytesSent:     bytesSent,
 	}

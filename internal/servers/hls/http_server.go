@@ -2,6 +2,7 @@ package hls
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	hlsPauseAfterAuthError = 2 * time.Second
+	pauseAfterAuthError = 2 * time.Second
 )
 
 //go:embed index.html
@@ -146,7 +147,7 @@ func (s *httpServer) onRequest(ctx *gin.Context) {
 
 	user, pass, hasCredentials := ctx.Request.BasicAuth()
 
-	res := s.pathManager.GetConfForPath(defs.PathGetConfForPathReq{
+	res := s.pathManager.FindPathConf(defs.PathFindPathConfReq{
 		AccessRequest: defs.PathAccessRequest{
 			Name:    dir,
 			Query:   ctx.Request.URL.RawQuery,
@@ -158,7 +159,8 @@ func (s *httpServer) onRequest(ctx *gin.Context) {
 		},
 	})
 	if res.Err != nil {
-		if terr, ok := res.Err.(*defs.ErrAuthentication); ok {
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
 			if !hasCredentials {
 				ctx.Header("WWW-Authenticate", `Basic realm="mediamtx"`)
 				ctx.Writer.WriteHeader(http.StatusUnauthorized)
@@ -171,8 +173,8 @@ func (s *httpServer) onRequest(ctx *gin.Context) {
 
 			s.Log(logger.Info, "connection %v failed to authenticate: %v", remoteAddr, terr.Message)
 
-			// wait some seconds to stop brute force attacks
-			<-time.After(hlsPauseAfterAuthError)
+			// wait some seconds to mitigate brute force attacks
+			<-time.After(pauseAfterAuthError)
 
 			ctx.Writer.WriteHeader(http.StatusUnauthorized)
 			return

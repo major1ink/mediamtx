@@ -2,6 +2,7 @@ package rtsp
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -40,6 +41,7 @@ type session struct {
 	state           gortsplib.ServerSessionState
 	transport       *gortsplib.Transport
 	pathName        string
+	query           string
 	decodeErrLogger logger.Writer
 	writeErrLogger  logger.Writer
 }
@@ -124,15 +126,14 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 	})
 
 	if res.Err != nil {
-		switch terr := res.Err.(type) {
-		case *defs.ErrAuthentication:
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
 			return c.handleAuthError(terr)
-
-		default:
-			return &base.Response{
-				StatusCode: base.StatusBadRequest,
-			}, res.Err
 		}
+
+		return &base.Response{
+			StatusCode: base.StatusBadRequest,
+		}, res.Err
 	}
 
 	s.path = res.Path
@@ -140,6 +141,7 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 	s.mutex.Lock()
 	s.state = gortsplib.ServerSessionStatePreRecord
 	s.pathName = ctx.Path
+	s.query = ctx.Query
 	s.mutex.Unlock()
 
 	return &base.Response{
@@ -209,21 +211,22 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 		})
 
 		if res.Err != nil {
-			switch terr := res.Err.(type) {
-			case *defs.ErrAuthentication:
+			var terr defs.AuthenticationError
+			if errors.As(res.Err, &terr) {
 				res, err := c.handleAuthError(terr)
 				return res, nil, err
+			}
 
-			case defs.ErrPathNoOnePublishing:
+			var terr2 defs.PathNoOnePublishingError
+			if errors.As(res.Err, &terr2) {
 				return &base.Response{
 					StatusCode: base.StatusNotFound,
 				}, nil, res.Err
-
-			default:
-				return &base.Response{
-					StatusCode: base.StatusBadRequest,
-				}, nil, res.Err
 			}
+
+			return &base.Response{
+				StatusCode: base.StatusBadRequest,
+			}, nil, res.Err
 		}
 
 		s.path = res.Path
@@ -232,6 +235,7 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 		s.mutex.Lock()
 		s.state = gortsplib.ServerSessionStatePrePlay
 		s.pathName = ctx.Path
+		s.query = ctx.Query
 		s.mutex.Unlock()
 
 		var stream *gortsplib.ServerStream
@@ -400,7 +404,8 @@ func (s *session) apiItem() *defs.APIRTSPSession {
 			}
 			return defs.APIRTSPSessionStateIdle
 		}(),
-		Path: s.pathName,
+		Path:  s.pathName,
+		Query: s.query,
 		Transport: func() *string {
 			if s.transport == nil {
 				return nil

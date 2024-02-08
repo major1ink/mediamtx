@@ -11,26 +11,18 @@ import (
 )
 
 type formatMPEGTSSegment struct {
-	f         *formatMPEGTS
-	startDTS  time.Duration
-	lastFlush time.Duration
+	f        *formatMPEGTS
+	startDTS time.Duration
+	startNTP time.Time
 
-	created time.Time
-	path    string
-	fi      *os.File
+	lastFlush time.Duration
+	path      string
+	fi        *os.File
 }
 
-func newFormatMPEGTSSegment(f *formatMPEGTS, startDTS time.Duration) *formatMPEGTSSegment {
-	s := &formatMPEGTSSegment{
-		f:         f,
-		startDTS:  startDTS,
-		lastFlush: startDTS,
-		created:   timeNow(),
-	}
-
-	f.dw.setTarget(s)
-
-	return s
+func (s *formatMPEGTSSegment) initialize() {
+	s.lastFlush = s.startDTS
+	s.f.dw.setTarget(s)
 }
 
 func (s *formatMPEGTSSegment) close() error {
@@ -95,7 +87,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+path(s.created).encode(s.f.a.pathFormat), s.f.a.codeMp, s.f.a.pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+path(s.startNTP).encode(s.f.a.pathFormat), s.f.a.codeMp, s.f.a.pathStream)
 			}
 
 			if s.f.a.stor.DbUseCodeMP {
@@ -103,20 +95,20 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+path(s.created).encode(s.f.a.pathFormat), s.f.a.codeMp)
+				s.path = fmt.Sprintf(s.f.a.free+path(s.startNTP).encode(s.f.a.pathFormat), s.f.a.codeMp)
 			}
 			if s.f.a.stor.UseDbPathStream {
 				s.f.a.pathStream, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetPathStream, s.f.a.agent.StreamName))
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+path(s.created).encode(s.f.a.pathFormat), s.f.a.pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+path(s.startNTP).encode(s.f.a.pathFormat), s.f.a.pathStream)
 			}
 			if !s.f.a.stor.DbUseCodeMP && !s.f.a.stor.UseDbPathStream {
-				s.path = fmt.Sprintf(s.f.a.free + path(s.created).encode(s.f.a.pathFormat))
+				s.path = fmt.Sprintf(s.f.a.free + path(s.startNTP).encode(s.f.a.pathFormat))
 			}
 		} else {
-			s.path = path(s.created).encode(s.f.a.pathFormat)
+			s.path = path(s.startNTP).encode(s.f.a.pathFormat)
 		}
 
 		s.f.a.agent.Log(logger.Debug, "creating segment %s", s.path)

@@ -2,6 +2,7 @@ package rtmp
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"time"
 
@@ -35,6 +36,12 @@ type OnDataMPEG4AudioFunc func(pts time.Duration, au []byte)
 
 // OnDataMPEG1AudioFunc is the prototype of the callback passed to OnDataMPEG1Audio().
 type OnDataMPEG1AudioFunc func(pts time.Duration, frame []byte)
+
+// OnDataG711Func is the prototype of the callback passed to OnDataG711().
+type OnDataG711Func func(pts time.Duration, samples []byte)
+
+// OnDataLPCMFunc is the prototype of the callback passed to OnDataLPCM().
+type OnDataLPCMFunc func(pts time.Duration, samples []byte)
 
 func hasVideo(md flvio.AMFMap) (bool, error) {
 	v, ok := md.GetV("videocodecid")
@@ -80,11 +87,17 @@ func hasAudio(md flvio.AMFMap, audioTrack *format.Format) (bool, error) {
 		case 0:
 			return false, nil
 
+		case message.CodecMPEG4Audio, message.CodecLPCM:
+			return true, nil
+
 		case message.CodecMPEG1Audio:
 			*audioTrack = &format.MPEG1Audio{}
 			return true, nil
 
-		case message.CodecMPEG4Audio:
+		case message.CodecPCMA:
+			return true, nil
+
+		case message.CodecPCMU:
 			return true, nil
 		}
 
@@ -94,7 +107,7 @@ func hasAudio(md flvio.AMFMap, audioTrack *format.Format) (bool, error) {
 		}
 	}
 
-	return false, fmt.Errorf("unsupported audio codec %v", v)
+	return false, fmt.Errorf("unsupported audio codec: %v", v)
 }
 
 func h265FindNALU(array []mp4.HEVCNaluArray, typ h265.NALUType) []byte {
@@ -111,7 +124,7 @@ func trackFromH264DecoderConfig(data []byte) (format.Format, error) {
 	var conf h264conf.Conf
 	err := conf.Unmarshal(data)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse H264 config: %v", err)
+		return nil, fmt.Errorf("unable to parse H264 config: %w", err)
 	}
 
 	return &format.H264{
@@ -201,7 +214,7 @@ func tracksFromMetadata(conn *Conn, payload []interface{}) (format.Format, forma
 				} else if msg.Type == message.VideoTypeAU && msg.IsKeyFrame {
 					nalus, err := h264.AVCCUnmarshal(msg.Payload)
 					if err != nil {
-						if err == h264.ErrAVCCNoNALUs {
+						if errors.Is(err, h264.ErrAVCCNoNALUs) {
 							continue
 						}
 						return nil, nil, err
@@ -243,13 +256,17 @@ func tracksFromMetadata(conn *Conn, payload []interface{}) (format.Format, forma
 			}
 
 		case *message.ExtendedSequenceStart:
+			if !hasVideo {
+				return nil, nil, fmt.Errorf("unexpected video packet")
+			}
+
 			if videoTrack == nil {
 				switch msg.FourCC {
 				case message.FourCCHEVC:
 					var hvcc mp4.HvcC
 					_, err := mp4.Unmarshal(bytes.NewReader(msg.Config), uint64(len(msg.Config)), &hvcc, mp4.Context{})
 					if err != nil {
-						return nil, nil, fmt.Errorf("invalid H265 configuration: %v", err)
+						return nil, nil, fmt.Errorf("invalid H265 configuration: %w", err)
 					}
 
 					vps := h265FindNALU(hvcc.NaluArrays, h265.NALUType_VPS_NUT)
@@ -270,13 +287,13 @@ func tracksFromMetadata(conn *Conn, payload []interface{}) (format.Format, forma
 					var av1c mp4.Av1C
 					_, err := mp4.Unmarshal(bytes.NewReader(msg.Config), uint64(len(msg.Config)), &av1c, mp4.Context{})
 					if err != nil {
-						return nil, nil, fmt.Errorf("invalid AV1 configuration: %v", err)
+						return nil, nil, fmt.Errorf("invalid AV1 configuration: %w", err)
 					}
 
 					// parse sequence header and metadata contained in ConfigOBUs, but do not use them
 					_, err = av1.BitstreamUnmarshal(av1c.ConfigOBUs, false)
 					if err != nil {
-						return nil, nil, fmt.Errorf("invalid AV1 configuration: %v", err)
+						return nil, nil, fmt.Errorf("invalid AV1 configuration: %w", err)
 					}
 
 					videoTrack = &format.AV1{
@@ -287,7 +304,7 @@ func tracksFromMetadata(conn *Conn, payload []interface{}) (format.Format, forma
 					var vpcc mp4.VpcC
 					_, err := mp4.Unmarshal(bytes.NewReader(msg.Config), uint64(len(msg.Config)), &vpcc, mp4.Context{})
 					if err != nil {
-						return nil, nil, fmt.Errorf("invalid VP9 configuration: %v", err)
+						return nil, nil, fmt.Errorf("invalid VP9 configuration: %w", err)
 					}
 
 					videoTrack = &format.VP9{
@@ -301,12 +318,58 @@ func tracksFromMetadata(conn *Conn, payload []interface{}) (format.Format, forma
 				return nil, nil, fmt.Errorf("unexpected audio packet")
 			}
 
-			if audioTrack == nil &&
-				msg.Codec == message.CodecMPEG4Audio &&
-				msg.AACType == message.AudioAACTypeConfig {
-				audioTrack, err = trackFromAACDecoderConfig(msg.Payload)
-				if err != nil {
-					return nil, nil, err
+			if audioTrack == nil {
+				switch {
+				case msg.Codec == message.CodecMPEG4Audio &&
+					msg.AACType == message.AudioAACTypeConfig:
+					audioTrack, err = trackFromAACDecoderConfig(msg.Payload)
+					if err != nil {
+						return nil, nil, err
+					}
+
+				case msg.Codec == message.CodecPCMA:
+					audioTrack = &format.G711{
+						PayloadTyp: 8,
+						MULaw:      false,
+						SampleRate: 8000,
+						ChannelCount: func() int {
+							if msg.IsStereo {
+								return 2
+							}
+							return 1
+						}(),
+					}
+
+				case msg.Codec == message.CodecPCMU:
+					audioTrack = &format.G711{
+						PayloadTyp: 0,
+						MULaw:      true,
+						SampleRate: 8000,
+						ChannelCount: func() int {
+							if msg.IsStereo {
+								return 2
+							}
+							return 1
+						}(),
+					}
+
+				case msg.Codec == message.CodecLPCM:
+					audioTrack = &format.LPCM{
+						PayloadTyp: 96,
+						BitDepth: func() int {
+							if msg.Depth == message.Depth16 {
+								return 16
+							}
+							return 8
+						}(),
+						SampleRate: audioRateRTMPToInt(msg.Rate),
+						ChannelCount: func() int {
+							if msg.IsStereo {
+								return 2
+							}
+							return 1
+						}(),
+					}
 				}
 			}
 		}
@@ -464,7 +527,7 @@ func (r *Reader) OnDataAV1(cb OnDataAV1Func) {
 		if msg, ok := msg.(*message.ExtendedCodedFrames); ok {
 			tu, err := av1.BitstreamUnmarshal(msg.Payload, true)
 			if err != nil {
-				return fmt.Errorf("unable to decode bitstream: %v", err)
+				return fmt.Errorf("unable to decode bitstream: %w", err)
 			}
 
 			cb(msg.DTS, tu)
@@ -490,10 +553,10 @@ func (r *Reader) OnDataH265(cb OnDataH26xFunc) {
 		case *message.Video:
 			au, err := h264.AVCCUnmarshal(msg.Payload)
 			if err != nil {
-				if err == h264.ErrAVCCNoNALUs {
+				if errors.Is(err, h264.ErrAVCCNoNALUs) {
 					return nil
 				}
-				return fmt.Errorf("unable to decode AVCC: %v", err)
+				return fmt.Errorf("unable to decode AVCC: %w", err)
 			}
 
 			cb(msg.DTS+msg.PTSDelta, au)
@@ -501,10 +564,10 @@ func (r *Reader) OnDataH265(cb OnDataH26xFunc) {
 		case *message.ExtendedFramesX:
 			au, err := h264.AVCCUnmarshal(msg.Payload)
 			if err != nil {
-				if err == h264.ErrAVCCNoNALUs {
+				if errors.Is(err, h264.ErrAVCCNoNALUs) {
 					return nil
 				}
-				return fmt.Errorf("unable to decode AVCC: %v", err)
+				return fmt.Errorf("unable to decode AVCC: %w", err)
 			}
 
 			cb(msg.DTS, au)
@@ -512,10 +575,10 @@ func (r *Reader) OnDataH265(cb OnDataH26xFunc) {
 		case *message.ExtendedCodedFrames:
 			au, err := h264.AVCCUnmarshal(msg.Payload)
 			if err != nil {
-				if err == h264.ErrAVCCNoNALUs {
+				if errors.Is(err, h264.ErrAVCCNoNALUs) {
 					return nil
 				}
-				return fmt.Errorf("unable to decode AVCC: %v", err)
+				return fmt.Errorf("unable to decode AVCC: %w", err)
 			}
 
 			cb(msg.DTS+msg.PTSDelta, au)
@@ -534,7 +597,7 @@ func (r *Reader) OnDataH264(cb OnDataH26xFunc) {
 				var conf h264conf.Conf
 				err := conf.Unmarshal(msg.Payload)
 				if err != nil {
-					return fmt.Errorf("unable to parse H264 config: %v", err)
+					return fmt.Errorf("unable to parse H264 config: %w", err)
 				}
 
 				au := [][]byte{
@@ -547,10 +610,10 @@ func (r *Reader) OnDataH264(cb OnDataH26xFunc) {
 			case message.VideoTypeAU:
 				au, err := h264.AVCCUnmarshal(msg.Payload)
 				if err != nil {
-					if err == h264.ErrAVCCNoNALUs {
+					if errors.Is(err, h264.ErrAVCCNoNALUs) {
 						return nil
 					}
-					return fmt.Errorf("unable to decode AVCC: %v", err)
+					return fmt.Errorf("unable to decode AVCC: %w", err)
 				}
 
 				cb(msg.DTS+msg.PTSDelta, au)
@@ -576,6 +639,41 @@ func (r *Reader) OnDataMPEG1Audio(cb OnDataMPEG1AudioFunc) {
 	r.onDataAudio = func(msg *message.Audio) error {
 		cb(msg.DTS, msg.Payload)
 		return nil
+	}
+}
+
+// OnDataG711 sets a callback that is called when G711 data is received.
+func (r *Reader) OnDataG711(cb OnDataG711Func) {
+	r.onDataAudio = func(msg *message.Audio) error {
+		cb(msg.DTS, msg.Payload)
+		return nil
+	}
+}
+
+// OnDataLPCM sets a callback that is called when LPCM data is received.
+func (r *Reader) OnDataLPCM(cb OnDataLPCMFunc) {
+	bitDepth := r.audioTrack.(*format.LPCM).BitDepth
+
+	if bitDepth == 16 {
+		r.onDataAudio = func(msg *message.Audio) error {
+			le := len(msg.Payload)
+			if le%2 != 0 {
+				return fmt.Errorf("invalid payload length: %d", le)
+			}
+
+			// convert from little endian to big endian
+			for i := 0; i < le; i += 2 {
+				msg.Payload[i], msg.Payload[i+1] = msg.Payload[i+1], msg.Payload[i]
+			}
+
+			cb(msg.DTS, msg.Payload)
+			return nil
+		}
+	} else {
+		r.onDataAudio = func(msg *message.Audio) error {
+			cb(msg.DTS, msg.Payload)
+			return nil
+		}
 	}
 }
 

@@ -1,6 +1,7 @@
 package formatprocessor
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -52,13 +53,12 @@ func (t *formatProcessorAC3) ProcessUnit(uu unit.Unit) error { //nolint:dupl
 	if err != nil {
 		return err
 	}
+	u.RTPPackets = pkts
 
 	ts := uint32(multiplyAndDivide(u.PTS, time.Duration(t.format.ClockRate()), time.Second))
-	for _, pkt := range pkts {
+	for _, pkt := range u.RTPPackets {
 		pkt.Timestamp += ts
 	}
-
-	u.RTPPackets = pkts
 
 	return nil
 }
@@ -98,7 +98,8 @@ func (t *formatProcessorAC3) ProcessRTPPacket( //nolint:dupl
 
 		frames, err := t.decoder.Decode(pkt)
 		if err != nil {
-			if err == rtpac3.ErrNonStartingPacketAndNoPrevious || err == rtpac3.ErrMorePacketsNeeded {
+			if errors.Is(err, rtpac3.ErrNonStartingPacketAndNoPrevious) ||
+				errors.Is(err, rtpac3.ErrMorePacketsNeeded) {
 				return u, nil
 			}
 			return nil, err

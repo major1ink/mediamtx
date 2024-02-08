@@ -8,6 +8,7 @@ import (
 	rtspformat "github.com/bluenviron/gortsplib/v4/pkg/format"
 	"github.com/bluenviron/mediacommon/pkg/codecs/ac3"
 	"github.com/bluenviron/mediacommon/pkg/codecs/av1"
+	"github.com/bluenviron/mediacommon/pkg/codecs/g711"
 	"github.com/bluenviron/mediacommon/pkg/codecs/h264"
 	"github.com/bluenviron/mediacommon/pkg/codecs/h265"
 	"github.com/bluenviron/mediacommon/pkg/codecs/jpeg"
@@ -18,6 +19,7 @@ import (
 	"github.com/bluenviron/mediacommon/pkg/codecs/vp9"
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
 
+	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/unit"
 )
@@ -107,8 +109,9 @@ type formatFMP4 struct {
 
 func (f *formatFMP4) initialize() {
 	nextID := 1
+	var formats []rtspformat.Format
 
-	addTrack := func(codec fmp4.Codec) *formatFMP4Track {
+	addTrack := func(format rtspformat.Format, codec fmp4.Codec) *formatFMP4Track {
 		initTrack := &fmp4.InitTrack{
 			TimeScale: 90000,
 			Codec:     codec,
@@ -116,9 +119,13 @@ func (f *formatFMP4) initialize() {
 		initTrack.ID = nextID
 		nextID++
 
-		track := newFormatFMP4Track(f, initTrack)
-		f.tracks = append(f.tracks, track)
+		track := &formatFMP4Track{
+			f:         f,
+			initTrack: initTrack,
+		}
 
+		f.tracks = append(f.tracks, track)
+		formats = append(formats, format)
 		return track
 	}
 
@@ -141,7 +148,7 @@ func (f *formatFMP4) initialize() {
 						8, 0, 0, 0, 66, 167, 191, 228, 96, 13, 0, 64,
 					},
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				firstReceived := false
 
@@ -186,6 +193,7 @@ func (f *formatFMP4) initialize() {
 					return track.record(&sample{
 						PartSample: sampl,
 						dts:        tunit.PTS,
+						ntp:        tunit.NTP,
 					})
 				})
 
@@ -198,7 +206,7 @@ func (f *formatFMP4) initialize() {
 					ChromaSubsampling: 1,
 					ColorRange:        false,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				firstReceived := false
 
@@ -258,6 +266,7 @@ func (f *formatFMP4) initialize() {
 							Payload:         tunit.Frame,
 						},
 						dts: tunit.PTS,
+						ntp: tunit.NTP,
 					})
 				})
 
@@ -295,7 +304,7 @@ func (f *formatFMP4) initialize() {
 					SPS: sps,
 					PPS: pps,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				var dtsExtractor *h265.DTSExtractor
 
@@ -357,6 +366,7 @@ func (f *formatFMP4) initialize() {
 					return track.record(&sample{
 						PartSample: sampl,
 						dts:        dts,
+						ntp:        tunit.NTP,
 					})
 				})
 
@@ -380,7 +390,7 @@ func (f *formatFMP4) initialize() {
 					SPS: sps,
 					PPS: pps,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				var dtsExtractor *h264.DTSExtractor
 
@@ -435,6 +445,7 @@ func (f *formatFMP4) initialize() {
 					return track.record(&sample{
 						PartSample: sampl,
 						dts:        dts,
+						ntp:        tunit.NTP,
 					})
 				})
 
@@ -455,7 +466,7 @@ func (f *formatFMP4) initialize() {
 				codec := &fmp4.CodecMPEG4Video{
 					Config: config,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				firstReceived := false
 				var lastPTS time.Duration
@@ -496,6 +507,7 @@ func (f *formatFMP4) initialize() {
 							IsNonSyncSample: !randomAccess,
 						},
 						dts: tunit.PTS,
+						ntp: tunit.NTP,
 					})
 				})
 
@@ -507,7 +519,7 @@ func (f *formatFMP4) initialize() {
 						0x14, 0x4a, 0x00, 0x01, 0x00, 0x00,
 					},
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				firstReceived := false
 				var lastPTS time.Duration
@@ -548,6 +560,7 @@ func (f *formatFMP4) initialize() {
 							IsNonSyncSample: !randomAccess,
 						},
 						dts: tunit.PTS,
+						ntp: tunit.NTP,
 					})
 				})
 
@@ -556,7 +569,7 @@ func (f *formatFMP4) initialize() {
 					Width:  800,
 					Height: 600,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				parsed := false
 
@@ -582,6 +595,7 @@ func (f *formatFMP4) initialize() {
 							Payload: tunit.Frame,
 						},
 						dts: tunit.PTS,
+						ntp: tunit.NTP,
 					})
 				})
 
@@ -599,7 +613,7 @@ func (f *formatFMP4) initialize() {
 						return 1
 					}(),
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				f.a.agent.Stream.AddReader(f.a.writer, media, forma, func(u unit.Unit) error {
 					tunit := u.(*unit.Opus)
@@ -607,20 +621,21 @@ func (f *formatFMP4) initialize() {
 						return nil
 					}
 
-					pts := tunit.PTS
+					var dt time.Duration
 
 					for _, packet := range tunit.Packets {
 						err := track.record(&sample{
 							PartSample: &fmp4.PartSample{
 								Payload: packet,
 							},
-							dts: pts,
+							dts: tunit.PTS + dt,
+							ntp: tunit.NTP.Add(dt),
 						})
 						if err != nil {
 							return err
 						}
 
-						pts += opus.PacketDuration(packet)
+						dt += opus.PacketDuration(packet)
 					}
 
 					return nil
@@ -635,7 +650,7 @@ func (f *formatFMP4) initialize() {
 				codec := &fmp4.CodecMPEG4Audio{
 					Config: *forma.GetConfig(),
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				sampleRate := time.Duration(forma.ClockRate())
 
@@ -646,14 +661,15 @@ func (f *formatFMP4) initialize() {
 					}
 
 					for i, au := range tunit.AUs {
-						auPTS := tunit.PTS + time.Duration(i)*mpeg4audio.SamplesPerAccessUnit*
-							time.Second/sampleRate
+						dt := time.Duration(i) * mpeg4audio.SamplesPerAccessUnit *
+							time.Second / sampleRate
 
 						err := track.record(&sample{
 							PartSample: &fmp4.PartSample{
 								Payload: au,
 							},
-							dts: auPTS,
+							dts: tunit.PTS + dt,
+							ntp: tunit.NTP.Add(dt),
 						})
 						if err != nil {
 							return err
@@ -673,7 +689,7 @@ func (f *formatFMP4) initialize() {
 					SampleRate:   32000,
 					ChannelCount: 2,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				parsed := false
 
@@ -683,7 +699,7 @@ func (f *formatFMP4) initialize() {
 						return nil
 					}
 
-					pts := tunit.PTS
+					var dt time.Duration
 
 					for _, frame := range tunit.Frames {
 						var h mpeg1audio.FrameHeader
@@ -703,13 +719,14 @@ func (f *formatFMP4) initialize() {
 							PartSample: &fmp4.PartSample{
 								Payload: frame,
 							},
-							dts: pts,
+							dts: tunit.PTS + tunit.PTS,
+							ntp: tunit.NTP,
 						})
 						if err != nil {
 							return err
 						}
 
-						pts += time.Duration(h.SampleCount()) *
+						dt += time.Duration(h.SampleCount()) *
 							time.Second / time.Duration(h.SampleRate)
 					}
 
@@ -732,7 +749,7 @@ func (f *formatFMP4) initialize() {
 					LfeOn:        true,
 					BitRateCode:  7,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				parsed := false
 
@@ -742,19 +759,17 @@ func (f *formatFMP4) initialize() {
 						return nil
 					}
 
-					pts := tunit.PTS
-
-					for _, frame := range tunit.Frames {
+					for i, frame := range tunit.Frames {
 						var syncInfo ac3.SyncInfo
 						err := syncInfo.Unmarshal(frame)
 						if err != nil {
-							return fmt.Errorf("invalid AC-3 frame: %s", err)
+							return fmt.Errorf("invalid AC-3 frame: %w", err)
 						}
 
 						var bsi ac3.BSI
 						err = bsi.Unmarshal(frame[5:])
 						if err != nil {
-							return fmt.Errorf("invalid AC-3 frame: %s", err)
+							return fmt.Errorf("invalid AC-3 frame: %w", err)
 						}
 
 						if !parsed {
@@ -770,18 +785,19 @@ func (f *formatFMP4) initialize() {
 							updateCodecs()
 						}
 
+						dt := time.Duration(i) * time.Duration(ac3.SamplesPerFrame) *
+							time.Second / time.Duration(codec.SampleRate)
+
 						err = track.record(&sample{
 							PartSample: &fmp4.PartSample{
 								Payload: frame,
 							},
-							dts: pts,
+							dts: tunit.PTS + dt,
+							ntp: tunit.NTP.Add(dt),
 						})
 						if err != nil {
 							return err
 						}
-
-						pts += time.Duration(ac3.SamplesPerFrame) *
-							time.Second / time.Duration(codec.SampleRate)
 					}
 
 					return nil
@@ -797,11 +813,43 @@ func (f *formatFMP4) initialize() {
 
 			case *rtspformat.G711:
 
+
 				if !f.a.recordAudio {
 					continue
 				}
 
 				// TODO
+
+				codec := &fmp4.CodecLPCM{
+					LittleEndian: false,
+					BitDepth:     16,
+					SampleRate:   forma.SampleRate,
+					ChannelCount: forma.ChannelCount,
+				}
+				track := addTrack(forma, codec)
+
+				f.a.agent.Stream.AddReader(f.a.writer, media, forma, func(u unit.Unit) error {
+					tunit := u.(*unit.G711)
+					if tunit.Samples == nil {
+						return nil
+					}
+
+					var out []byte
+					if forma.MULaw {
+						out = g711.DecodeMulaw(tunit.Samples)
+					} else {
+						out = g711.DecodeAlaw(tunit.Samples)
+					}
+
+					return track.record(&sample{
+						PartSample: &fmp4.PartSample{
+							Payload: out,
+						},
+						dts: tunit.PTS,
+						ntp: tunit.NTP,
+					})
+				})
+
 
 			case *rtspformat.LPCM:
 
@@ -815,7 +863,7 @@ func (f *formatFMP4) initialize() {
 					SampleRate:   forma.SampleRate,
 					ChannelCount: forma.ChannelCount,
 				}
-				track := addTrack(codec)
+				track := addTrack(forma, codec)
 
 				f.a.agent.Stream.AddReader(f.a.writer, media, forma, func(u unit.Unit) error {
 					tunit := u.(*unit.LPCM)
@@ -828,20 +876,15 @@ func (f *formatFMP4) initialize() {
 							Payload: tunit.Samples,
 						},
 						dts: tunit.PTS,
+						ntp: tunit.NTP,
 					})
 				})
 			}
 		}
 	}
 
-	f.a.agent.Log(logger.Info, "recording %d %s",
-		len(f.tracks),
-		func() string {
-			if len(f.tracks) == 1 {
-				return "track"
-			}
-			return "tracks"
-		}())
+	f.a.agent.Log(logger.Info, "recording %s",
+		defs.FormatsInfo(formats))
 }
 
 func (f *formatFMP4) close() {

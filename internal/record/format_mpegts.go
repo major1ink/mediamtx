@@ -14,6 +14,7 @@ import (
 	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4video"
 	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
 
+	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/unit"
 )
@@ -50,12 +51,15 @@ type formatMPEGTS struct {
 
 func (f *formatMPEGTS) initialize() {
 	var tracks []*mpegts.Track
+	var formats []rtspformat.Format
 
-	addTrack := func(codec mpegts.Codec) *mpegts.Track {
+	addTrack := func(format rtspformat.Format, codec mpegts.Codec) *mpegts.Track {
 		track := &mpegts.Track{
 			Codec: codec,
 		}
+
 		tracks = append(tracks, track)
+		formats = append(formats, format)
 		return track
 	}
 
@@ -63,7 +67,7 @@ func (f *formatMPEGTS) initialize() {
 		for _, forma := range media.Formats {
 			switch forma := forma.(type) {
 			case *rtspformat.H265:
-				track := addTrack(&mpegts.CodecH265{})
+				track := addTrack(forma, &mpegts.CodecH265{})
 
 				var dtsExtractor *h265.DTSExtractor
 
@@ -87,11 +91,11 @@ func (f *formatMPEGTS) initialize() {
 						return err
 					}
 
-					return f.recordH26x(track, dts, durationGoToMPEGTS(tunit.PTS), durationGoToMPEGTS(dts), randomAccess, tunit.AU)
+					return f.recordH26x(track, tunit.PTS, dts, tunit.NTP, randomAccess, tunit.AU)
 				})
 
 			case *rtspformat.H264:
-				track := addTrack(&mpegts.CodecH264{})
+				track := addTrack(forma, &mpegts.CodecH264{})
 
 				var dtsExtractor *h264.DTSExtractor
 
@@ -115,11 +119,11 @@ func (f *formatMPEGTS) initialize() {
 						return err
 					}
 
-					return f.recordH26x(track, dts, durationGoToMPEGTS(tunit.PTS), durationGoToMPEGTS(dts), idrPresent, tunit.AU)
+					return f.recordH26x(track, tunit.PTS, dts, tunit.NTP, idrPresent, tunit.AU)
 				})
 
 			case *rtspformat.MPEG4Video:
-				track := addTrack(&mpegts.CodecMPEG4Video{})
+				track := addTrack(forma, &mpegts.CodecMPEG4Video{})
 
 				firstReceived := false
 				var lastPTS time.Duration
@@ -140,7 +144,7 @@ func (f *formatMPEGTS) initialize() {
 					f.hasVideo = true
 					randomAccess := bytes.Contains(tunit.Frame, []byte{0, 0, 1, byte(mpeg4video.GroupOfVOPStartCode)})
 
-					err := f.setupSegment(tunit.PTS, true, randomAccess)
+					err := f.setupSegment(tunit.PTS, tunit.NTP, true, randomAccess)
 					if err != nil {
 						return err
 					}
@@ -149,7 +153,7 @@ func (f *formatMPEGTS) initialize() {
 				})
 
 			case *rtspformat.MPEG1Video:
-				track := addTrack(&mpegts.CodecMPEG1Video{})
+				track := addTrack(forma, &mpegts.CodecMPEG1Video{})
 
 				firstReceived := false
 				var lastPTS time.Duration
@@ -170,7 +174,7 @@ func (f *formatMPEGTS) initialize() {
 					f.hasVideo = true
 					randomAccess := bytes.Contains(tunit.Frame, []byte{0, 0, 1, 0xB8})
 
-					err := f.setupSegment(tunit.PTS, true, randomAccess)
+					err := f.setupSegment(tunit.PTS, tunit.NTP, true, randomAccess)
 					if err != nil {
 						return err
 					}
@@ -180,11 +184,13 @@ func (f *formatMPEGTS) initialize() {
 
 			case *rtspformat.Opus:
 
+
 				if !f.a.recordAudio {
 					continue
 				}
 
-				track := addTrack(&mpegts.CodecOpus{
+				track := addTrack(forma, &mpegts.CodecOpus{
+
 					ChannelCount: func() int {
 						if forma.IsStereo {
 							return 2
@@ -199,7 +205,7 @@ func (f *formatMPEGTS) initialize() {
 						return nil
 					}
 
-					err := f.setupSegment(tunit.PTS, false, true)
+					err := f.setupSegment(tunit.PTS, tunit.NTP, false, true)
 					if err != nil {
 						return err
 					}
@@ -209,11 +215,13 @@ func (f *formatMPEGTS) initialize() {
 
 			case *rtspformat.MPEG4Audio:
 
+
 				if !f.a.recordAudio {
 					continue
 				}
 
-				track := addTrack(&mpegts.CodecMPEG4Audio{
+				track := addTrack(forma, &mpegts.CodecMPEG4Audio{
+
 					Config: *forma.GetConfig(),
 				})
 
@@ -223,7 +231,7 @@ func (f *formatMPEGTS) initialize() {
 						return nil
 					}
 
-					err := f.setupSegment(tunit.PTS, false, true)
+					err := f.setupSegment(tunit.PTS, tunit.NTP, false, true)
 					if err != nil {
 						return err
 					}
@@ -233,11 +241,13 @@ func (f *formatMPEGTS) initialize() {
 
 			case *rtspformat.MPEG1Audio:
 
+
 				if !f.a.recordAudio {
 					continue
 				}
 
-				track := addTrack(&mpegts.CodecMPEG1Audio{})
+				track := addTrack(forma, &mpegts.CodecMPEG1Audio{})
+
 
 				f.a.agent.Stream.AddReader(f.a.writer, media, forma, func(u unit.Unit) error {
 					tunit := u.(*unit.MPEG1Audio)
@@ -245,7 +255,7 @@ func (f *formatMPEGTS) initialize() {
 						return nil
 					}
 
-					err := f.setupSegment(tunit.PTS, false, true)
+					err := f.setupSegment(tunit.PTS, tunit.NTP, false, true)
 					if err != nil {
 						return err
 					}
@@ -255,11 +265,13 @@ func (f *formatMPEGTS) initialize() {
 
 			case *rtspformat.AC3:
 
+
 				if !f.a.recordAudio {
 					continue
 				}
 
-				track := addTrack(&mpegts.CodecAC3{})
+				track := addTrack(forma, &mpegts.CodecAC3{})
+
 
 				sampleRate := time.Duration(forma.SampleRate)
 
@@ -289,14 +301,8 @@ func (f *formatMPEGTS) initialize() {
 	f.bw = bufio.NewWriterSize(f.dw, mpegtsMaxBufferSize)
 	f.mw = mpegts.NewWriter(f.bw, tracks)
 
-	f.a.agent.Log(logger.Info, "recording %d %s",
-		len(tracks),
-		func() string {
-			if len(tracks) == 1 {
-				return "track"
-			}
-			return "tracks"
-		}())
+	f.a.agent.Log(logger.Info, "recording %s",
+		defs.FormatsInfo(formats))
 }
 
 func (f *formatMPEGTS) close() {
@@ -305,11 +311,20 @@ func (f *formatMPEGTS) close() {
 	}
 }
 
-func (f *formatMPEGTS) setupSegment(dts time.Duration, isVideo bool, randomAccess bool) error {
+func (f *formatMPEGTS) setupSegment(
+	dts time.Duration,
+	ntp time.Time,
+	isVideo bool,
+	randomAccess bool,
+) error {
 	switch {
 	case f.currentSegment == nil:
-		f.currentSegment = newFormatMPEGTSSegment(f, dts)
-
+		f.currentSegment = &formatMPEGTSSegment{
+			f:        f,
+			startDTS: dts,
+			startNTP: ntp,
+		}
+		f.currentSegment.initialize()
 	case (!f.hasVideo || isVideo) &&
 		randomAccess &&
 		(dts-f.currentSegment.startDTS) >= f.a.agent.SegmentDuration:
@@ -318,7 +333,12 @@ func (f *formatMPEGTS) setupSegment(dts time.Duration, isVideo bool, randomAcces
 			return err
 		}
 
-		f.currentSegment = newFormatMPEGTSSegment(f, dts)
+		f.currentSegment = &formatMPEGTSSegment{
+			f:        f,
+			startDTS: dts,
+			startNTP: ntp,
+		}
+		f.currentSegment.initialize()
 
 	case (dts - f.currentSegment.lastFlush) >= f.a.agent.PartDuration:
 		err := f.bw.Flush()
@@ -332,15 +352,20 @@ func (f *formatMPEGTS) setupSegment(dts time.Duration, isVideo bool, randomAcces
 	return nil
 }
 
-func (f *formatMPEGTS) recordH26x(track *mpegts.Track, goDTS time.Duration,
-	pts int64, dts int64, randomAccess bool, au [][]byte,
+func (f *formatMPEGTS) recordH26x(
+	track *mpegts.Track,
+	pts time.Duration,
+	dts time.Duration,
+	ntp time.Time,
+	randomAccess bool,
+	au [][]byte,
 ) error {
 	f.hasVideo = true
 
-	err := f.setupSegment(goDTS, true, randomAccess)
+	err := f.setupSegment(dts, ntp, true, randomAccess)
 	if err != nil {
 		return err
 	}
 
-	return f.mw.WriteH26x(track, pts, dts, randomAccess, au)
+	return f.mw.WriteH26x(track, durationGoToMPEGTS(pts), durationGoToMPEGTS(dts), randomAccess, au)
 }

@@ -3,6 +3,7 @@ package webrtc
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -243,6 +244,14 @@ func findAudioTrack(
 
 	if g711Format != nil {
 		return g711Format, func(track *webrtc.OutgoingTrack) error {
+			if g711Format.SampleRate != 8000 {
+				return fmt.Errorf("unsupported G711 sample rate")
+			}
+
+			if g711Format.ChannelCount != 1 {
+				return fmt.Errorf("unsupported G711 channel count")
+			}
+
 			stream.AddReader(writer, media, g711Format, func(u unit.Unit) error {
 				for _, pkt := range u.GetRTPPackets() {
 					track.WriteRTP(pkt) //nolint:errcheck
@@ -368,9 +377,10 @@ func (s *session) runPublish() (int, error) {
 		},
 	})
 	if res.Err != nil {
-		if _, ok := res.Err.(*defs.ErrAuthentication); ok {
-			// wait some seconds to stop brute force attacks
-			<-time.After(webrtcPauseAfterAuthError)
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
+			// wait some seconds to mitigate brute force attacks
+			<-time.After(pauseAfterAuthError)
 
 			return http.StatusUnauthorized, res.Err
 		}
@@ -498,10 +508,10 @@ func (s *session) runRead() (int, error) {
 		},
 	})
 	if res.Err != nil {
-		if _, ok := res.Err.(*defs.ErrAuthentication); ok {
-			// wait some seconds to stop brute force attacks
-			<-time.After(webrtcPauseAfterAuthError)
-
+		var terr defs.AuthenticationError
+		if errors.As(res.Err, &terr) {
+			// wait some seconds to mitigate brute force attacks
+			<-time.After(pauseAfterAuthError)
 			return http.StatusUnauthorized, res.Err
 		}
 
@@ -586,7 +596,7 @@ func (s *session) runRead() (int, error) {
 	}
 
 	s.Log(logger.Info, "is reading from path '%s', %s",
-		res.Path.Name(), defs.MediasInfo(res.Stream.MediasForReader(writer)))
+		res.Path.Name(), defs.FormatsInfo(res.Stream.FormatsForReader(writer)))
 
 	onUnreadHook := hooks.OnRead(hooks.OnReadParams{
 		Logger:          s,
@@ -708,6 +718,7 @@ func (s *session) apiItem() *defs.APIWebRTCSession {
 			return defs.APIWebRTCSessionStateRead
 		}(),
 		Path:          s.req.pathName,
+		Query:         s.req.query,
 		BytesReceived: bytesReceived,
 		BytesSent:     bytesSent,
 	}
