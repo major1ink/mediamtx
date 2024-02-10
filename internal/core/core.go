@@ -40,6 +40,10 @@ import (
 	"github.com/bluenviron/mediamtx/internal/storage/psql"
 )
 
+type MaxPub struct {
+	Max int
+}
+
 var version = "v0.0.0"
 
 var defaultConfPaths = []string{
@@ -437,6 +441,8 @@ func (p *Core) createResources(initial bool) error {
 			externalCmdPool:           p.externalCmdPool,
 			parent:                    p,
 			stor:                      stor,
+			Publisher:                 MaxPub{Max: len(p.conf.Paths) - 1},
+			max:                       p.conf.PathDefaults.MaxPublishers,
 		}
 		p.pathManager.initialize()
 
@@ -701,6 +707,8 @@ func (p *Core) createResources(initial bool) error {
 			WebRTCServer: p.webRTCServer,
 			SRTServer:    p.srtServer,
 			Parent:       p,
+			Publisher:    &p.pathManager.Publisher.Max,
+			Max:          p.conf.PathDefaults.MaxPublishers,
 		}
 		err := i.Initialize()
 		if err != nil {

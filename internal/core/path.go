@@ -249,6 +249,7 @@ func (pa *path) run() {
 	}
 
 	pa.Log(logger.Debug, "destroyed: %v", err)
+	pa.publisher.Max--
 }
 
 func (pa *path) runInner() error {

@@ -168,6 +168,9 @@ type API struct {
 
 	httpServer *httpserv.WrappedServer
 	mutex      sync.Mutex
+
+	Publisher *int
+	Max       int
 }
 
 // Initialize initializes API.
@@ -398,6 +401,12 @@ func (a *API) onConfigPathsGet(ctx *gin.Context) {
 }
 
 func (a *API) onConfigPathsAdd(ctx *gin.Context) { //nolint:dupl
+
+	if a.Max != 0 && *a.Publisher >= a.Max {
+		a.Parent.Log(logger.Info, "Maximum publisher count reached")
+		return
+	}
+	*a.Publisher++
 	name, ok := paramName(ctx)
 	if !ok {
 		a.writeError(ctx, http.StatusBadRequest, fmt.Errorf("invalid name"))
