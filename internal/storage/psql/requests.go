@@ -1,5 +1,7 @@
 package psql
 
+import "context"
+
 func (r *Req) ExecQuery(query string) error {
 
 	_, err := r.pool.Exec(r.ctx, query)
@@ -7,6 +9,16 @@ func (r *Req) ExecQuery(query string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (r *Req) ExecQueryNoCtx(query string) error {
+	r.ctx = context.Background()
+	_, err := r.pool.Exec(r.ctx, query)
+	if err != nil {
+		return err
+	}
+	r.ctx.Done()
 	return nil
 }
 

@@ -26,6 +26,7 @@ func (s *formatMPEGTSSegment) initialize() {
 }
 
 func (s *formatMPEGTSSegment) close() error {
+
 	err := s.f.bw.Flush()
 
 	if s.fi != nil {
@@ -40,6 +41,7 @@ func (s *formatMPEGTSSegment) close() error {
 
 			if s.f.a.stor.Use {
 				stat, err3 := os.Stat(s.path)
+
 				if err3 == nil {
 					paths := strings.Split(s.path, "/")
 					err4 := s.f.a.stor.Req.ExecQuery(
@@ -50,6 +52,15 @@ func (s *formatMPEGTSSegment) close() error {
 							paths[len(paths)-1],
 						))
 					if err4 != nil {
+						if err4.Error() == "context canceled" {
+							err4 = s.f.a.stor.Req.ExecQueryNoCtx(
+								fmt.Sprintf(
+									s.f.a.stor.Sql.UpdateSize,
+									fmt.Sprint(stat.Size()),
+									time.Now().Format("2006-01-02 15:04:05"),
+									paths[len(paths)-1],
+								))
+						}
 						return err4
 					}
 					return err
