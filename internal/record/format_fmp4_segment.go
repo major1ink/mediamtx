@@ -75,6 +75,15 @@ func (s *formatFMP4Segment) close() error {
 							paths[len(paths)-1]),
 					)
 					if err4 != nil {
+						if err4.Error() == "context canceled" {
+							err4 = s.f.a.stor.Req.ExecQueryNoCtx(
+								fmt.Sprintf(
+									s.f.a.stor.Sql.UpdateSize,
+									fmt.Sprint(stat.Size()),
+									time.Now().Format("2006-01-02 15:04:05"),
+									paths[len(paths)-1],
+								))
+						}
 						return err4
 					}
 
