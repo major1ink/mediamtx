@@ -129,6 +129,11 @@ type bdTable struct {
 	Contract       string
 }
 
+type prohys struct {
+	Ip_address_out string
+	Code_mp        string
+}
+
 func getTypeInt(item interface{}) int {
 
 	t := reflect.TypeOf(item)
