@@ -15,7 +15,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
-func writeTempFile(byts []byte) (string, error) {
+func createTempFile(byts []byte) (string, error) {
 	tmpf, err := os.CreateTemp(os.TempDir(), "rtsp-")
 	if err != nil {
 		return "", err
@@ -32,7 +32,7 @@ func writeTempFile(byts []byte) (string, error) {
 
 func TestConfFromFile(t *testing.T) {
 	func() {
-		tmpf, err := writeTempFile([]byte("logLevel: debug\n" +
+		tmpf, err := createTempFile([]byte("logLevel: debug\n" +
 			"paths:\n" +
 			"  cam1:\n" +
 			"    runOnDemandStartTimeout: 5s\n"))
@@ -67,6 +67,7 @@ func TestConfFromFile(t *testing.T) {
 			RPICameraSharpness:         1,
 			RPICameraExposure:          "normal",
 			RPICameraAWB:               "auto",
+			RPICameraAWBGains:          []float64{0, 0},
 			RPICameraDenoise:           "off",
 			RPICameraMetering:          "centre",
 			RPICameraFPS:               30,
@@ -84,7 +85,7 @@ func TestConfFromFile(t *testing.T) {
 	}()
 
 	func() {
-		tmpf, err := writeTempFile([]byte(``))
+		tmpf, err := createTempFile([]byte(``))
 		require.NoError(t, err)
 		defer os.Remove(tmpf)
 
@@ -93,7 +94,7 @@ func TestConfFromFile(t *testing.T) {
 	}()
 
 	func() {
-		tmpf, err := writeTempFile([]byte(`paths:`))
+		tmpf, err := createTempFile([]byte(`paths:`))
 		require.NoError(t, err)
 		defer os.Remove(tmpf)
 
@@ -102,7 +103,7 @@ func TestConfFromFile(t *testing.T) {
 	}()
 
 	func() {
-		tmpf, err := writeTempFile([]byte(
+		tmpf, err := createTempFile([]byte(
 			"paths:\n" +
 				"  mypath:\n"))
 		require.NoError(t, err)
@@ -126,7 +127,7 @@ func TestConfFromFileAndEnv(t *testing.T) {
 	// deprecated path parameter
 	t.Setenv("MTX_PATHS_CAM2_DISABLEPUBLISHEROVERRIDE", "yes")
 
-	tmpf, err := writeTempFile([]byte("{}"))
+	tmpf, err := createTempFile([]byte("{}"))
 	require.NoError(t, err)
 	defer os.Remove(tmpf)
 
@@ -178,7 +179,7 @@ func TestConfEncryption(t *testing.T) {
 
 	t.Setenv("RTSP_CONFKEY", key)
 
-	tmpf, err := writeTempFile([]byte(encryptedConf))
+	tmpf, err := createTempFile([]byte(encryptedConf))
 	require.NoError(t, err)
 	defer os.Remove(tmpf)
 
@@ -295,7 +296,7 @@ func TestConfErrors(t *testing.T) {
 		},
 	} {
 		t.Run(ca.name, func(t *testing.T) {
-			tmpf, err := writeTempFile([]byte(ca.conf))
+			tmpf, err := createTempFile([]byte(ca.conf))
 			require.NoError(t, err)
 			defer os.Remove(tmpf)
 
@@ -325,7 +326,7 @@ func TestSampleConfFile(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "../../mediamtx.yml", confPath1)
 
-		tmpf, err := writeTempFile([]byte("paths:\n  all_others:"))
+		tmpf, err := createTempFile([]byte("paths:\n  all_others:"))
 		require.NoError(t, err)
 		defer os.Remove(tmpf)
 

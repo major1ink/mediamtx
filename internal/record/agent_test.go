@@ -11,18 +11,13 @@ import (
 	"github.com/bluenviron/mediacommon/pkg/codecs/h265"
 	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4audio"
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
-	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/stretchr/testify/require"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/stream"
+	"github.com/bluenviron/mediamtx/internal/test"
 	"github.com/bluenviron/mediamtx/internal/unit"
 )
-
-type nilLogger struct{}
-
-func (nilLogger) Log(_ logger.Level, _ string, _ ...interface{}) {
-}
 
 func TestAgent(t *testing.T) {
 	desc := &description.Session{Medias: []*description.Media{
@@ -108,14 +103,8 @@ func TestAgent(t *testing.T) {
 					PTS: (50 + time.Duration(i)) * time.Second,
 				},
 				AU: [][]byte{
-					{ // SPS
-						0x67, 0x42, 0xc0, 0x28, 0xd9, 0x00, 0x78, 0x02,
-						0x27, 0xe5, 0x84, 0x00, 0x00, 0x03, 0x00, 0x04,
-						0x00, 0x00, 0x03, 0x00, 0xf0, 0x3c, 0x60, 0xc9, 0x20,
-					},
-					{ // PPS
-						0x08, 0x06, 0x07, 0x08,
-					},
+					test.FormatH264.SPS,
+					test.FormatH264.PPS,
 					{5}, // IDR
 				},
 			})
@@ -149,7 +138,7 @@ func TestAgent(t *testing.T) {
 				1460,
 				desc,
 				true,
-				&nilLogger{},
+				&test.NilLogger{},
 			)
 			require.NoError(t, err)
 			defer stream.Close()
@@ -184,7 +173,7 @@ func TestAgent(t *testing.T) {
 				OnSegmentComplete: func(fpath string) {
 					segDone <- struct{}{}
 				},
-				Parent:       &nilLogger{},
+				Parent:       &test.NilLogger{},
 				restartPause: 1 * time.Millisecond,
 			}
 			w.Initialize()
@@ -265,7 +254,7 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 		1460,
 		desc,
 		true,
-		&nilLogger{},
+		&test.NilLogger{},
 	)
 	require.NoError(t, err)
 	defer stream.Close()
@@ -284,8 +273,12 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 		SegmentDuration: 1 * time.Second,
 		PathName:        "mypath",
 		Stream:          stream,
+
+		Parent:          &test.NilLogger{},
+
 		Parent:          &nilLogger{},
 		RecordAudio:     true,
+
 	}
 	w.Initialize()
 
@@ -296,14 +289,8 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 				NTP: time.Date(2008, 0o5, 20, 22, 15, 25, 0, time.UTC),
 			},
 			AU: [][]byte{
-				{ // SPS
-					0x67, 0x42, 0xc0, 0x28, 0xd9, 0x00, 0x78, 0x02,
-					0x27, 0xe5, 0x84, 0x00, 0x00, 0x03, 0x00, 0x04,
-					0x00, 0x00, 0x03, 0x00, 0xf0, 0x3c, 0x60, 0xc9, 0x20,
-				},
-				{ // PPS
-					0x08, 0x06, 0x07, 0x08,
-				},
+				test.FormatH264.SPS,
+				test.FormatH264.PPS,
 				{5}, // IDR
 			},
 		})

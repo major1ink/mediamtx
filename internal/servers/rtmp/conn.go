@@ -32,6 +32,9 @@ const (
 	pauseAfterAuthError = 2 * time.Second
 )
 
+var errNoSupportedCodecs = errors.New(
+	"the stream doesn't contain any supported codec, which are currently H264, MPEG-4 Audio, MPEG-1/2 Audio")
+
 func pathNameAndQuery(inURL *url.URL) (string, url.Values, string) {
 	// remove leading and trailing slashes inserted by OBS and some other clients
 	tmp := strings.TrimRight(inURL.String(), "/")
@@ -60,7 +63,7 @@ type conn struct {
 	wg                  *sync.WaitGroup
 	nconn               net.Conn
 	externalCmdPool     *externalcmd.Pool
-	pathManager         defs.PathManager
+	pathManager         serverPathManager
 	parent              *Server
 
 	ctx       context.Context
@@ -165,7 +168,7 @@ func (c *conn) runReader() error {
 func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 	pathName, query, rawQuery := pathNameAndQuery(u)
 
-	res := c.pathManager.AddReader(defs.PathAddReaderReq{
+	path, stream, err := c.pathManager.AddReader(defs.PathAddReaderReq{
 		Author: c,
 		AccessRequest: defs.PathAccessRequest{
 			Name:  pathName,
@@ -177,18 +180,17 @@ func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 			ID:    &c.uuid,
 		},
 	})
-
-	if res.Err != nil {
+	if err != nil {
 		var terr defs.AuthenticationError
-		if errors.As(res.Err, &terr) {
+		if errors.As(err, &terr) {
 			// wait some seconds to mitigate brute force attacks
 			<-time.After(pauseAfterAuthError)
 			return terr
 		}
-		return res.Err
+		return err
 	}
 
-	defer res.Path.RemoveReader(defs.PathRemoveReaderReq{Author: c})
+	defer path.RemoveReader(defs.PathRemoveReaderReq{Author: c})
 
 	c.mutex.Lock()
 	c.state = connStateRead
@@ -198,39 +200,37 @@ func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 
 	writer := asyncwriter.New(c.writeQueueSize, c)
 
-	defer res.Stream.RemoveReader(writer)
+	defer stream.RemoveReader(writer)
 
 	var w *rtmp.Writer
 
 	videoFormat := c.setupVideo(
 		&w,
-		res.Stream,
+		stream,
 		writer)
 
 	audioFormat := c.setupAudio(
 		&w,
-		res.Stream,
+		stream,
 		writer)
 
 	if videoFormat == nil && audioFormat == nil {
-		return fmt.Errorf(
-			"the stream doesn't contain any supported codec, which are currently H264, MPEG-4 Audio, MPEG-1/2 Audio")
+		return errNoSupportedCodecs
 	}
 
 	c.Log(logger.Info, "is reading from path '%s', %s",
-		res.Path.Name(), defs.FormatsInfo(res.Stream.FormatsForReader(writer)))
+		path.Name(), defs.FormatsInfo(stream.FormatsForReader(writer)))
 
 	onUnreadHook := hooks.OnRead(hooks.OnReadParams{
 		Logger:          c,
 		ExternalCmdPool: c.externalCmdPool,
-		Conf:            res.Path.SafeConf(),
-		ExternalCmdEnv:  res.Path.ExternalCmdEnv(),
+		Conf:            path.SafeConf(),
+		ExternalCmdEnv:  path.ExternalCmdEnv(),
 		Reader:          c.APISourceDescribe(),
 		Query:           rawQuery,
 	})
 	defer onUnreadHook()
 
-	var err error
 	w, err = rtmp.NewWriter(conn, videoFormat, audioFormat)
 	if err != nil {
 		return err
@@ -396,7 +396,7 @@ func (c *conn) setupAudio(
 func (c *conn) runPublish(conn *rtmp.Conn, u *url.URL) error {
 	pathName, query, rawQuery := pathNameAndQuery(u)
 
-	res := c.pathManager.AddPublisher(defs.PathAddPublisherReq{
+	path, err := c.pathManager.AddPublisher(defs.PathAddPublisherReq{
 		Author: c,
 		AccessRequest: defs.PathAccessRequest{
 			Name:    pathName,
@@ -409,18 +409,17 @@ func (c *conn) runPublish(conn *rtmp.Conn, u *url.URL) error {
 			ID:      &c.uuid,
 		},
 	})
-
-	if res.Err != nil {
+	if err != nil {
 		var terr defs.AuthenticationError
-		if errors.As(res.Err, &terr) {
+		if errors.As(err, &terr) {
 			// wait some seconds to mitigate brute force attacks
 			<-time.After(pauseAfterAuthError)
 			return terr
 		}
-		return res.Err
+		return err
 	}
 
-	defer res.Path.RemovePublisher(defs.PathRemovePublisherReq{Author: c})
+	defer path.RemovePublisher(defs.PathRemovePublisherReq{Author: c})
 
 	c.mutex.Lock()
 	c.state = connStatePublish
@@ -551,16 +550,14 @@ func (c *conn) runPublish(conn *rtmp.Conn, u *url.URL) error {
 		}
 	}
 
-	rres := res.Path.StartPublisher(defs.PathStartPublisherReq{
+	stream, err = path.StartPublisher(defs.PathStartPublisherReq{
 		Author:             c,
 		Desc:               &description.Session{Medias: medias},
 		GenerateRTPPackets: true,
 	})
-	if rres.Err != nil {
-		return rres.Err
+	if err != nil {
+		return err
 	}
-
-	stream = rres.Stream
 
 	// disable write deadline to allow outgoing acknowledges
 	c.nconn.SetWriteDeadline(time.Time{})

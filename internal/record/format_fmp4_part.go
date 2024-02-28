@@ -61,6 +61,7 @@ func (p *formatFMP4Part) initialize() {
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
 
+
 		if p.s.f.a.stor.DbDrives {
 
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
@@ -107,8 +108,9 @@ func (p *formatFMP4Part) close() error {
 				p.s.path = fmt.Sprintf(free + Path(p.s.startNTP).Encode(p.s.f.a.pathFormat))
 			}
 		} else {
-			p.s.path = Path(p.s.startNTP).Encode(p.s.f.a.pathFormat)
+			p.s.path = Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat)
 		}
+
 
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 

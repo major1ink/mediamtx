@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4"
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
-	"github.com/bluenviron/gortsplib/v4/pkg/format"
 	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
 	srt "github.com/datarhei/gosrt"
 	"github.com/pion/rtp"
@@ -22,14 +22,30 @@ import (
 
 	"github.com/bluenviron/mediamtx/internal/protocols/rtmp"
 	"github.com/bluenviron/mediamtx/internal/protocols/webrtc"
+	"github.com/bluenviron/mediamtx/internal/test"
 )
 
+func httpPullFile(t *testing.T, hc *http.Client, u string) []byte {
+	res, err := hc.Get(u)
+	require.NoError(t, err)
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("bad status code: %v", res.StatusCode)
+	}
+
+	byts, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	return byts
+}
+
 func TestMetrics(t *testing.T) {
-	serverCertFpath, err := writeTempFile(serverCert)
+	serverCertFpath, err := test.CreateTempFile(test.TLSCertPub)
 	require.NoError(t, err)
 	defer os.Remove(serverCertFpath)
 
-	serverKeyFpath, err := writeTempFile(serverKey)
+	serverKeyFpath, err := test.CreateTempFile(test.TLSCertKey)
 	require.NoError(t, err)
 	defer os.Remove(serverKeyFpath)
 
@@ -93,10 +109,7 @@ webrtc_sessions_bytes_sent 0
 			defer wg.Done()
 			source := gortsplib.Client{}
 			err := source.StartRecording("rtsp://localhost:8554/rtsp_path",
-				&description.Session{Medias: []*description.Media{{
-					Type:    description.MediaTypeVideo,
-					Formats: []format.Format{testFormatH264},
-				}}})
+				&description.Session{Medias: []*description.Media{test.UniqueMediaH264()}})
 			require.NoError(t, err)
 			defer source.Close()
 			<-terminate
@@ -106,10 +119,7 @@ webrtc_sessions_bytes_sent 0
 			defer wg.Done()
 			source2 := gortsplib.Client{TLSConfig: &tls.Config{InsecureSkipVerify: true}}
 			err := source2.StartRecording("rtsps://localhost:8322/rtsps_path",
-				&description.Session{Medias: []*description.Media{{
-					Type:    description.MediaTypeVideo,
-					Formats: []format.Format{testFormatH264},
-				}}})
+				&description.Session{Medias: []*description.Media{test.UniqueMediaH264()}})
 			require.NoError(t, err)
 			defer source2.Close()
 			<-terminate
@@ -127,7 +137,7 @@ webrtc_sessions_bytes_sent 0
 			conn, err := rtmp.NewClientConn(nconn, u, true)
 			require.NoError(t, err)
 
-			_, err = rtmp.NewWriter(conn, testFormatH264, nil)
+			_, err = rtmp.NewWriter(conn, test.FormatH264, nil)
 			require.NoError(t, err)
 			<-terminate
 		}()
@@ -144,7 +154,7 @@ webrtc_sessions_bytes_sent 0
 			conn, err := rtmp.NewClientConn(nconn, u, true)
 			require.NoError(t, err)
 
-			_, err = rtmp.NewWriter(conn, testFormatH264, nil)
+			_, err = rtmp.NewWriter(conn, test.FormatH264, nil)
 			require.NoError(t, err)
 			<-terminate
 		}()
@@ -158,9 +168,10 @@ webrtc_sessions_bytes_sent 0
 			s := &webrtc.WHIPClient{
 				HTTPClient: &http.Client{Transport: &http.Transport{}},
 				URL:        su,
+				Log:        test.NilLogger{},
 			}
 
-			tracks, err := s.Publish(context.Background(), testMediaH264.Formats[0], nil)
+			tracks, err := s.Publish(context.Background(), test.MediaH264.Formats[0], nil)
 			require.NoError(t, err)
 			defer checkClose(t, s.Close)
 
@@ -202,18 +213,9 @@ webrtc_sessions_bytes_sent 0
 			require.NoError(t, err)
 
 			err = w.WriteH26x(track, 0, 0, true, [][]byte{
-				{ // SPS
-					0x67, 0x42, 0xc0, 0x28, 0xd9, 0x00, 0x78, 0x02,
-					0x27, 0xe5, 0x84, 0x00, 0x00, 0x03, 0x00, 0x04,
-					0x00, 0x00, 0x03, 0x00, 0xf0, 0x3c, 0x60, 0xc9,
-					0x20,
-				},
-				{ // PPS
-					0x08, 0x06, 0x07, 0x08,
-				},
-				{ // IDR
-					0x05, 1,
-				},
+				test.FormatH264.SPS,
+				test.FormatH264.PPS,
+				{0x05, 1}, // IDR
 			})
 			require.NoError(t, err)
 
@@ -276,8 +278,57 @@ webrtc_sessions_bytes_sent 0
 				`rtmps_conns_bytes_received\{id=".*?",state="publish"\} [0-9]+`+"\n"+
 				`rtmps_conns_bytes_sent\{id=".*?",state="publish"\} [0-9]+`+"\n"+
 				`srt_conns\{id=".*?",state="publish"\} 1`+"\n"+
-				`srt_conns_bytes_received\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_sent\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_sent_unique\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_unique\{id=".*?",state="publish"\} 1`+"\n"+
+				`srt_conns_packets_send_loss\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_loss\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_retrans\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_retrans\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_sent_ack\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_ack\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_sent_nak\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_nak\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_sent_km\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_km\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_us_snd_duration\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_send_drop\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_drop\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_undecrypt\{id=".*?",state="publish"\} [0-9]+`+"\n"+
 				`srt_conns_bytes_sent\{id=".*?",state="publish"\} 0`+"\n"+
+				`srt_conns_bytes_received\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_sent_unique\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_received_unique\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_received_loss\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_retrans\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_received_retrans\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_send_drop\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_received_drop\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_received_undecrypt\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_us_packets_send_period\{id=".*?",state="publish"\} \d+\.\d+`+"\n"+
+				`srt_conns_packets_flow_window\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_flight_size\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_ms_rtt\{id=".*?",state="publish"\} \d+\.\d+`+"\n"+
+				`srt_conns_mbps_send_rate\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_mbps_receive_rate\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_mbps_link_capacity\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_avail_send_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_avail_receive_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_mbps_max_bw\{id=".*?",state="publish"\} -1`+"\n"+
+				`srt_conns_bytes_mss\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_send_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_send_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_ms_send_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_ms_send_tsb_pd_delay\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_receive_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_bytes_receive_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_ms_receive_buf\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_ms_receive_tsb_pd_delay\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_reorder_tolerance\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_avg_belated_time\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_send_loss_rate\{id=".*?",state="publish"\} [0-9]+`+"\n"+
+				`srt_conns_packets_received_loss_rate\{id=".*?",state="publish"\} [0-9]+`+"\n"+
 				`webrtc_sessions\{id=".*?",state="publish"\} 1`+"\n"+
 				`webrtc_sessions_bytes_received\{id=".*?",state="publish"\} [0-9]+`+"\n"+
 				`webrtc_sessions_bytes_sent\{id=".*?",state="publish"\} [0-9]+`+"\n"+
