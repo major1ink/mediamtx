@@ -14,7 +14,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
-var drives []interface{}
+// var drives []interface{}
 
 var free string
 
@@ -64,10 +64,12 @@ func (p *formatFMP4Part) close() error {
 		if p.s.f.a.stor.DbDrives {
 
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
-
+			p.s.f.a.agent.Log(logger.Debug, "data: %v", data)
 			if err != nil {
 				return err
 			}
+
+			drives := []interface{}{}
 			for _, line := range data {
 				drives = append(drives, line[0].(string))
 			}
@@ -79,6 +81,9 @@ func (p *formatFMP4Part) close() error {
 					return err
 				}
 				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
+				if err != nil {
+					return err
+				}
 				p.s.path = fmt.Sprintf(free+Path(p.s.startNTP).Encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
 			}
 

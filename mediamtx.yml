@@ -47,9 +47,9 @@ metrics: yes
 metricsAddress: 192.168.250.40:9998
 
 # Enable pprof-compatible endpoint to monitor performances.
-pprof: no
+pprof: yes
 # Address of the pprof listener.
-pprofAddress: 127.0.0.1:9999
+pprofAddress: 192.168.250.40:9999
 
 # Command to run when a client connects to the server.
 # This is terminated with SIGINT when a client disconnects from the server.
@@ -297,7 +297,7 @@ pathDefaults:
   # Maximum number of readers. Zero means no limit.
   maxReaders: 0
   # Maximum number of publishers. Zero means no limit.
-  maxPublishers: 3
+  maxPublishers: 5
   # SRT encryption passphrase require to read from this path
   srtReadPassphrase:
   # If the stream is not available, redirect readers to this path.
@@ -597,7 +597,7 @@ database:
   # Maximum number of connections
   maxConnections: 1
   # Enable/disable discs from the database for recording
-  dbDrives: no
+  dbDrives: yes
   # Enable/disable the code_mp_contract field to create a record path
   dbUseCodeMP: no
   #
@@ -605,9 +605,9 @@ database:
   # Enable/disable updating the status of a stream in the database
   useUpdaterStatus: yes
   # Enable/disable the server start with streams from the database
-  useSrise: no
+  useSrise: yes
   # Enable/disable the server start with proxy streams from the database
-  useProxy: yes
+  useProxy: no
   # SQL queryes 
   sql:
     # SQL query to insert video record

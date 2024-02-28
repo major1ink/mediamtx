@@ -81,10 +81,12 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 		if s.f.a.stor.DbDrives {
 
 			data, err := s.f.a.stor.Req.SelectData(s.f.a.stor.Sql.GetDrives)
+			s.f.a.agent.Log(logger.Debug, "data: %v", data)
 
 			if err != nil {
 				return 0, err
 			}
+			drives := []interface{}{}
 			for _, line := range data {
 				drives = append(drives, line[0].(string))
 			}
