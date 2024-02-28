@@ -47,9 +47,9 @@ metrics: yes
 metricsAddress: 192.168.250.40:9998
 
 # Enable pprof-compatible endpoint to monitor performances.
-pprof: no
+pprof: yes
 # Address of the pprof listener.
-pprofAddress: 127.0.0.1:9999
+pprofAddress: 192.168.250.40:9999
 
 # Command to run when a client connects to the server.
 # This is terminated with SIGINT when a client disconnects from the server.
@@ -76,9 +76,9 @@ apiAddress: 192.168.250.40:9997
 # Global settings -> Playback server
 
 # Enable downloading recordings from the playback server.
-playback: no
+playback: yes
 # Address of the playback server listener.
-playbackAddress: :9996
+playbackAddress: 192.168.250.40:9996
 
 ###############################################
 # Global settings -> RTSP server
@@ -297,7 +297,7 @@ pathDefaults:
   # Maximum number of readers. Zero means no limit.
   maxReaders: 0
   # Maximum number of publishers. Zero means no limit.
-  maxPublishers: 2
+  maxPublishers: 5
   # SRT encryption passphrase require to read from this path
   srtReadPassphrase:
   # If the stream is not available, redirect readers to this path.
@@ -317,7 +317,7 @@ pathDefaults:
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
-  recordPath: /%path/%Y-%m-%d/%path-%s-%f
+  recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -606,6 +606,8 @@ database:
   useUpdaterStatus: yes
   # Enable/disable the server start with streams from the database
   useSrise: yes
+  # Enable/disable the server start with proxy streams from the database
+  useProxy: no
   # SQL queryes 
   sql:
     # SQL query to insert video record
@@ -624,4 +626,6 @@ database:
     updateStatus: "UPDATE public.\"videocameras\" SET \"status_public\"='%d' WHERE \"code_mp\"='%s'"
     # request for a list of streams
     getData: "SELECT \"id\", (CASE WHEN \"login\" ISNULL THEN '' ELSE \"login\" END), (CASE WHEN \"pass\" ISNULL THEN '' ELSE \"pass\" END), \"ip_address_out\", (CASE WHEN \"cam_path\" ISNULL THEN '' ELSE \"cam_path\" END), \"code_mp\", (CASE WHEN \"state_public\" ISNULL THEN '0' ELSE \"state_public\" END),(CASE WHEN \"status_public\" ISNULL THEN '0' ELSE \"status_public\" END) FROM public.\"videocameras\" WHERE \"cam_path\" IS NOT null AND \"state_public\" = '1'"
+    # for l3
+    getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp JOIN \"DataDevice\" dd ON vp.\"Stream\" = dd.\"UID\" JOIN \"MountPlace\" mp ON dd.\"codeMP\" = mp.\"codeMP\" JOIN \"video_servers\" vs ON mp.\"id_video_servers\" = vs.\"id\" WHERE vp.\"StatePublic\" = '1'"
 

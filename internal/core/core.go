@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/netip"
 	"os"
@@ -39,6 +40,10 @@ import (
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/storage/psql"
 )
+
+type MaxPub struct {
+	Max int
+}
 
 var version = "v0.0.0"
 
@@ -354,7 +359,48 @@ func (p *Core) createResources(initial bool) error {
 			UseDbPathStream:  p.conf.Database.UseDbPathStream,
 			UseUpdaterStatus: p.conf.Database.UseUpdaterStatus,
 			UseSrise:         p.conf.Database.UseSrise,
+			UseProxy:         p.conf.Database.UseProxy,
 			Sql:              p.conf.Database.Sql,
+		}
+		if stor.UseProxy {
+			if stor.UseSrise {
+				return errors.New("sRise and proxy can't be used at the same time")
+			}
+			data, err := stor.Req.SelectData(stor.Sql.GetDataForProxy)
+			if err != nil {
+				return err
+			}
+			var result []prohys
+
+			for _, line := range data {
+				result = append(result, prohys{
+					Code_mp:        line[0].(string),
+					Ip_address_out: line[1].(string),
+				})
+			}
+
+			for _, i := range result {
+
+				var s conf.OptionalPath
+
+				postJson := []byte(fmt.Sprintf(`
+		{	
+			"name": "%s",
+			"source": "%s",
+			"sourceOnDemand": true
+		}`, i.Code_mp, fmt.Sprintf("rtsp://%v/%s", i.Ip_address_out, i.Code_mp)))
+				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
+				if err != nil {
+					return err
+				}
+				p.conf.AddPath(i.Code_mp, &s)
+				err = p.conf.Validate()
+				if err != nil {
+					return err
+				}
+
+			}
+
 		}
 
 		if stor.UseSrise {
@@ -437,6 +483,8 @@ func (p *Core) createResources(initial bool) error {
 			externalCmdPool:           p.externalCmdPool,
 			parent:                    p,
 			stor:                      stor,
+			Publisher:                 MaxPub{Max: len(p.conf.Paths) - 1},
+			max:                       p.conf.PathDefaults.MaxPublishers,
 		}
 		p.pathManager.initialize()
 
@@ -701,6 +749,8 @@ func (p *Core) createResources(initial bool) error {
 			WebRTCServer: p.webRTCServer,
 			SRTServer:    p.srtServer,
 			Parent:       p,
+			Publisher:    &p.pathManager.Publisher.Max,
+			Max:          p.conf.PathDefaults.MaxPublishers,
 		}
 		err := i.Initialize()
 		if err != nil {

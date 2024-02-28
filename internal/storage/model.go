@@ -13,5 +13,6 @@ type Storage struct {
 	UseDbPathStream  bool
 	UseUpdaterStatus bool
 	UseSrise         bool
+	UseProxy         bool
 	Sql              conf.Sql
 }

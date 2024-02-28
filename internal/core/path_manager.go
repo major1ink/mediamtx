@@ -82,11 +82,8 @@ type pathManager struct {
 	chAPIPathsGet  chan pathAPIPathsGetReq
 
 	stor      storage.Storage
-	publisher MaxPub
-}
-
-type MaxPub struct {
-	Max int
+	Publisher MaxPub
+	max       int
 }
 
 func (pm *pathManager) initialize() {
@@ -107,7 +104,6 @@ func (pm *pathManager) initialize() {
 	pm.chAddPublisher = make(chan defs.PathAddPublisherReq)
 	pm.chAPIPathsList = make(chan pathAPIPathsListReq)
 	pm.chAPIPathsGet = make(chan pathAPIPathsGetReq)
-	pm.publisher = MaxPub{Max: len(pm.pathConfs) - 1}
 
 	for pathConfName, pathConf := range pm.pathConfs {
 		if pathConf.Regexp == nil {
@@ -131,6 +127,11 @@ type bdTable struct {
 	State_public   int
 	Status_public  int
 	Contract       string
+}
+
+type prohys struct {
+	Ip_address_out string
+	Code_mp        string
 }
 
 func getTypeInt(item interface{}) int {
@@ -401,9 +402,9 @@ func (pm *pathManager) createPath(
 		externalCmdPool:   pm.externalCmdPool,
 		parent:            pm,
 		stor:              pm.stor,
-		publisher:         &pm.publisher,
+		publisher:         &pm.Publisher,
 	}
-	pa.initialize(pm.stor, &pm.publisher)
+	pa.initialize(pm.stor, &pm.Publisher)
 
 	pm.paths[name] = pa
 

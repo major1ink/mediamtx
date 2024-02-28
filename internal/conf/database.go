@@ -13,6 +13,7 @@ type Database struct {
 	UseDbPathStream  bool   `json:"useDbPathStream"`
 	UseUpdaterStatus bool   `json:"useUpdaterStatus"`
 	UseSrise         bool   `json:"useSrise"`
+	UseProxy         bool   `json:"useProxy"`
 	Sql              Sql    `json:"sql"`
 }
 
@@ -24,7 +25,7 @@ type Sql struct {
 	GetDrives       string `json:"getDrives"`
 	UpdateStatus    string `json:"updateStatus"`
 	GetData         string `json:"getData"`
-	GetDataContract string `json:"getDataContract"`
+	GetDataForProxy string `json:"getDataForProxy"`
 }
 
 func (db *Database) setDefaults() {
@@ -40,6 +41,8 @@ func (db *Database) setDefaults() {
 	db.DbUseCodeMP = false
 	db.UseDbPathStream = false
 	db.UseUpdaterStatus = false
+	db.UseSrise = false
+	db.UseProxy = false
 	db.Sql = Sql{
 		InsertPath:    "",
 		GetPathStream: "",
