@@ -169,8 +169,13 @@ type API struct {
 	SRTServer    SRTServer
 	Parent       apiParent
 
+
 	httpServer *httpp.WrappedServer
 	mutex      sync.RWMutex
+
+	Publisher *int
+	Max       int
+
 }
 
 // Initialize initializes API.
@@ -405,7 +410,15 @@ func (a *API) onConfigPathsGet(ctx *gin.Context) {
 }
 
 func (a *API) onConfigPathsAdd(ctx *gin.Context) { //nolint:dupl
+
+
+	if a.Max != 0 && *a.Publisher >= a.Max {
+		a.Parent.Log(logger.Info, "Maximum publisher count reached")
+		return
+	}
+	*a.Publisher++
 	confName, ok := paramName(ctx)
+
 	if !ok {
 		a.writeError(ctx, http.StatusBadRequest, fmt.Errorf("invalid name"))
 		return
