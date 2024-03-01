@@ -276,7 +276,7 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 
 		Parent:          &test.NilLogger{},
 
-		Parent:          &nilLogger{},
+		
 		RecordAudio:     true,
 
 	}

@@ -28,8 +28,9 @@ const (
 //go:embed index.html
 var hlsIndex []byte
 
+// go:embed hls.min.js
+//
 //nolint:typecheck
-//go:embed hls.min.js
 var hlsMinJS []byte
 
 type httpServer struct {

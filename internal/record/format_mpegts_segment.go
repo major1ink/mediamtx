@@ -76,7 +76,6 @@ func (s *formatMPEGTSSegment) close() error {
 func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 	if s.fi == nil {
 
-
 		var err error
 
 		if s.f.a.stor.DbDrives {
@@ -92,7 +91,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				drives = append(drives, line[0].(string))
 			}
 			s.f.a.free = getMostFreeDisk(drives)
-			if s.f.a.stor.DbUseCodeMP && s.f.a.stor.UseDbPathStream {
+			if s.f.a.stor.DbUseCodeMP_Contract && s.f.a.stor.UseDbPathStream {
 				s.f.a.codeMp, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetCodeMP, s.f.a.agent.StreamName))
 				if err != nil {
 					return 0, err
@@ -101,30 +100,29 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+Path(s.startNTP).Encode(s.f.a.pathFormat), s.f.a.codeMp, s.f.a.pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.codeMp, s.f.a.pathStream)
 			}
 
-			if s.f.a.stor.DbUseCodeMP {
+			if s.f.a.stor.DbUseCodeMP_Contract {
 				s.f.a.codeMp, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetCodeMP, s.f.a.agent.StreamName))
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+Path(s.startNTP).Encode(s.f.a.pathFormat), s.f.a.codeMp)
+				s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.codeMp)
 			}
 			if s.f.a.stor.UseDbPathStream {
 				s.f.a.pathStream, err = s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.stor.Sql.GetPathStream, s.f.a.agent.StreamName))
 				if err != nil {
 					return 0, err
 				}
-				s.path = fmt.Sprintf(s.f.a.free+Path(s.startNTP).Encode(s.f.a.pathFormat), s.f.a.pathStream)
+				s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.pathStream)
 			}
-			if !s.f.a.stor.DbUseCodeMP && !s.f.a.stor.UseDbPathStream {
-				s.path = fmt.Sprintf(s.f.a.free + Path(s.startNTP).Encode(s.f.a.pathFormat))
+			if !s.f.a.stor.DbUseCodeMP_Contract && !s.f.a.stor.UseDbPathStream {
+				s.path = fmt.Sprintf(s.f.a.free + Path{Start: s.startNTP}.Encode(s.f.a.pathFormat))
 			}
 		} else {
 			s.path = Path{Start: s.startNTP}.Encode(s.f.a.pathFormat)
 		}
-
 
 		s.f.a.agent.Log(logger.Debug, "creating segment %s", s.path)
 
@@ -145,7 +143,6 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				err := s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
 						s.f.a.stor.Sql.InsertPath,
-						"pathStream",
 						pathRec+"/",
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),
@@ -161,7 +158,6 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				err := s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
 						s.f.a.stor.Sql.InsertPath,
-						"stream",
 						pathRec+"/",
 						paths[len(paths)-1],
 						time.Now().Format("2006-01-02 15:04:05"),

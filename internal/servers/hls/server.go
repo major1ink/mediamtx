@@ -13,9 +13,6 @@ import (
 	"github.com/bluenviron/mediamtx/internal/logger"
 
 	"github.com/bluenviron/mediamtx/internal/stream"
-
-	"github.com/bluenviron/mediamtx/internal/storage"
-
 )
 
 // ErrMuxerNotFound is returned when a muxer is not found.
@@ -90,15 +87,14 @@ type Server struct {
 
 	// in
 
-  chPathReady    chan defs.Path
+	chPathReady    chan defs.Path
 	chPathNotReady chan defs.Path
 	chGetMuxer     chan serverGetMuxerReq
 	chCloseMuxer   chan *muxer
 	chAPIMuxerList chan serverAPIMuxersListReq
 	chAPIMuxerGet  chan serverAPIMuxersGetReq
 
-	stor storage.Storage
-
+	// stor storage.Storage
 }
 
 // Initialize initializes the server.

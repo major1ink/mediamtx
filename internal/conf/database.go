@@ -1,20 +1,21 @@
 package conf
 
 type Database struct {
-	Use              bool   `json:"use"`
-	DbAddress        string `json:"dbAddress"`
-	DbPort           int    `json:"dbPort"`
-	DbName           string `json:"dbName"`
-	DbUser           string `json:"dbUser"`
-	DbPassword       string `json:"dbPassword"`
-	MaxConnections   int    `json:"maxConnections"`
-	DbDrives         bool   `json:"dbDrives"`
-	DbUseCodeMP      bool   `json:"dbUseCodeMP"`
-	UseDbPathStream  bool   `json:"useDbPathStream"`
-	UseUpdaterStatus bool   `json:"useUpdaterStatus"`
-	UseSrise         bool   `json:"useSrise"`
-	UseProxy         bool   `json:"useProxy"`
-	Sql              Sql    `json:"sql"`
+	Use                  bool   `json:"use"`
+	DbAddress            string `json:"dbAddress"`
+	DbPort               int    `json:"dbPort"`
+	DbName               string `json:"dbName"`
+	DbUser               string `json:"dbUser"`
+	DbPassword           string `json:"dbPassword"`
+	MaxConnections       int    `json:"maxConnections"`
+	DbDrives             bool   `json:"dbDrives"`
+	DbUseCodeMP_Contract bool   `json:"dbUseCodeMP_Contract"`
+	DbUseContract        bool   `json:"dbUseContract"`
+	UseDbPathStream      bool   `json:"useDbPathStream"`
+	UseUpdaterStatus     bool   `json:"useUpdaterStatus"`
+	UseSrise             bool   `json:"useSrise"`
+	UseProxy             bool   `json:"useProxy"`
+	Sql                  Sql    `json:"sql"`
 }
 
 type Sql struct {
@@ -25,6 +26,7 @@ type Sql struct {
 	GetDrives       string `json:"getDrives"`
 	UpdateStatus    string `json:"updateStatus"`
 	GetData         string `json:"getData"`
+	GetDataContract string `json:"getDataContract"`
 	GetDataForProxy string `json:"getDataForProxy"`
 }
 
@@ -38,7 +40,7 @@ func (db *Database) setDefaults() {
 	db.DbPassword = ""
 	db.MaxConnections = 0
 	db.DbDrives = false
-	db.DbUseCodeMP = false
+	db.DbUseCodeMP_Contract = false
 	db.UseDbPathStream = false
 	db.UseUpdaterStatus = false
 	db.UseSrise = false

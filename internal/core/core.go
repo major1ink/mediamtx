@@ -45,7 +45,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v0.0.0"
+var version = "v1.5.1-2"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -352,15 +352,16 @@ func (p *Core) createResources(initial bool) error {
 	if p.pathManager == nil {
 		req := psql.NewReq(p.ctx, p.dbPool)
 		stor := storage.Storage{
-			Use:              p.conf.Database.Use,
-			Req:              req,
-			DbDrives:         p.conf.Database.DbDrives,
-			DbUseCodeMP:      p.conf.Database.DbUseCodeMP,
-			UseDbPathStream:  p.conf.Database.UseDbPathStream,
-			UseUpdaterStatus: p.conf.Database.UseUpdaterStatus,
-			UseSrise:         p.conf.Database.UseSrise,
-			UseProxy:         p.conf.Database.UseProxy,
-			Sql:              p.conf.Database.Sql,
+			Use:                  p.conf.Database.Use,
+			Req:                  req,
+			DbDrives:             p.conf.Database.DbDrives,
+			DbUseCodeMP_Contract: p.conf.Database.DbUseCodeMP_Contract,
+			DbUseContract:        p.conf.Database.DbUseContract,
+			UseDbPathStream:      p.conf.Database.UseDbPathStream,
+			UseUpdaterStatus:     p.conf.Database.UseUpdaterStatus,
+			UseSrise:             p.conf.Database.UseSrise,
+			UseProxy:             p.conf.Database.UseProxy,
+			Sql:                  p.conf.Database.Sql,
 		}
 		if stor.UseProxy {
 			if stor.UseSrise {
@@ -404,53 +405,108 @@ func (p *Core) createResources(initial bool) error {
 		}
 
 		if stor.UseSrise {
-			data, err := stor.Req.SelectData(stor.Sql.GetData)
-			if err != nil {
-				return err
-			}
-			var result []bdTable
-
-			for _, line := range data {
-				result = append(result, bdTable{
-					Id:             getTypeInt(line[0]),
-					Login:          line[1].(string),
-					Pass:           line[2].(string),
-					Ip_address_out: line[3].(netip.Prefix),
-					Cam_path:       line[4].(string),
-					Code_mp:        line[5].(string),
-					State_public:   getTypeInt(line[6]),
-					Status_public:  getTypeInt(line[7]),
-				})
-			}
-			for _, i := range result {
-
-				var s conf.OptionalPath
-
-				postJson := []byte(fmt.Sprintf(`
-				{	
-					"name": "%s",
-					"source": "%s",
-					"sourceProtocol": "tcp",
-					"sourceOnDemandCloseAfter": "10s",
-					"sourceOnDemandStartTimeout": "10s",
-					"readPass": "",
-					"readUser": "",
-					"runOnDemandCloseAfter": "10s",
-					"runOnDemandStartTimeout": "10s",
-					"runOnReadyRestart": true,
-					"runOnReady": "",
-					"runOnReadRestart": false
-				}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path)))
-				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
+			if stor.DbUseContract {
+				data, err := stor.Req.SelectData(stor.Sql.GetDataContract)
 				if err != nil {
 					return err
 				}
-				p.conf.AddPath(i.Code_mp, &s)
+				var result []bdTable
+
+				for _, line := range data {
+					result = append(result, bdTable{
+						Id:             getTypeInt(line[0]),
+						Login:          line[1].(string),
+						Pass:           line[2].(string),
+						Ip_address_out: line[3].(netip.Prefix),
+						Cam_path:       line[4].(string),
+						Code_mp:        line[5].(string),
+						State_public:   getTypeInt(line[6]),
+						Status_public:  getTypeInt(line[7]),
+						Contract:       line[8].(string),
+						Record:         getTypeBool(line[9]),
+					})
+				}
+				for _, i := range result {
+
+					var s conf.OptionalPath
+
+					postJson := []byte(fmt.Sprintf(`
+					{	
+						"name": "%s",
+						"source": "%s",
+						"record": %t,
+						"sourceProtocol": "tcp",
+						"sourceOnDemandCloseAfter": "10s",
+						"sourceOnDemandStartTimeout": "10s",
+						"readPass": "",
+						"readUser": "",
+						"runOnDemandCloseAfter": "10s",
+						"runOnDemandStartTimeout": "10s",
+						"runOnReadyRestart": true,
+						"runOnReady": "",
+						"runOnReadRestart": false
+					}`, fmt.Sprintf("%s/%s", i.Contract, i.Code_mp), fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path), i.Record))
+					err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
+					if err != nil {
+						return err
+					}
+					stream := i.Contract + "/" + i.Code_mp
+					p.conf.AddPath(stream, &s)
+				}
 				err = p.conf.Validate()
 				if err != nil {
 					return err
 				}
+			} else {
+				data, err := stor.Req.SelectData(stor.Sql.GetData)
+				if err != nil {
+					return err
+				}
+				var result []bdTable
 
+				for _, line := range data {
+					result = append(result, bdTable{
+						Id:             getTypeInt(line[0]),
+						Login:          line[1].(string),
+						Pass:           line[2].(string),
+						Ip_address_out: line[3].(netip.Prefix),
+						Cam_path:       line[4].(string),
+						Code_mp:        line[5].(string),
+						State_public:   getTypeInt(line[6]),
+						Status_public:  getTypeInt(line[7]),
+						Record:         getTypeBool(line[8]),
+					})
+				}
+				for _, i := range result {
+
+					var s conf.OptionalPath
+
+					postJson := []byte(fmt.Sprintf(`
+					{	
+						"name": "%s",
+						"source": "%s",
+						"record": %t,
+						"sourceProtocol": "tcp",
+						"sourceOnDemandCloseAfter": "10s",
+						"sourceOnDemandStartTimeout": "10s",
+						"readPass": "",
+						"readUser": "",
+						"runOnDemandCloseAfter": "10s",
+						"runOnDemandStartTimeout": "10s",
+						"runOnReadyRestart": true,
+						"runOnReady": "",
+						"runOnReadRestart": false
+					}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path), i.Record))
+					err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
+					if err != nil {
+						return err
+					}
+					p.conf.AddPath(i.Code_mp, &s)
+				}
+				err = p.conf.Validate()
+				if err != nil {
+					return err
+				}
 			}
 
 		}

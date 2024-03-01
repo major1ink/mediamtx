@@ -16,7 +16,6 @@ import (
 	"github.com/bluenviron/mediamtx/internal/stream"
 
 	"github.com/bluenviron/mediamtx/internal/storage"
-
 )
 
 func pathConfCanBeUpdated(oldPathConf *conf.Path, newPathConf *conf.Path) bool {
@@ -132,6 +131,7 @@ type bdTable struct {
 	State_public   int
 	Status_public  int
 	Contract       string
+	Record         bool
 }
 
 type prohys struct {
@@ -156,6 +156,12 @@ func getTypeInt(item interface{}) int {
 	}
 
 	return int(item.(int64))
+}
+
+func getTypeBool(item interface{}) bool {
+
+	s := getTypeInt(item)
+	return s == 1
 }
 
 func (pm *pathManager) close() {

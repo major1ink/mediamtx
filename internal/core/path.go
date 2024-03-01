@@ -964,14 +964,14 @@ func (pa *path) RemovePublisher(req defs.PathRemovePublisherReq) {
 func (pa *path) StartPublisher(req defs.PathStartPublisherReq) (*stream.Stream, error) {
 	req.Res = make(chan defs.PathStartPublisherRes)
 	if pa.conf.MaxPublishers != 0 && pa.publisher.Max >= pa.conf.MaxPublishers {
-		return defs.PathStartPublisherRes{Err: fmt.Errorf("maximum publisher count reached")}
+		return nil, fmt.Errorf("maximum publisher count reached")
 	}
 
 	select {
 	case pa.chStartPublisher <- req:
 
 		res := <-req.Res
-    pa.publisher.Max++
+		pa.publisher.Max++
 		return res.Stream, res.Err
 
 	case <-pa.ctx.Done():
