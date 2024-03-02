@@ -19,11 +19,6 @@ const (
 	webrtcStreamID           = "mediamtx"
 )
 
-type nilLogger struct{}
-
-func (nilLogger) Log(_ logger.Level, _ string, _ ...interface{}) {
-}
-
 type trackRecvPair struct {
 	track    *webrtc.TrackRemote
 	receiver *webrtc.RTPReceiver
@@ -48,10 +43,6 @@ type PeerConnection struct {
 
 // Start starts the peer connection.
 func (co *PeerConnection) Start() error {
-	if co.Log == nil {
-		co.Log = &nilLogger{}
-	}
-
 	configuration := webrtc.Configuration{
 		ICEServers: co.ICEServers,
 	}
@@ -236,7 +227,7 @@ outer:
 // GatherIncomingTracks gathers incoming tracks.
 func (co *PeerConnection) GatherIncomingTracks(
 	ctx context.Context,
-	count int,
+	maxCount int,
 ) ([]*IncomingTrack, error) {
 	var tracks []*IncomingTrack
 
@@ -246,7 +237,7 @@ func (co *PeerConnection) GatherIncomingTracks(
 	for {
 		select {
 		case <-t.C:
-			if count == 0 {
+			if maxCount == 0 && len(tracks) != 0 {
 				return tracks, nil
 			}
 			return nil, fmt.Errorf("deadline exceeded while waiting tracks")
@@ -258,7 +249,7 @@ func (co *PeerConnection) GatherIncomingTracks(
 			}
 			tracks = append(tracks, track)
 
-			if len(tracks) == count || len(tracks) >= 2 {
+			if len(tracks) == maxCount || len(tracks) >= 2 {
 				return tracks, nil
 			}
 

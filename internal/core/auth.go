@@ -104,12 +104,12 @@ func doAuthentication(
 		}
 	}
 
-	if !pathUser.IsEmpty() {
-		if accessRequest.RTSPRequest != nil && rtspAuth.Method == headers.AuthDigest {
+	if pathUser != "" {
+		if accessRequest.RTSPRequest != nil && rtspAuth.Method == headers.AuthDigestMD5 {
 			err := auth.Validate(
 				accessRequest.RTSPRequest,
-				pathUser.GetValue(),
-				pathPass.GetValue(),
+				string(pathUser),
+				string(pathPass),
 				accessRequest.RTSPBaseURL,
 				rtspAuthMethods,
 				"IPCAM",

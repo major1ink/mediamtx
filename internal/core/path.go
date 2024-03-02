@@ -22,7 +22,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
-func newEmptyTimer() *time.Timer {
+func emptyTimer() *time.Timer {
 	t := time.NewTimer(0)
 	<-t.C
 	return t
@@ -128,10 +128,10 @@ func (pa *path) initialize(stor storage.Storage,
 	pa.ctx = ctx
 	pa.ctxCancel = ctxCancel
 	pa.readers = make(map[defs.Reader]struct{})
-	pa.onDemandStaticSourceReadyTimer = newEmptyTimer()
-	pa.onDemandStaticSourceCloseTimer = newEmptyTimer()
-	pa.onDemandPublisherReadyTimer = newEmptyTimer()
-	pa.onDemandPublisherCloseTimer = newEmptyTimer()
+	pa.onDemandStaticSourceReadyTimer = emptyTimer()
+	pa.onDemandStaticSourceCloseTimer = emptyTimer()
+	pa.onDemandPublisherReadyTimer = emptyTimer()
+	pa.onDemandPublisherCloseTimer = emptyTimer()
 	pa.chReloadConf = make(chan *conf.Path)
 	pa.chStaticSourceSetReady = make(chan defs.PathSourceStaticSetReadyReq)
 	pa.chStaticSourceSetNotReady = make(chan defs.PathSourceStaticSetNotReadyReq)
@@ -403,7 +403,7 @@ func (pa *path) doSourceStaticSetReady(req defs.PathSourceStaticSetReadyReq) {
 
 	if pa.conf.HasOnDemandStaticSource() {
 		pa.onDemandStaticSourceReadyTimer.Stop()
-		pa.onDemandStaticSourceReadyTimer = newEmptyTimer()
+		pa.onDemandStaticSourceReadyTimer = emptyTimer()
 		pa.onDemandStaticSourceScheduleClose()
 	}
 
@@ -525,7 +525,7 @@ func (pa *path) doStartPublisher(req defs.PathStartPublisherReq) {
 
 	if pa.conf.HasOnDemandPublisher() && pa.onDemandPublisherState != pathOnDemandStateInitial {
 		pa.onDemandPublisherReadyTimer.Stop()
-		pa.onDemandPublisherReadyTimer = newEmptyTimer()
+		pa.onDemandPublisherReadyTimer = emptyTimer()
 		pa.onDemandPublisherScheduleClose()
 	}
 
@@ -684,7 +684,7 @@ func (pa *path) onDemandStaticSourceScheduleClose() {
 func (pa *path) onDemandStaticSourceStop(reason string) {
 	if pa.onDemandStaticSourceState == pathOnDemandStateClosing {
 		pa.onDemandStaticSourceCloseTimer.Stop()
-		pa.onDemandStaticSourceCloseTimer = newEmptyTimer()
+		pa.onDemandStaticSourceCloseTimer = emptyTimer()
 	}
 
 	pa.onDemandStaticSourceState = pathOnDemandStateInitial
@@ -717,7 +717,7 @@ func (pa *path) onDemandPublisherScheduleClose() {
 func (pa *path) onDemandPublisherStop(reason string) {
 	if pa.onDemandPublisherState == pathOnDemandStateClosing {
 		pa.onDemandPublisherCloseTimer.Stop()
-		pa.onDemandPublisherCloseTimer = newEmptyTimer()
+		pa.onDemandPublisherCloseTimer = emptyTimer()
 	}
 
 	pa.onUnDemandHook(reason)
@@ -869,13 +869,13 @@ func (pa *path) addReaderPost(req defs.PathAddReaderReq) {
 		if pa.onDemandStaticSourceState == pathOnDemandStateClosing {
 			pa.onDemandStaticSourceState = pathOnDemandStateReady
 			pa.onDemandStaticSourceCloseTimer.Stop()
-			pa.onDemandStaticSourceCloseTimer = newEmptyTimer()
+			pa.onDemandStaticSourceCloseTimer = emptyTimer()
 		}
 	} else if pa.conf.HasOnDemandPublisher() {
 		if pa.onDemandPublisherState == pathOnDemandStateClosing {
 			pa.onDemandPublisherState = pathOnDemandStateReady
 			pa.onDemandPublisherCloseTimer.Stop()
-			pa.onDemandPublisherCloseTimer = newEmptyTimer()
+			pa.onDemandPublisherCloseTimer = emptyTimer()
 		}
 	}
 
@@ -940,12 +940,13 @@ func (pa *path) describe(req defs.PathDescribeReq) defs.PathDescribeRes {
 }
 
 // addPublisher is called by a publisher through pathManager.
-func (pa *path) addPublisher(req defs.PathAddPublisherReq) defs.PathAddPublisherRes {
+func (pa *path) addPublisher(req defs.PathAddPublisherReq) (defs.Path, error) {
 	select {
 	case pa.chAddPublisher <- req:
-		return <-req.Res
+		res := <-req.Res
+		return res.Path, res.Err
 	case <-pa.ctx.Done():
-		return defs.PathAddPublisherRes{Err: fmt.Errorf("terminated")}
+		return nil, fmt.Errorf("terminated")
 	}
 }
 
@@ -960,18 +961,21 @@ func (pa *path) RemovePublisher(req defs.PathRemovePublisherReq) {
 }
 
 // StartPublisher is called by a publisher.
-func (pa *path) StartPublisher(req defs.PathStartPublisherReq) defs.PathStartPublisherRes {
+func (pa *path) StartPublisher(req defs.PathStartPublisherReq) (*stream.Stream, error) {
 	req.Res = make(chan defs.PathStartPublisherRes)
 	if pa.conf.MaxPublishers != 0 && pa.publisher.Max >= pa.conf.MaxPublishers {
-		return defs.PathStartPublisherRes{Err: fmt.Errorf("maximum publisher count reached")}
+		return nil, fmt.Errorf("maximum publisher count reached")
 	}
 
 	select {
 	case pa.chStartPublisher <- req:
+
+		res := <-req.Res
 		pa.publisher.Max++
-		return <-req.Res
+		return res.Stream, res.Err
+
 	case <-pa.ctx.Done():
-		return defs.PathStartPublisherRes{Err: fmt.Errorf("terminated")}
+		return nil, fmt.Errorf("terminated")
 	}
 }
 
@@ -986,12 +990,13 @@ func (pa *path) StopPublisher(req defs.PathStopPublisherReq) {
 }
 
 // addReader is called by a reader through pathManager.
-func (pa *path) addReader(req defs.PathAddReaderReq) defs.PathAddReaderRes {
+func (pa *path) addReader(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
 	select {
 	case pa.chAddReader <- req:
-		return <-req.Res
+		res := <-req.Res
+		return res.Path, res.Stream, res.Err
 	case <-pa.ctx.Done():
-		return defs.PathAddReaderRes{Err: fmt.Errorf("terminated")}
+		return nil, nil, fmt.Errorf("terminated")
 	}
 }
 
