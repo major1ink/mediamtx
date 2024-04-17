@@ -36,6 +36,8 @@ type agentInstance struct {
 	free        string
 	pathStream  string
 	codeMp      string
+	endTime     string
+	timeStart   string
 }
 
 func (a *agentInstance) initialize() {

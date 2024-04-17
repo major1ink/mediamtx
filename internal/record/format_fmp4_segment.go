@@ -48,7 +48,7 @@ func (s *formatFMP4Segment) initialize() {
 
 func (s *formatFMP4Segment) close() error {
 	var err error
-
+	s.f.a.endTime = time.Now().Format("2006-01-02 15:04:05")
 	if s.curPart != nil {
 		err = s.curPart.close()
 	}
@@ -71,7 +71,7 @@ func (s *formatFMP4Segment) close() error {
 						fmt.Sprintf(
 							s.f.a.stor.Sql.UpdateSize,
 							fmt.Sprint(stat.Size()),
-							time.Now().Format("2006-01-02 15:04:05"),
+							s.f.a.endTime,
 							paths[len(paths)-1]),
 					)
 					if err4 != nil {
@@ -80,7 +80,7 @@ func (s *formatFMP4Segment) close() error {
 								fmt.Sprintf(
 									s.f.a.stor.Sql.UpdateSize,
 									fmt.Sprint(stat.Size()),
-									time.Now().Format("2006-01-02 15:04:05"),
+									s.f.a.endTime,
 									paths[len(paths)-1],
 								))
 						}
