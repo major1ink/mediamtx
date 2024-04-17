@@ -26,7 +26,7 @@ func (s *formatMPEGTSSegment) initialize() {
 }
 
 func (s *formatMPEGTSSegment) close() error {
-
+	s.f.a.endTime = time.Now().Format("2006-01-02 15:04:05")
 	err := s.f.bw.Flush()
 
 	if s.fi != nil {
@@ -48,7 +48,7 @@ func (s *formatMPEGTSSegment) close() error {
 						fmt.Sprintf(
 							s.f.a.stor.Sql.UpdateSize,
 							fmt.Sprint(stat.Size()),
-							time.Now().Format("2006-01-02 15:04:05"),
+							s.f.a.endTime,
 							paths[len(paths)-1],
 						))
 					if err4 != nil {
@@ -57,7 +57,7 @@ func (s *formatMPEGTSSegment) close() error {
 								fmt.Sprintf(
 									s.f.a.stor.Sql.UpdateSize,
 									fmt.Sprint(stat.Size()),
-									time.Now().Format("2006-01-02 15:04:05"),
+									s.f.a.endTime,
 									paths[len(paths)-1],
 								))
 						}
@@ -126,6 +126,8 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 
 		s.f.a.agent.Log(logger.Debug, "creating segment %s", s.path)
 
+		s.f.a.timeStart = s.startNTP.Format("2006-01-02 15:04:05")
+
 		err = os.MkdirAll(filepath.Dir(s.path), 0o755)
 		if err != nil {
 			return 0, err
@@ -140,12 +142,13 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 			paths := strings.Split(s.path, "/")
 			pathRec := strings.Join(paths[:len(paths)-1], "/")
 			if s.f.a.stor.UseDbPathStream {
+
 				err := s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
 						s.f.a.stor.Sql.InsertPath,
 						pathRec+"/",
 						paths[len(paths)-1],
-						time.Now().Format("2006-01-02 15:04:05"),
+						s.f.a.timeStart,
 						s.f.a.pathStream,
 						s.f.a.free,
 					),
@@ -160,7 +163,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 						s.f.a.stor.Sql.InsertPath,
 						pathRec+"/",
 						paths[len(paths)-1],
-						time.Now().Format("2006-01-02 15:04:05"),
+						s.f.a.timeStart,
 						s.f.a.agent.PathName,
 						s.f.a.free,
 					),

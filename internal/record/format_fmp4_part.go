@@ -117,7 +117,7 @@ func (p *formatFMP4Part) close() error {
 		if err != nil {
 			return err
 		}
-
+		p.s.f.a.timeStart = p.s.startNTP.Format("2006-01-02 15:04:05")
 		if p.s.f.a.stor.Use {
 			paths := strings.Split(p.s.path, "/")
 			pathRec := strings.Join(paths[:len(paths)-1], "/")
@@ -127,7 +127,7 @@ func (p *formatFMP4Part) close() error {
 						p.s.f.a.stor.Sql.InsertPath,
 						pathRec+"/",
 						paths[len(paths)-1],
-						time.Now().Format("2006-01-02 15:04:05"),
+						p.s.f.a.timeStart,
 						p.s.f.a.pathStream,
 						p.s.f.a.free,
 					),
@@ -142,7 +142,7 @@ func (p *formatFMP4Part) close() error {
 						p.s.f.a.stor.Sql.InsertPath,
 						pathRec+"/",
 						paths[len(paths)-1],
-						time.Now().Format("2006-01-02 15:04:05"),
+						p.s.f.a.timeStart,
 						p.s.f.a.agent.PathName,
 						p.s.f.a.free,
 					),

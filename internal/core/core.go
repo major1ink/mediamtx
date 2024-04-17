@@ -45,7 +45,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.5.1-2"
+var version = "v1.5.1-7"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -388,8 +388,8 @@ func (p *Core) createResources(initial bool) error {
 		{	
 			"name": "%s",
 			"source": "%s",
-			"sourceOnDemand": true
-		}`, i.Code_mp, fmt.Sprintf("rtsp://%v/%s", i.Ip_address_out, i.Code_mp)))
+			"sourceOnDemand": true,
+		}`, i.Code_mp, fmt.Sprintf("rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@%v/%s", i.Ip_address_out, i.Code_mp)))
 				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
 				if err != nil {
 					return err
