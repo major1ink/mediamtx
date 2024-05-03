@@ -58,13 +58,12 @@ func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
 
 		if p.s.f.a.stor.DbDrives {
-
+			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", p.s.f.a.stor.Sql.GetDrives))
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
-			p.s.f.a.agent.Log(logger.Debug, "data: %v", data)
 			if err != nil {
 				return err
 			}
-
+			p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
 			drives := []interface{}{}
 			for _, line := range data {
 				drives = append(drives, line[0].(string))
@@ -72,30 +71,38 @@ func (p *formatFMP4Part) close() error {
 			p.s.f.a.free = getMostFreeDisk(drives)
 
 			if p.s.f.a.stor.DbUseCodeMP_Contract && p.s.f.a.stor.UseDbPathStream {
+				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName)))
 				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
 				if err != nil {
 					return err
 				}
+				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.codeMp )
+				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName)))
 				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
 				if err != nil {
 					return err
 				}
+				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.pathStream )
 				p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
 			}
 
 			if p.s.f.a.stor.UseDbPathStream {
+				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName)))
 				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
 				if err != nil {
 					return err
 				}
+				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.pathStream )
 				p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
 			}
 
 			if p.s.f.a.stor.DbUseCodeMP_Contract {
+				p.s.f.a.agent.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName)))
 				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
 				if err != nil {
 					return err
 				}
+				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.codeMp )
 				p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.codeMp)
 			}
 
@@ -105,7 +112,7 @@ func (p *formatFMP4Part) close() error {
 		} else {
 			p.s.path = Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat)
 		}
-
+		
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 
 		err := os.MkdirAll(filepath.Dir(p.s.path), 0o755)
@@ -122,6 +129,15 @@ func (p *formatFMP4Part) close() error {
 			paths := strings.Split(p.s.path, "/")
 			pathRec := strings.Join(paths[:len(paths)-1], "/")
 			if p.s.f.a.stor.UseDbPathStream {
+				
+				p.s.f.a.agent.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(
+					p.s.f.a.stor.Sql.InsertPath,
+					pathRec+"/",
+					paths[len(paths)-1],
+					p.s.f.a.timeStart,
+					p.s.f.a.pathStream,
+					p.s.f.a.free,
+				)))
 				err := p.s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
 						p.s.f.a.stor.Sql.InsertPath,
@@ -136,7 +152,16 @@ func (p *formatFMP4Part) close() error {
 					os.Remove(p.s.path)
 					return err
 				}
+				p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 			} else {
+				p.s.f.a.agent.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(
+					p.s.f.a.stor.Sql.InsertPath,
+					pathRec+"/",
+					paths[len(paths)-1],
+					p.s.f.a.timeStart,
+					p.s.f.a.agent.PathName,
+					p.s.f.a.free,
+				)))
 				err := p.s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
 						p.s.f.a.stor.Sql.InsertPath,
@@ -151,6 +176,7 @@ func (p *formatFMP4Part) close() error {
 					os.Remove(p.s.path)
 					return err
 				}
+				p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 			}
 
 		}

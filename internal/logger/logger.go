@@ -12,10 +12,9 @@ import (
 
 // Logger is a log handler.
 type Logger struct {
-	level Level
-
-	destinations []destination
-	mutex        sync.Mutex
+	level                  Level
+	destinations           []destination
+	mutex                  sync.Mutex
 }
 
 // New allocates a log handler.
