@@ -12,8 +12,8 @@ logLevel: debug
 logDestinations: [file]
 # If "file" is in logDestinations, this is the file which will receive the logs.
 logFile: mediamtx.log
-
-logDirStreams: ./LogStream
+logStreams: no
+logDirStreams: ./
 # Timeout of read operations.
 readTimeout: 10s
 # Timeout of write operations.

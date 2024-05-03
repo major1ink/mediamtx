@@ -55,6 +55,7 @@ type pathManager struct {
 	logLevel                  conf.LogLevel
 	logDestinations           []logger.Destination
 	logFile                   string
+	logStreams                bool
 	logDirStreams              string
 	externalAuthenticationURL string
 	rtspAddress               string
@@ -399,10 +400,8 @@ func (pm *pathManager) createPath(
 	name string,
 	matches []string,
 ) {
-	logg, err := logger.NewLoggerStream(logger.Level(pm.logLevel), pm.logDestinations, pm.logFile, name,pm.logDirStreams)
-	if err != nil {
-		pm.Log(logger.Error, "%s", err)
-	}
+
+
 	pa := &path{
 		parentCtx:         pm.ctx,
 		logLevel:          pm.logLevel,
@@ -420,7 +419,15 @@ func (pm *pathManager) createPath(
 		parent:            pm,
 		stor:              pm.stor,
 		publisher:         &pm.Publisher,
-		loggerPath:        logg,
+		logStreams:        pm.logStreams,
+		
+	}
+	if pm.logStreams{
+		logg, err := logger.NewLoggerStream(logger.Level(pm.logLevel), pm.logDestinations, pm.logFile, name,pm.logDirStreams)
+		if err != nil {
+			pm.Log(logger.Error, "%s", err)
+		}
+		pa.loggerPath = logg
 	}
 	pa.initialize(pm.stor, &pm.Publisher)
 

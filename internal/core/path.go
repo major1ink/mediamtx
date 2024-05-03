@@ -80,6 +80,7 @@ type path struct {
 	externalCmdPool   *externalcmd.Pool
 	parent            pathParent
 	loggerPath        *logger.Logger
+	logStreams        bool
 
 	ctx            context.Context
 	ctxCancel      func()
@@ -125,7 +126,7 @@ type path struct {
 func (pa *path) initialize(stor storage.Storage,
 	publisher *MaxPub) {
 	ctx, ctxCancel := context.WithCancel(pa.parentCtx)
-	
+
 	pa.ctx = ctx
 	pa.ctxCancel = ctxCancel
 	pa.readers = make(map[defs.Reader]struct{})
@@ -157,9 +158,11 @@ func (pa *path) initialize(stor storage.Storage,
 func (pa *path) close() {
 	pa.publisher.Max--
 	pa.ctxCancel()
-	pa.Log (logger.Debug, "closed")
-	pa.loggerPath.Close()
-	
+	pa.Log(logger.Debug, "closed")
+	if pa.logStreams{
+		pa.loggerPath.Close()
+	}
+
 }
 
 func (pa *path) wait() {
@@ -168,7 +171,12 @@ func (pa *path) wait() {
 
 // Log implements logger.Writer.
 func (pa *path) Log(level logger.Level, format string, args ...interface{}) {
-	pa.loggerPath.Log(level, "[path "+pa.name+"] "+format, args...)
+	if pa.logStreams {
+		pa.loggerPath.Log(level, "[path "+pa.name+"] "+format, args...)	
+	} else {
+		pa.parent.Log(level, "[path "+pa.name+"] "+format, args...)
+	}
+	
 }
 
 func (pa *path) Name() string {

@@ -536,6 +536,7 @@ func (p *Core) createResources(initial bool) error {
 			logLevel:                  p.conf.LogLevel,
 			logDestinations:           p.conf.LogDestinations,
 			logFile:                   p.conf.LogFile,
+			logStreams:                p.conf.LogStreams,
 			logDirStreams:              p.conf.LogDirStreams,
 			externalAuthenticationURL: p.conf.ExternalAuthenticationURL,
 			rtspAddress:               p.conf.RTSPAddress,
