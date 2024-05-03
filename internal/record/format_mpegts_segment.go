@@ -197,7 +197,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 					paths[len(paths)-1],
 					s.f.a.timeStart,
 					s.f.a.agent.PathName,
-					// s.f.a.free,
+					s.f.a.free,
 				)))
 				err := s.f.a.stor.Req.ExecQuery(
 					fmt.Sprintf(
@@ -206,7 +206,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 						paths[len(paths)-1],
 						s.f.a.timeStart,
 						s.f.a.agent.PathName,
-						// s.f.a.free,
+						s.f.a.free,
 					),
 				)
 				if err != nil {
