@@ -26,6 +26,7 @@ type serverGetMuxerRes struct {
 type serverGetMuxerReq struct {
 	path           string
 	remoteAddr     string
+	query          string
 	sourceOnDemand bool
 	res            chan serverGetMuxerRes
 }
@@ -60,24 +61,23 @@ type serverParent interface {
 
 // Server is a HLS server.
 type Server struct {
-	Address                   string
-	Encryption                bool
-	ServerKey                 string
-	ServerCert                string
-	ExternalAuthenticationURL string
-	AlwaysRemux               bool
-	Variant                   conf.HLSVariant
-	SegmentCount              int
-	SegmentDuration           conf.StringDuration
-	PartDuration              conf.StringDuration
-	SegmentMaxSize            conf.StringSize
-	AllowOrigin               string
-	TrustedProxies            conf.IPsOrCIDRs
-	Directory                 string
-	ReadTimeout               conf.StringDuration
-	WriteQueueSize            int
-	PathManager               serverPathManager
-	Parent                    serverParent
+	Address         string
+	Encryption      bool
+	ServerKey       string
+	ServerCert      string
+	AllowOrigin     string
+	TrustedProxies  conf.IPNetworks
+	AlwaysRemux     bool
+	Variant         conf.HLSVariant
+	SegmentCount    int
+	SegmentDuration conf.StringDuration
+	PartDuration    conf.StringDuration
+	SegmentMaxSize  conf.StringSize
+	Directory       string
+	ReadTimeout     conf.StringDuration
+	WriteQueueSize  int
+	PathManager     serverPathManager
+	Parent          serverParent
 
 	ctx        context.Context
 	ctxCancel  func()
@@ -158,7 +158,7 @@ outer:
 		case pa := <-s.chPathReady:
 			if s.AlwaysRemux && !pa.SafeConf().SourceOnDemand {
 				if _, ok := s.muxers[pa.Name()]; !ok {
-					s.createMuxer(pa.Name(), "")
+					s.createMuxer(pa.Name(), "", "")
 				}
 			}
 
@@ -177,7 +177,7 @@ outer:
 			case s.AlwaysRemux && !req.sourceOnDemand:
 				req.res <- serverGetMuxerRes{err: fmt.Errorf("muxer is waiting to be created")}
 			default:
-				req.res <- serverGetMuxerRes{muxer: s.createMuxer(req.path, req.remoteAddr)}
+				req.res <- serverGetMuxerRes{muxer: s.createMuxer(req.path, req.remoteAddr, req.query)}
 			}
 
 		case c := <-s.chCloseMuxer:
@@ -221,22 +221,22 @@ outer:
 	s.httpServer.close()
 }
 
-func (s *Server) createMuxer(pathName string, remoteAddr string) *muxer {
+func (s *Server) createMuxer(pathName string, remoteAddr string, query string) *muxer {
 	r := &muxer{
-		parentCtx:                 s.ctx,
-		remoteAddr:                remoteAddr,
-		externalAuthenticationURL: s.ExternalAuthenticationURL,
-		variant:                   s.Variant,
-		segmentCount:              s.SegmentCount,
-		segmentDuration:           s.SegmentDuration,
-		partDuration:              s.PartDuration,
-		segmentMaxSize:            s.SegmentMaxSize,
-		directory:                 s.Directory,
-		writeQueueSize:            s.WriteQueueSize,
-		wg:                        &s.wg,
-		pathName:                  pathName,
-		pathManager:               s.PathManager,
-		parent:                    s,
+		parentCtx:       s.ctx,
+		remoteAddr:      remoteAddr,
+		variant:         s.Variant,
+		segmentCount:    s.SegmentCount,
+		segmentDuration: s.SegmentDuration,
+		partDuration:    s.PartDuration,
+		segmentMaxSize:  s.SegmentMaxSize,
+		directory:       s.Directory,
+		writeQueueSize:  s.WriteQueueSize,
+		wg:              &s.wg,
+		pathName:        pathName,
+		pathManager:     s.PathManager,
+		parent:          s,
+		query:           query,
 	}
 	r.initialize()
 	s.muxers[pathName] = r

@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/bluenviron/mediamtx/internal/asyncwriter"
+	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
@@ -26,10 +27,6 @@ import (
 	"github.com/bluenviron/mediamtx/internal/protocols/rtmp"
 	"github.com/bluenviron/mediamtx/internal/stream"
 	"github.com/bluenviron/mediamtx/internal/unit"
-)
-
-const (
-	pauseAfterAuthError = 2 * time.Second
 )
 
 var errNoSupportedCodecs = errors.New(
@@ -176,15 +173,15 @@ func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 			IP:    c.ip(),
 			User:  query.Get("user"),
 			Pass:  query.Get("pass"),
-			Proto: defs.AuthProtocolRTMP,
+			Proto: auth.ProtocolRTMP,
 			ID:    &c.uuid,
 		},
 	})
 	if err != nil {
-		var terr defs.AuthenticationError
+		var terr auth.Error
 		if errors.As(err, &terr) {
 			// wait some seconds to mitigate brute force attacks
-			<-time.After(pauseAfterAuthError)
+			<-time.After(auth.PauseAfterError)
 			return terr
 		}
 		return err
@@ -240,10 +237,10 @@ func (c *conn) runRead(conn *rtmp.Conn, u *url.URL) error {
 	c.nconn.SetReadDeadline(time.Time{})
 
 	writer.Start()
+	defer writer.Stop()
 
 	select {
 	case <-c.ctx.Done():
-		writer.Stop()
 		return fmt.Errorf("terminated")
 
 	case err := <-writer.Error():
@@ -405,15 +402,15 @@ func (c *conn) runPublish(conn *rtmp.Conn, u *url.URL) error {
 			IP:      c.ip(),
 			User:    query.Get("user"),
 			Pass:    query.Get("pass"),
-			Proto:   defs.AuthProtocolRTMP,
+			Proto:   auth.ProtocolRTMP,
 			ID:      &c.uuid,
 		},
 	})
 	if err != nil {
-		var terr defs.AuthenticationError
+		var terr auth.Error
 		if errors.As(err, &terr) {
 			// wait some seconds to mitigate brute force attacks
-			<-time.After(pauseAfterAuthError)
+			<-time.After(auth.PauseAfterError)
 			return terr
 		}
 		return err

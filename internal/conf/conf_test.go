@@ -52,11 +52,10 @@ func TestConfFromFile(t *testing.T) {
 			Source:                     "publisher",
 			SourceOnDemandStartTimeout: 10 * StringDuration(time.Second),
 			SourceOnDemandCloseAfter:   10 * StringDuration(time.Second),
-			Playback:                   true,
 			RecordPath:                 "./recordings/%path/%Y-%m-%d_%H-%M-%S-%f",
 			RecordAudio:                true,
 			RecordFormat:               RecordFormatFMP4,
-			RecordPartDuration:         100000000,
+			RecordPartDuration:         StringDuration(1 * time.Second),
 			RecordSegmentDuration:      3600000000000,
 			RecordDeleteAfter:          86400000000000,
 			OverridePublisher:          true,
@@ -216,17 +215,6 @@ func TestConfErrors(t *testing.T) {
 			"'udpMaxPayloadSize' must be less than 1472",
 		},
 		{
-			"invalid externalAuthenticationURL 1",
-			"externalAuthenticationURL: testing\n",
-			"'externalAuthenticationURL' must be a HTTP URL",
-		},
-		{
-			"invalid externalAuthenticationURL 2",
-			"externalAuthenticationURL: http://myurl\n" +
-				"authMethods: [digest]\n",
-			"'externalAuthenticationURL' can't be used when 'digest' is in authMethods",
-		},
-		{
 			"invalid strict encryption 1",
 			"encryption: strict\n" +
 				"protocols: [udp]\n",
@@ -336,4 +324,32 @@ func TestSampleConfFile(t *testing.T) {
 
 		require.Equal(t, conf1.Paths, conf2.Paths)
 	}()
+}
+
+// needed due to https://github.com/golang/go/issues/21092
+func TestConfOverrideDefaultSlices(t *testing.T) {
+	tmpf, err := createTempFile([]byte(
+		"authInternalUsers:\n" +
+			"  - user: user1\n" +
+			"  - user: user2\n" +
+			"authHTTPExclude:\n" +
+			"  - path: ''\n"))
+	require.NoError(t, err)
+	defer os.Remove(tmpf)
+
+	conf, _, err := Load(tmpf, nil)
+	require.NoError(t, err)
+
+	require.Equal(t, AuthInternalUsers{
+		{
+			User: "user1",
+		},
+		{
+			User: "user2",
+		},
+	}, conf.AuthInternalUsers)
+
+	require.Equal(t, AuthInternalUserPermissions{
+		{},
+	}, conf.AuthHTTPExclude)
 }

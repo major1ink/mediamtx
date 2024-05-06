@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -17,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/logger"
@@ -149,6 +151,10 @@ type WebRTCServer interface {
 	APISessionsKick(uuid.UUID) error
 }
 
+type apiAuthManager interface {
+	Authenticate(req *auth.Request) error
+}
+
 type apiParent interface {
 	logger.Writer
 	APIConfigSet(conf *conf.Conf)
@@ -156,18 +162,24 @@ type apiParent interface {
 
 // API is an API server.
 type API struct {
-	Address      string
-	ReadTimeout  conf.StringDuration
-	Conf         *conf.Conf
-	PathManager  PathManager
-	RTSPServer   RTSPServer
-	RTSPSServer  RTSPServer
-	RTMPServer   RTMPServer
-	RTMPSServer  RTMPServer
-	HLSServer    HLSServer
-	WebRTCServer WebRTCServer
-	SRTServer    SRTServer
-	Parent       apiParent
+	Address        string
+	Encryption     bool
+	ServerKey      string
+	ServerCert     string
+	AllowOrigin    string
+	TrustedProxies conf.IPNetworks
+	ReadTimeout    conf.StringDuration
+	Conf           *conf.Conf
+	AuthManager    apiAuthManager
+	PathManager    PathManager
+	RTSPServer     RTSPServer
+	RTSPSServer    RTSPServer
+	RTMPServer     RTMPServer
+	RTMPSServer    RTMPServer
+	HLSServer      HLSServer
+	WebRTCServer   WebRTCServer
+	SRTServer      SRTServer
+	Parent         apiParent
 
 
 	httpServer *httpp.WrappedServer
@@ -181,9 +193,9 @@ type API struct {
 // Initialize initializes API.
 func (a *API) Initialize() error {
 	router := gin.New()
-	router.SetTrustedProxies(nil) //nolint:errcheck
+	router.SetTrustedProxies(a.TrustedProxies.ToTrustedProxies()) //nolint:errcheck
 
-	group := router.Group("/")
+	group := router.Group("/", a.middlewareOrigin, a.middlewareAuth)
 
 	group.GET("/v3/config/global/get", a.onConfigGlobalGet)
 	group.PATCH("/v3/config/global/patch", a.onConfigGlobalPatch)
@@ -252,16 +264,17 @@ func (a *API) Initialize() error {
 
 	network, address := restrictnetwork.Restrict("tcp", a.Address)
 
-	var err error
-	a.httpServer, err = httpp.NewWrappedServer(
-		network,
-		address,
-		time.Duration(a.ReadTimeout),
-		"",
-		"",
-		router,
-		a,
-	)
+	a.httpServer = &httpp.WrappedServer{
+		Network:     network,
+		Address:     address,
+		ReadTimeout: time.Duration(a.ReadTimeout),
+		Encryption:  a.Encryption,
+		ServerCert:  a.ServerCert,
+		ServerKey:   a.ServerKey,
+		Handler:     router,
+		Parent:      a,
+	}
+	err := a.httpServer.Initialize()
 	if err != nil {
 		return err
 	}
@@ -290,6 +303,36 @@ func (a *API) writeError(ctx *gin.Context, status int, err error) {
 	ctx.JSON(status, &defs.APIError{
 		Error: err.Error(),
 	})
+}
+
+func (a *API) middlewareOrigin(ctx *gin.Context) {
+	ctx.Writer.Header().Set("Access-Control-Allow-Origin", a.AllowOrigin)
+	ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+}
+
+func (a *API) middlewareAuth(ctx *gin.Context) {
+	user, pass, hasCredentials := ctx.Request.BasicAuth()
+
+	err := a.AuthManager.Authenticate(&auth.Request{
+		User:   user,
+		Pass:   pass,
+		Query:  ctx.Request.URL.RawQuery,
+		IP:     net.ParseIP(ctx.ClientIP()),
+		Action: conf.AuthActionAPI,
+	})
+	if err != nil {
+		if !hasCredentials {
+			ctx.Header("WWW-Authenticate", `Basic realm="mediamtx"`)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		// wait some seconds to mitigate brute force attacks
+		<-time.After(auth.PauseAfterError)
+
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
 }
 
 func (a *API) onConfigGlobalGet(ctx *gin.Context) {
@@ -1114,11 +1157,6 @@ func (a *API) onRecordingsGet(ctx *gin.Context) {
 		return
 	}
 
-	if !pathConf.Playback {
-		a.writeError(ctx, http.StatusBadRequest, fmt.Errorf("playback is disabled on path '%s'", pathName))
-		return
-	}
-
 	ctx.JSON(http.StatusOK, recordingEntry(pathConf, pathName))
 }
 
@@ -1138,11 +1176,6 @@ func (a *API) onRecordingDeleteSegment(ctx *gin.Context) {
 	_, pathConf, _, err := conf.FindPathConf(c.Paths, pathName)
 	if err != nil {
 		a.writeError(ctx, http.StatusBadRequest, err)
-		return
-	}
-
-	if !pathConf.Playback {
-		a.writeError(ctx, http.StatusBadRequest, fmt.Errorf("playback is disabled on path '%s'", pathName))
 		return
 	}
 

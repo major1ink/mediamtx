@@ -46,20 +46,20 @@ type muxerGetInstanceReq struct {
 }
 
 type muxer struct {
-	parentCtx                 context.Context
-	remoteAddr                string
-	externalAuthenticationURL string
-	variant                   conf.HLSVariant
-	segmentCount              int
-	segmentDuration           conf.StringDuration
-	partDuration              conf.StringDuration
-	segmentMaxSize            conf.StringSize
-	directory                 string
-	writeQueueSize            int
-	wg                        *sync.WaitGroup
-	pathName                  string
-	pathManager               serverPathManager
-	parent                    *Server
+	parentCtx       context.Context
+	remoteAddr      string
+	variant         conf.HLSVariant
+	segmentCount    int
+	segmentDuration conf.StringDuration
+	partDuration    conf.StringDuration
+	segmentMaxSize  conf.StringSize
+	directory       string
+	writeQueueSize  int
+	wg              *sync.WaitGroup
+	pathName        string
+	pathManager     serverPathManager
+	parent          *Server
+	query           string
 
 	ctx             context.Context
 	ctxCancel       func()
@@ -125,6 +125,7 @@ func (m *muxer) runInner() error {
 		AccessRequest: defs.PathAccessRequest{
 			Name:     m.pathName,
 			SkipAuth: true,
+			Query:    m.query,
 		},
 	})
 	if err != nil {
@@ -166,6 +167,12 @@ func (m *muxer) runInner() error {
 		recreateTimer = emptyTimer()
 	}
 
+	defer func() {
+		if mi != nil {
+			mi.close()
+		}
+	}()
+
 	var activityCheckTimer *time.Timer
 	if m.remoteAddr != "" {
 		activityCheckTimer = time.NewTimer(closeCheckPeriod)
@@ -179,13 +186,12 @@ func (m *muxer) runInner() error {
 			req.res <- mi
 
 		case err := <-instanceError:
-			mi.close()
-
 			if m.remoteAddr != "" {
 				return err
 			}
 
 			m.Log(logger.Error, err.Error())
+			mi.close()
 			mi = nil
 			instanceError = make(chan error)
 			recreateTimer = time.NewTimer(recreatePause)
@@ -216,17 +222,11 @@ func (m *muxer) runInner() error {
 		case <-activityCheckTimer.C:
 			t := time.Unix(0, atomic.LoadInt64(m.lastRequestTime))
 			if time.Since(t) >= closeAfterInactivity {
-				if mi != nil {
-					mi.close()
-				}
 				return fmt.Errorf("not used anymore")
 			}
 			activityCheckTimer = time.NewTimer(closeCheckPeriod)
 
 		case <-m.ctx.Done():
-			if mi != nil {
-				mi.close()
-			}
 			return errors.New("terminated")
 		}
 	}

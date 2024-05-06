@@ -397,7 +397,9 @@ func TestPathRunOnRead(t *testing.T) {
 					defer reader.Close()
 
 				case "webrtc":
-					hc := &http.Client{Transport: &http.Transport{}}
+					tr := &http.Transport{}
+					defer tr.CloseIdleConnections()
+					hc := &http.Client{Transport: tr}
 
 					u, err := url.Parse("http://localhost:8889/test/whep?query=value")
 					require.NoError(t, err)
@@ -405,7 +407,7 @@ func TestPathRunOnRead(t *testing.T) {
 					c := &webrtc.WHIPClient{
 						HTTPClient: hc,
 						URL:        u,
-						Log:        test.NilLogger{},
+						Log:        test.NilLogger,
 					}
 
 					writerDone := make(chan struct{})
@@ -423,7 +425,7 @@ func TestPathRunOnRead(t *testing.T) {
 							case <-writerTerminate:
 								return
 							}
-							err := source.WritePacketRTP(media0, &rtp.Packet{
+							err2 := source.WritePacketRTP(media0, &rtp.Packet{
 								Header: rtp.Header{
 									Version:        2,
 									Marker:         true,
@@ -434,7 +436,7 @@ func TestPathRunOnRead(t *testing.T) {
 								},
 								Payload: []byte{5},
 							})
-							require.NoError(t, err)
+							require.NoError(t, err2)
 							i++
 						}
 					}()
@@ -523,7 +525,7 @@ func TestPathRecord(t *testing.T) {
 	defer source.Close()
 
 	for i := 0; i < 4; i++ {
-		err := source.WritePacketRTP(media0, &rtp.Packet{
+		err = source.WritePacketRTP(media0, &rtp.Packet{
 			Header: rtp.Header{
 				Version:        2,
 				Marker:         true,
@@ -543,7 +545,9 @@ func TestPathRecord(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(files))
 
-	hc := &http.Client{Transport: &http.Transport{}}
+	tr := &http.Transport{}
+	defer tr.CloseIdleConnections()
+	hc := &http.Client{Transport: tr}
 
 	httpRequest(t, hc, http.MethodPatch, "http://localhost:9997/v3/config/paths/patch/all_others", map[string]interface{}{
 		"record": false,
@@ -558,7 +562,7 @@ func TestPathRecord(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	for i := 4; i < 8; i++ {
-		err := source.WritePacketRTP(media0, &rtp.Packet{
+		err = source.WritePacketRTP(media0, &rtp.Packet{
 			Header: rtp.Header{
 				Version:        2,
 				Marker:         true,
@@ -646,12 +650,12 @@ func TestPathSourceRegexp(t *testing.T) {
 					StatusCode: base.StatusOK,
 				}, stream, nil
 			},
-			onSetup: func(ctx *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
+			onSetup: func(_ *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
 				return &base.Response{
 					StatusCode: base.StatusOK,
 				}, stream, nil
 			},
-			onPlay: func(ctx *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, error) {
+			onPlay: func(_ *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, error) {
 				return &base.Response{
 					StatusCode: base.StatusOK,
 				}, nil
@@ -757,7 +761,7 @@ func TestPathOverridePublisher(t *testing.T) {
 			require.NoError(t, err)
 
 			if ca == "enabled" {
-				err := s1.Wait()
+				err = s1.Wait()
 				require.EqualError(t, err, "EOF")
 
 				err = s2.WritePacketRTP(medi, &rtp.Packet{

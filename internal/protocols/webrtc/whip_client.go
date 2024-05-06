@@ -1,16 +1,20 @@
 package webrtc
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
 	"github.com/pion/sdp/v3"
+	"github.com/pion/webrtc/v3"
 
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/protocols/httpp"
 )
 
 // WHIPClient is a WHIP client.
@@ -19,7 +23,8 @@ type WHIPClient struct {
 	URL        *url.URL
 	Log        logger.Writer
 
-	pc *PeerConnection
+	pc               *PeerConnection
+	patchIsSupported bool
 }
 
 // Publish publishes tracks.
@@ -28,7 +33,7 @@ func (c *WHIPClient) Publish(
 	videoTrack format.Format,
 	audioTrack format.Format,
 ) ([]*OutgoingTrack, error) {
-	iceServers, err := WHIPOptionsICEServers(ctx, c.HTTPClient, c.URL.String())
+	iceServers, err := c.optionsICEServers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +69,7 @@ func (c *WHIPClient) Publish(
 		return nil, err
 	}
 
-	res, err := PostOffer(ctx, c.HTTPClient, c.URL.String(), offer)
+	res, err := c.postOffer(ctx, offer)
 	if err != nil {
 		c.pc.Close()
 		return nil, err
@@ -78,6 +83,7 @@ func (c *WHIPClient) Publish(
 
 	err = c.pc.SetAnswer(res.Answer)
 	if err != nil {
+		c.deleteSession(context.Background()) //nolint:errcheck
 		c.pc.Close()
 		return nil, err
 	}
@@ -89,8 +95,9 @@ outer:
 	for {
 		select {
 		case ca := <-c.pc.NewLocalCandidate():
-			err := WHIPPatchCandidate(context.Background(), c.HTTPClient, c.URL.String(), offer, res.ETag, ca)
+			err := c.patchCandidate(ctx, offer, res.ETag, ca)
 			if err != nil {
+				c.deleteSession(context.Background()) //nolint:errcheck
 				c.pc.Close()
 				return nil, err
 			}
@@ -101,6 +108,7 @@ outer:
 			break outer
 
 		case <-t.C:
+			c.deleteSession(context.Background()) //nolint:errcheck
 			c.pc.Close()
 			return nil, fmt.Errorf("deadline exceeded while waiting connection")
 		}
@@ -111,7 +119,7 @@ outer:
 
 // Read reads tracks.
 func (c *WHIPClient) Read(ctx context.Context) ([]*IncomingTrack, error) {
-	iceServers, err := WHIPOptionsICEServers(ctx, c.HTTPClient, c.URL.String())
+	iceServers, err := c.optionsICEServers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +149,7 @@ func (c *WHIPClient) Read(ctx context.Context) ([]*IncomingTrack, error) {
 		return nil, err
 	}
 
-	res, err := PostOffer(ctx, c.HTTPClient, c.URL.String(), offer)
+	res, err := c.postOffer(ctx, offer)
 	if err != nil {
 		c.pc.Close()
 		return nil, err
@@ -156,6 +164,7 @@ func (c *WHIPClient) Read(ctx context.Context) ([]*IncomingTrack, error) {
 	var sdp sdp.SessionDescription
 	err = sdp.Unmarshal([]byte(res.Answer.SDP))
 	if err != nil {
+		c.deleteSession(context.Background()) //nolint:errcheck
 		c.pc.Close()
 		return nil, err
 	}
@@ -163,12 +172,14 @@ func (c *WHIPClient) Read(ctx context.Context) ([]*IncomingTrack, error) {
 	// check that there are at most two tracks
 	_, err = TrackCount(sdp.MediaDescriptions)
 	if err != nil {
+		c.deleteSession(context.Background()) //nolint:errcheck
 		c.pc.Close()
 		return nil, err
 	}
 
 	err = c.pc.SetAnswer(res.Answer)
 	if err != nil {
+		c.deleteSession(context.Background()) //nolint:errcheck
 		c.pc.Close()
 		return nil, err
 	}
@@ -180,8 +191,9 @@ outer:
 	for {
 		select {
 		case ca := <-c.pc.NewLocalCandidate():
-			err := WHIPPatchCandidate(context.Background(), c.HTTPClient, c.URL.String(), offer, res.ETag, ca)
+			err = c.patchCandidate(ctx, offer, res.ETag, ca)
 			if err != nil {
+				c.deleteSession(context.Background()) //nolint:errcheck
 				c.pc.Close()
 				return nil, err
 			}
@@ -192,17 +204,25 @@ outer:
 			break outer
 
 		case <-t.C:
+			c.deleteSession(context.Background()) //nolint:errcheck
 			c.pc.Close()
 			return nil, fmt.Errorf("deadline exceeded while waiting connection")
 		}
 	}
 
-	return c.pc.GatherIncomingTracks(ctx, 0)
+	tracks, err := c.pc.GatherIncomingTracks(ctx, 0)
+	if err != nil {
+		c.deleteSession(context.Background()) //nolint:errcheck
+		c.pc.Close()
+		return nil, err
+	}
+
+	return tracks, nil
 }
 
 // Close closes the client.
 func (c *WHIPClient) Close() error {
-	err := WHIPDeleteSession(context.Background(), c.HTTPClient, c.URL.String())
+	err := c.deleteSession(context.Background())
 	c.pc.Close()
 	return err
 }
@@ -216,4 +236,140 @@ func (c *WHIPClient) Wait(ctx context.Context) error {
 	case <-ctx.Done():
 		return fmt.Errorf("terminated")
 	}
+}
+
+func (c *WHIPClient) optionsICEServers(
+	ctx context.Context,
+) ([]webrtc.ICEServer, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodOptions, c.URL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusNoContent {
+		return nil, fmt.Errorf("bad status code: %v", res.StatusCode)
+	}
+
+	return LinkHeaderUnmarshal(res.Header["Link"])
+}
+
+type whipPostOfferResponse struct {
+	Answer   *webrtc.SessionDescription
+	Location string
+	ETag     string
+}
+
+func (c *WHIPClient) postOffer(
+	ctx context.Context,
+	offer *webrtc.SessionDescription,
+) (*whipPostOfferResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL.String(), bytes.NewReader([]byte(offer.SDP)))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/sdp")
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("bad status code: %v", res.StatusCode)
+	}
+
+	contentType := httpp.ParseContentType(req.Header.Get("Content-Type"))
+	if contentType != "application/sdp" {
+		return nil, fmt.Errorf("bad Content-Type: expected 'application/sdp', got '%s'", contentType)
+	}
+
+	c.patchIsSupported = (res.Header.Get("Accept-Patch") == "application/trickle-ice-sdpfrag")
+
+	Location := res.Header.Get("Location")
+
+	etag := res.Header.Get("ETag")
+	if etag == "" {
+		return nil, fmt.Errorf("ETag is missing")
+	}
+
+	sdp, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	answer := &webrtc.SessionDescription{
+		Type: webrtc.SDPTypeAnswer,
+		SDP:  string(sdp),
+	}
+
+	return &whipPostOfferResponse{
+		Answer:   answer,
+		Location: Location,
+		ETag:     etag,
+	}, nil
+}
+
+func (c *WHIPClient) patchCandidate(
+	ctx context.Context,
+	offer *webrtc.SessionDescription,
+	etag string,
+	candidate *webrtc.ICECandidateInit,
+) error {
+	if !c.patchIsSupported {
+		return nil
+	}
+
+	frag, err := ICEFragmentMarshal(offer.SDP, []*webrtc.ICECandidateInit{candidate})
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, c.URL.String(), bytes.NewReader(frag))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/trickle-ice-sdpfrag")
+	req.Header.Set("If-Match", etag)
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("bad status code: %v", res.StatusCode)
+	}
+
+	return nil
+}
+
+func (c *WHIPClient) deleteSession(
+	ctx context.Context,
+) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.URL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status code: %v", res.StatusCode)
+	}
+
+	return nil
 }

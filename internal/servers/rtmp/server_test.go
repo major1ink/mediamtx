@@ -10,6 +10,7 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/bluenviron/mediamtx/internal/asyncwriter"
+	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
@@ -43,7 +44,7 @@ func (p *dummyPath) StartPublisher(req defs.PathStartPublisherReq) (*stream.Stre
 		1460,
 		req.Desc,
 		true,
-		test.NilLogger{},
+		test.NilLogger,
 	)
 	if err != nil {
 		return nil, err
@@ -65,11 +66,17 @@ type dummyPathManager struct {
 	path *dummyPath
 }
 
-func (pm *dummyPathManager) AddPublisher(_ defs.PathAddPublisherReq) (defs.Path, error) {
+func (pm *dummyPathManager) AddPublisher(req defs.PathAddPublisherReq) (defs.Path, error) {
+	if req.AccessRequest.User != "myuser" || req.AccessRequest.Pass != "mypass" {
+		return nil, auth.Error{}
+	}
 	return pm.path, nil
 }
 
-func (pm *dummyPathManager) AddReader(_ defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+func (pm *dummyPathManager) AddReader(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+	if req.AccessRequest.User != "myuser" || req.AccessRequest.Pass != "mypass" {
+		return nil, nil, auth.Error{}
+	}
 	return pm.path, pm.path.stream, nil
 }
 
@@ -113,13 +120,13 @@ func TestServerPublish(t *testing.T) {
 				RunOnDisconnect:     "",
 				ExternalCmdPool:     nil,
 				PathManager:         pathManager,
-				Parent:              &test.NilLogger{},
+				Parent:              test.NilLogger,
 			}
 			err := s.Initialize()
 			require.NoError(t, err)
 			defer s.Close()
 
-			u, err := url.Parse("rtmp://127.0.0.1:1935/teststream?user=testpublisher&pass=testpass&param=value")
+			u, err := url.Parse("rtmp://127.0.0.1:1935/teststream?user=myuser&pass=mypass&param=value")
 			require.NoError(t, err)
 
 			nconn, err := func() (net.Conn, error) {
@@ -139,7 +146,7 @@ func TestServerPublish(t *testing.T) {
 
 			<-path.streamCreated
 
-			aw := asyncwriter.New(512, &test.NilLogger{})
+			aw := asyncwriter.New(512, test.NilLogger)
 
 			recv := make(chan struct{})
 
@@ -193,7 +200,7 @@ func TestServerRead(t *testing.T) {
 				1460,
 				desc,
 				true,
-				test.NilLogger{},
+				test.NilLogger,
 			)
 			require.NoError(t, err)
 
@@ -215,13 +222,13 @@ func TestServerRead(t *testing.T) {
 				RunOnDisconnect:     "",
 				ExternalCmdPool:     nil,
 				PathManager:         pathManager,
-				Parent:              &test.NilLogger{},
+				Parent:              test.NilLogger,
 			}
 			err = s.Initialize()
 			require.NoError(t, err)
 			defer s.Close()
 
-			u, err := url.Parse("rtmp://127.0.0.1:1935/teststream?user=testreader&pass=testpass&param=value")
+			u, err := url.Parse("rtmp://127.0.0.1:1935/teststream?user=myuser&pass=mypass&param=value")
 			require.NoError(t, err)
 
 			nconn, err := func() (net.Conn, error) {
@@ -251,7 +258,7 @@ func TestServerRead(t *testing.T) {
 				},
 			})
 
-			r.OnDataH264(func(pts time.Duration, au [][]byte) {
+			r.OnDataH264(func(_ time.Duration, au [][]byte) {
 				require.Equal(t, [][]byte{
 					test.FormatH264.SPS,
 					test.FormatH264.PPS,

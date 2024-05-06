@@ -8,6 +8,7 @@ import (
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/bluenviron/mediacommon/pkg/formats/mpegts"
 	"github.com/bluenviron/mediamtx/internal/asyncwriter"
+	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
@@ -41,7 +42,7 @@ func (p *dummyPath) StartPublisher(req defs.PathStartPublisherReq) (*stream.Stre
 		1460,
 		req.Desc,
 		true,
-		test.NilLogger{},
+		test.NilLogger,
 	)
 	if err != nil {
 		return nil, err
@@ -63,11 +64,17 @@ type dummyPathManager struct {
 	path *dummyPath
 }
 
-func (pm *dummyPathManager) AddPublisher(_ defs.PathAddPublisherReq) (defs.Path, error) {
+func (pm *dummyPathManager) AddPublisher(req defs.PathAddPublisherReq) (defs.Path, error) {
+	if req.AccessRequest.User != "myuser" || req.AccessRequest.Pass != "mypass" {
+		return nil, auth.Error{}
+	}
 	return pm.path, nil
 }
 
-func (pm *dummyPathManager) AddReader(_ defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+func (pm *dummyPathManager) AddReader(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+	if req.AccessRequest.User != "myuser" || req.AccessRequest.Pass != "mypass" {
+		return nil, nil, auth.Error{}
+	}
 	return pm.path, pm.path.stream, nil
 }
 
@@ -93,13 +100,13 @@ func TestServerPublish(t *testing.T) {
 		RunOnDisconnect:     "string",
 		ExternalCmdPool:     externalCmdPool,
 		PathManager:         pathManager,
-		Parent:              &test.NilLogger{},
+		Parent:              test.NilLogger,
 	}
 	err := s.Initialize()
 	require.NoError(t, err)
 	defer s.Close()
 
-	u := "srt://localhost:8890?streamid=publish:mypath"
+	u := "srt://localhost:8890?streamid=publish:mypath:myuser:mypass"
 
 	srtConf := srt.DefaultConfig()
 	address, err := srtConf.UnmarshalURL(u)
@@ -132,7 +139,7 @@ func TestServerPublish(t *testing.T) {
 
 	<-path.streamCreated
 
-	aw := asyncwriter.New(512, &test.NilLogger{})
+	aw := asyncwriter.New(512, test.NilLogger)
 
 	recv := make(chan struct{})
 
@@ -172,7 +179,7 @@ func TestServerRead(t *testing.T) {
 		1460,
 		desc,
 		true,
-		test.NilLogger{},
+		test.NilLogger,
 	)
 	require.NoError(t, err)
 
@@ -192,13 +199,13 @@ func TestServerRead(t *testing.T) {
 		RunOnDisconnect:     "string",
 		ExternalCmdPool:     externalCmdPool,
 		PathManager:         pathManager,
-		Parent:              &test.NilLogger{},
+		Parent:              test.NilLogger,
 	}
 	err = s.Initialize()
 	require.NoError(t, err)
 	defer s.Close()
 
-	u := "srt://localhost:8890?streamid=read:mypath"
+	u := "srt://localhost:8890?streamid=read:mypath:myuser:mypass"
 
 	srtConf := srt.DefaultConfig()
 	address, err := srtConf.UnmarshalURL(u)

@@ -30,7 +30,6 @@ import (
 )
 
 const (
-	pauseAfterAuthError        = 2 * time.Second
 	webrtcTurnSecretExpiration = 24 * 3600 * time.Second
 	webrtcPayloadMaxSize       = 1188 // 1200 - 12 (RTP header)
 )
@@ -151,6 +150,7 @@ type webRTCAddSessionCandidatesRes struct {
 }
 
 type webRTCAddSessionCandidatesReq struct {
+	pathName   string
 	secret     uuid.UUID
 	candidates []*pwebrtc.ICECandidateInit
 	res        chan webRTCAddSessionCandidatesRes
@@ -161,8 +161,9 @@ type webRTCDeleteSessionRes struct {
 }
 
 type webRTCDeleteSessionReq struct {
-	secret uuid.UUID
-	res    chan webRTCDeleteSessionRes
+	pathName string
+	secret   uuid.UUID
+	res      chan webRTCDeleteSessionRes
 }
 
 type serverPathManager interface {
@@ -182,7 +183,7 @@ type Server struct {
 	ServerKey             string
 	ServerCert            string
 	AllowOrigin           string
-	TrustedProxies        conf.IPsOrCIDRs
+	TrustedProxies        conf.IPNetworks
 	ReadTimeout           conf.StringDuration
 	WriteQueueSize        int
 	LocalUDPAddress       string
@@ -344,7 +345,7 @@ outer:
 
 		case req := <-s.chAddSessionCandidates:
 			sx, ok := s.sessionsBySecret[req.secret]
-			if !ok {
+			if !ok || sx.req.pathName != req.pathName {
 				req.res <- webRTCAddSessionCandidatesRes{err: ErrSessionNotFound}
 				continue
 			}
@@ -353,7 +354,7 @@ outer:
 
 		case req := <-s.chDeleteSession:
 			sx, ok := s.sessionsBySecret[req.secret]
-			if !ok {
+			if !ok || sx.req.pathName != req.pathName {
 				req.res <- webRTCDeleteSessionRes{err: ErrSessionNotFound}
 				continue
 			}
@@ -430,30 +431,32 @@ func (s *Server) findSessionByUUID(uuid uuid.UUID) *session {
 	return nil
 }
 
-func (s *Server) generateICEServers() ([]pwebrtc.ICEServer, error) {
-	ret := make([]pwebrtc.ICEServer, len(s.ICEServers))
+func (s *Server) generateICEServers(clientConfig bool) ([]pwebrtc.ICEServer, error) {
+	ret := make([]pwebrtc.ICEServer, 0, len(s.ICEServers))
 
-	for i, server := range s.ICEServers {
-		if server.Username == "AUTH_SECRET" {
-			expireDate := time.Now().Add(webrtcTurnSecretExpiration).Unix()
+	for _, server := range s.ICEServers {
+		if !server.ClientOnly || clientConfig {
+			if server.Username == "AUTH_SECRET" {
+				expireDate := time.Now().Add(webrtcTurnSecretExpiration).Unix()
 
-			user, err := randomTurnUser()
-			if err != nil {
-				return nil, err
+				user, err := randomTurnUser()
+				if err != nil {
+					return nil, err
+				}
+
+				server.Username = strconv.FormatInt(expireDate, 10) + ":" + user
+
+				h := hmac.New(sha1.New, []byte(server.Password))
+				h.Write([]byte(server.Username))
+
+				server.Password = base64.StdEncoding.EncodeToString(h.Sum(nil))
 			}
 
-			server.Username = strconv.FormatInt(expireDate, 10) + ":" + user
-
-			h := hmac.New(sha1.New, []byte(server.Password))
-			h.Write([]byte(server.Username))
-
-			server.Password = base64.StdEncoding.EncodeToString(h.Sum(nil))
-		}
-
-		ret[i] = pwebrtc.ICEServer{
-			URLs:       []string{server.URL},
-			Username:   server.Username,
-			Credential: server.Password,
+			ret = append(ret, pwebrtc.ICEServer{
+				URLs:       []string{server.URL},
+				Username:   server.Username,
+				Credential: server.Password,
+			})
 		}
 	}
 

@@ -55,8 +55,8 @@ func TestSource(t *testing.T) {
 				Handler: &testServer{
 					onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 					) (*base.Response, *gortsplib.ServerStream, error) {
-						err := auth.Validate(ctx.Request, "testuser", "testpass", nil, nil, "IPCAM", nonce)
-						if err != nil {
+						err2 := auth.Validate(ctx.Request, "testuser", "testpass", nil, "IPCAM", nonce)
+						if err2 != nil {
 							return &base.Response{ //nolint:nilerr
 								StatusCode: base.StatusUnauthorized,
 								Header: base.Header{
@@ -69,15 +69,15 @@ func TestSource(t *testing.T) {
 							StatusCode: base.StatusOK,
 						}, stream, nil
 					},
-					onSetup: func(ctx *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
+					onSetup: func(_ *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
 						return &base.Response{
 							StatusCode: base.StatusOK,
 						}, stream, nil
 					},
-					onPlay: func(ctx *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, error) {
+					onPlay: func(_ *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, error) {
 						go func() {
 							time.Sleep(100 * time.Millisecond)
-							err := stream.WritePacketRTP(media0, &rtp.Packet{
+							err2 := stream.WritePacketRTP(media0, &rtp.Packet{
 								Header: rtp.Header{
 									Version:        0x02,
 									PayloadType:    96,
@@ -88,7 +88,7 @@ func TestSource(t *testing.T) {
 								},
 								Payload: []byte{5, 1, 2, 3, 4},
 							})
-							require.NoError(t, err)
+							require.NoError(t, err2)
 						}()
 
 						return &base.Response{
@@ -105,15 +105,18 @@ func TestSource(t *testing.T) {
 				s.UDPRTCPAddress = "127.0.0.1:8003"
 
 			case "tls":
-				serverCertFpath, err := test.CreateTempFile(test.TLSCertPub)
+				var serverCertFpath string
+				serverCertFpath, err = test.CreateTempFile(test.TLSCertPub)
 				require.NoError(t, err)
 				defer os.Remove(serverCertFpath)
 
-				serverKeyFpath, err := test.CreateTempFile(test.TLSCertKey)
+				var serverKeyFpath string
+				serverKeyFpath, err = test.CreateTempFile(test.TLSCertKey)
 				require.NoError(t, err)
 				defer os.Remove(serverKeyFpath)
 
-				cert, err := tls.LoadX509KeyPair(serverCertFpath, serverKeyFpath)
+				var cert tls.Certificate
+				cert, err = tls.LoadX509KeyPair(serverCertFpath, serverKeyFpath)
 				require.NoError(t, err)
 
 				s.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
@@ -181,8 +184,8 @@ func TestRTSPSourceNoPassword(t *testing.T) {
 	s := gortsplib.Server{
 		Handler: &testServer{
 			onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
-				err := auth.Validate(ctx.Request, "testuser", "", nil, nil, "IPCAM", nonce)
-				if err != nil {
+				err2 := auth.Validate(ctx.Request, "testuser", "", nil, "IPCAM", nonce)
+				if err2 != nil {
 					return &base.Response{ //nolint:nilerr
 						StatusCode: base.StatusUnauthorized,
 						Header: base.Header{
@@ -195,10 +198,10 @@ func TestRTSPSourceNoPassword(t *testing.T) {
 					StatusCode: base.StatusOK,
 				}, stream, nil
 			},
-			onSetup: func(ctx *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
+			onSetup: func(_ *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
 				go func() {
 					time.Sleep(100 * time.Millisecond)
-					err := stream.WritePacketRTP(media0, &rtp.Packet{
+					err2 := stream.WritePacketRTP(media0, &rtp.Packet{
 						Header: rtp.Header{
 							Version:        0x02,
 							PayloadType:    96,
@@ -209,14 +212,14 @@ func TestRTSPSourceNoPassword(t *testing.T) {
 						},
 						Payload: []byte{5, 1, 2, 3, 4},
 					})
-					require.NoError(t, err)
+					require.NoError(t, err2)
 				}()
 
 				return &base.Response{
 					StatusCode: base.StatusOK,
 				}, stream, nil
 			},
-			onPlay: func(ctx *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, error) {
+			onPlay: func(_ *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, error) {
 				return &base.Response{
 					StatusCode: base.StatusOK,
 				}, nil
@@ -263,12 +266,12 @@ func TestRTSPSourceRange(t *testing.T) {
 
 			s := gortsplib.Server{
 				Handler: &testServer{
-					onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
+					onDescribe: func(_ *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
 						return &base.Response{
 							StatusCode: base.StatusOK,
 						}, stream, nil
 					},
-					onSetup: func(ctx *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
+					onSetup: func(_ *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
 						return &base.Response{
 							StatusCode: base.StatusOK,
 						}, stream, nil

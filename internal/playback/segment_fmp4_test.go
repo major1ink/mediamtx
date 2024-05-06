@@ -41,7 +41,7 @@ func writeBenchInit(f io.WriteSeeker) {
 	}
 
 	_, err = f.Write([]byte{
-		'm', 'o', 'o', 'f', 0x00, 0x00, 0x00, 0x10,
+		0x00, 0x00, 0x00, 0x10, 'm', 'o', 'o', 'f',
 	})
 	if err != nil {
 		panic(err)
@@ -60,13 +60,13 @@ func BenchmarkFMP4ReadInit(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		func() {
-			f, err := os.Open(f.Name())
+			f, err = os.Open(f.Name())
 			if err != nil {
 				panic(err)
 			}
 			defer f.Close()
 
-			_, err = fmp4ReadInit(f)
+			_, err = segmentFMP4ReadInit(f)
 			if err != nil {
 				panic(err)
 			}
