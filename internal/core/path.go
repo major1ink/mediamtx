@@ -79,6 +79,8 @@ type path struct {
 	wg                *sync.WaitGroup
 	externalCmdPool   *externalcmd.Pool
 	parent            pathParent
+	loggerPath        *logger.Logger
+	logStreams        bool
 
 	ctx            context.Context
 	ctxCancel      func()
@@ -156,6 +158,11 @@ func (pa *path) initialize(stor storage.Storage,
 func (pa *path) close() {
 	pa.publisher.Max--
 	pa.ctxCancel()
+	pa.Log(logger.Debug, "closed")
+	if pa.logStreams{
+		pa.loggerPath.Close()
+	}
+
 }
 
 func (pa *path) wait() {
@@ -164,7 +171,12 @@ func (pa *path) wait() {
 
 // Log implements logger.Writer.
 func (pa *path) Log(level logger.Level, format string, args ...interface{}) {
-	pa.parent.Log(level, "[path "+pa.name+"] "+format, args...)
+	if pa.logStreams {
+		pa.loggerPath.Log(level, "[path "+pa.name+"] "+format, args...)	
+	} else {
+		pa.parent.Log(level, "[path "+pa.name+"] "+format, args...)
+	}
+	
 }
 
 func (pa *path) Name() string {

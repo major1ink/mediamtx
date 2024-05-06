@@ -88,6 +88,8 @@ type Conf struct {
 	LogLevel                  LogLevel        `json:"logLevel"`
 	LogDestinations           LogDestinations `json:"logDestinations"`
 	LogFile                   string          `json:"logFile"`
+	LogStreams                bool            `json:"logStreams"`
+	LogDirStreams             string          `json:"logDirStreams"`
 	ReadTimeout               StringDuration  `json:"readTimeout"`
 	WriteTimeout              StringDuration  `json:"writeTimeout"`
 	ReadBufferCount           *int            `json:"readBufferCount,omitempty"` // deprecated

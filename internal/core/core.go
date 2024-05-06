@@ -45,7 +45,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.5.1-7"
+var version = "v1.5.1-8"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -241,10 +241,12 @@ outer:
 			if p.pathManager.stor.UseUpdaterStatus {
 				for key := range p.pathManager.paths {
 					query := fmt.Sprintf(p.pathManager.stor.Sql.UpdateStatus, 0, key)
+					p.Log(logger.Debug, "SQL query sent:%s", query)
 					err := p.pathManager.stor.Req.ExecQuery(query)
 					if err != nil {
 						fmt.Println(err)
 					}
+					p.Log(logger.Debug, "The request was successfully completed")
 				}
 
 			}
@@ -367,12 +369,13 @@ func (p *Core) createResources(initial bool) error {
 			if stor.UseSrise {
 				return errors.New("sRise and proxy can't be used at the same time")
 			}
+			p.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataForProxy))
 			data, err := stor.Req.SelectData(stor.Sql.GetDataForProxy)
 			if err != nil {
 				return err
 			}
+			p.Log(logger.Debug, "The result of executing the sql query: %v", data)
 			var result []prohys
-
 			for _, line := range data {
 				result = append(result, prohys{
 					Code_mp:        line[0].(string),
@@ -383,7 +386,6 @@ func (p *Core) createResources(initial bool) error {
 			for _, i := range result {
 
 				var s conf.OptionalPath
-
 				postJson := []byte(fmt.Sprintf(`
 		{	
 			"name": "%s",
@@ -406,10 +408,12 @@ func (p *Core) createResources(initial bool) error {
 
 		if stor.UseSrise {
 			if stor.DbUseContract {
+				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",stor.Sql.GetDataContract))
 				data, err := stor.Req.SelectData(stor.Sql.GetDataContract)
 				if err != nil {
 					return err
 				}
+				p.Log(logger.Debug, "The result of executing the sql query: %v", data)
 				var result []bdTable
 
 				for _, line := range data {
@@ -458,10 +462,12 @@ func (p *Core) createResources(initial bool) error {
 					return err
 				}
 			} else {
+				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",stor.Sql.GetData))
 				data, err := stor.Req.SelectData(stor.Sql.GetData)
 				if err != nil {
 					return err
 				}
+				p.Log(logger.Debug, "The result of executing the sql query: %v", data)
 				var result []bdTable
 
 				for _, line := range data {
@@ -528,6 +534,10 @@ func (p *Core) createResources(initial bool) error {
 
 		p.pathManager = &pathManager{
 			logLevel:                  p.conf.LogLevel,
+			logDestinations:           p.conf.LogDestinations,
+			logFile:                   p.conf.LogFile,
+			logStreams:                p.conf.LogStreams,
+			logDirStreams:              p.conf.LogDirStreams,
 			externalAuthenticationURL: p.conf.ExternalAuthenticationURL,
 			rtspAddress:               p.conf.RTSPAddress,
 			authMethods:               p.conf.AuthMethods,

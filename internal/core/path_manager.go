@@ -53,6 +53,10 @@ type pathManagerParent interface {
 
 type pathManager struct {
 	logLevel                  conf.LogLevel
+	logDestinations           []logger.Destination
+	logFile                   string
+	logStreams                bool
+	logDirStreams              string
 	externalAuthenticationURL string
 	rtspAddress               string
 	authMethods               conf.AuthMethods
@@ -397,6 +401,7 @@ func (pm *pathManager) createPath(
 	matches []string,
 ) {
 
+
 	pa := &path{
 		parentCtx:         pm.ctx,
 		logLevel:          pm.logLevel,
@@ -414,6 +419,15 @@ func (pm *pathManager) createPath(
 		parent:            pm,
 		stor:              pm.stor,
 		publisher:         &pm.Publisher,
+		logStreams:        pm.logStreams,
+		
+	}
+	if pm.logStreams{
+		logg, err := logger.NewLoggerStream(logger.Level(pm.logLevel), pm.logDestinations, pm.logFile, name,pm.logDirStreams)
+		if err != nil {
+			pm.Log(logger.Error, "%s", err)
+		}
+		pa.loggerPath = logg
 	}
 	pa.initialize(pm.stor, &pm.Publisher)
 
@@ -432,11 +446,12 @@ func (pm *pathManager) removePath(pa *path) {
 	}
 	if pm.stor.UseUpdaterStatus {
 		query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
-		pm.Log(logger.Debug, "SQL status %s", query)
+		pa.Log(logger.Debug, "SQL status %s", query)
 		err := pm.stor.Req.ExecQuery(query)
 		if err != nil {
-			pm.Log(logger.Error, "%s", err)
+			pa.Log(logger.Error, "%s", err)
 		}
+		pa.Log(logger.Debug, "The request was successfully completed")
 	}
 	delete(pm.paths, pa.name)
 }
@@ -455,11 +470,12 @@ func (pm *pathManager) pathReady(pa *path) {
 	case pm.chPathReady <- pa:
 		if pm.stor.UseUpdaterStatus {
 			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 1, pa.Name())
-			pm.Log(logger.Debug, "SQL status %s", query)
+			pa.Log(logger.Debug, "SQL status %s", query)
 			err := pm.stor.Req.ExecQuery(query)
 			if err != nil {
-				pm.Log(logger.Error, "%s", err)
+				pa.Log(logger.Error, "%s", err)
 			}
+			pa.Log(logger.Debug, "The request was successfully completed")
 		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
@@ -472,11 +488,12 @@ func (pm *pathManager) pathNotReady(pa *path) {
 	case pm.chPathNotReady <- pa:
 		if pm.stor.UseUpdaterStatus {
 			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
-			pm.Log(logger.Debug, "SQL status %s", query)
+			pa.Log(logger.Debug, "SQL status %s", query)
 			err := pm.stor.Req.ExecQuery(query)
 			if err != nil {
-				pm.Log(logger.Error, "%s", err)
+				pa.Log(logger.Error, "%s", err)
 			}
+			pa.Log(logger.Debug, "The request was successfully completed")
 		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
@@ -489,11 +506,12 @@ func (pm *pathManager) closePath(pa *path) {
 	case pm.chClosePath <- pa:
 		if pm.stor.UseUpdaterStatus {
 			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
-			pm.Log(logger.Debug, "SQL status %s", query)
+			pa.Log(logger.Debug, "SQL status %s", query)
 			err := pm.stor.Req.ExecQuery(query)
 			if err != nil {
-				pm.Log(logger.Error, "%s", err)
+				pa.Log(logger.Error, "%s", err)
 			}
+			pa.Log(logger.Debug, "The request was successfully completed")
 		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()

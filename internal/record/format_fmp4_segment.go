@@ -67,6 +67,12 @@ func (s *formatFMP4Segment) close() error {
 				stat, err3 := os.Stat(s.path)
 				if err3 == nil {
 					paths := strings.Split(s.path, "/")
+					s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",fmt.Sprintf(
+						s.f.a.stor.Sql.UpdateSize,
+						fmt.Sprint(stat.Size()),
+						s.f.a.endTime,
+						paths[len(paths)-1])))
+
 					err4 := s.f.a.stor.Req.ExecQuery(
 						fmt.Sprintf(
 							s.f.a.stor.Sql.UpdateSize,
@@ -74,8 +80,16 @@ func (s *formatFMP4Segment) close() error {
 							s.f.a.endTime,
 							paths[len(paths)-1]),
 					)
+					s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 					if err4 != nil {
 						if err4.Error() == "context canceled" {
+							s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",fmt.Sprintf(
+								s.f.a.stor.Sql.UpdateSize,
+								fmt.Sprint(stat.Size()),
+								s.f.a.endTime,
+								paths[len(paths)-1],
+							)))
+
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(
 								fmt.Sprintf(
 									s.f.a.stor.Sql.UpdateSize,
@@ -83,6 +97,7 @@ func (s *formatFMP4Segment) close() error {
 									s.f.a.endTime,
 									paths[len(paths)-1],
 								))
+							s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 						}
 						return err4
 					}

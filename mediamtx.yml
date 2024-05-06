@@ -7,12 +7,13 @@
 # Global settings -> General
 
 # Verbosity of the program; available values are "error", "warn", "info", "debug".
-logLevel: info
+logLevel: debug
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
-logDestinations: [stdout]
+logDestinations: [file]
 # If "file" is in logDestinations, this is the file which will receive the logs.
-logFile: /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.log
-
+logFile: mediamtx.log
+logStreams: yes
+logDirStreams: ./
 # Timeout of read operations.
 readTimeout: 10s
 # Timeout of write operations.
@@ -44,12 +45,12 @@ externalAuthenticationURL:
 # Enable Prometheus-compatible metrics.
 metrics: yes
 # Address of the metrics listener.
-metricsAddress: 192.168.250.40:9998
+metricsAddress: 192.168.250.43:9998
 
 # Enable pprof-compatible endpoint to monitor performances.
 pprof: yes
 # Address of the pprof listener.
-pprofAddress: 192.168.250.40:9999
+pprofAddress: 192.168.250.43:9999
 
 # Command to run when a client connects to the server.
 # This is terminated with SIGINT when a client disconnects from the server.
@@ -70,7 +71,7 @@ runOnDisconnect:
 # Enable controlling the server through the API.
 api: yes
 # Address of the API listener.
-apiAddress: 192.168.250.40:9997
+apiAddress: 192.168.250.43:9997
 
 ###############################################
 # Global settings -> Playback server
@@ -78,7 +79,7 @@ apiAddress: 192.168.250.40:9997
 # Enable downloading recordings from the playback server.
 playback: no
 # Address of the playback server listener.
-playbackAddress: 192.168.250.40:9996
+playbackAddress: 192.168.250.43:9996
 
 ###############################################
 # Global settings -> RTSP server
@@ -317,7 +318,8 @@ pathDefaults:
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
-  recordPath: /ttttt/%v/%Y-%m-%d/%path-%s-%f
+  #/ttttt/%v/%Y-%m-%d/%path-%s-%f
+  recordPath: /home/anton/go/src/github.com/gubka595/video/%Y-%m-%d/%path-%s-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -600,13 +602,13 @@ database:
   # Maximum number of connections
   maxConnections: 1
   # Enable/disable discs from the database for recording
-  dbDrives: yes
+  dbDrives: no
   # Enable/disable the code_mp_contract field to create a record path
   dbUseCodeMP_Contract: no
   # Enable/disable the contract field to create a straem path. Work with useSrise: yes
   dbUseContract: no
   #
-  useDbPathStream: yes
+  useDbPathStream: no
   # Enable/disable updating the status of a stream in the database
   useUpdaterStatus: no
   # Enable/disable the server start with streams from the database
@@ -618,7 +620,7 @@ database:
     # SQL query to insert video record
     # EXAMPLE insertPath: "INSERT INTO \"video_record\" (\"stream\", \"path_record\", \"file_name\", \"date_time_start\") VALUES ('%s', '%s', '%s', '%s')" 
     # L3
-    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\", \"pathStream\", \"id_storage\") VALUES ('%s', '%s','%s','%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))"
+    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\", \"stream\", \"id_storage\") VALUES ('%s', '%s','%s','%s', '4')"
     # L6
     # insertPath: "INSERT INTO \"video_record\" (\"path_record\", \"file_name\",\"date_time_start\", \"code_mp_cam\", \"id_storage\") VALUES ('%s', '%s','%s','%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))"
     #
