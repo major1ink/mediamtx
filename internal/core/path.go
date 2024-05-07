@@ -18,6 +18,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/hooks"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/record"
+	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
@@ -78,18 +79,21 @@ type path struct {
 	wg                *sync.WaitGroup
 	externalCmdPool   *externalcmd.Pool
 	parent            pathParent
+	loggerPath        *logger.Logger
+	logStreams        bool
 
-	ctx                            context.Context
-	ctxCancel                      func()
-	confMutex                      sync.RWMutex
-	source                         defs.Source
-	publisherQuery                 string
-	stream                         *stream.Stream
-	recordAgent                    *record.Agent
-	readyTime                      time.Time
-	onUnDemandHook                 func(string)
-	onNotReadyHook                 func()
-	readers                        map[defs.Reader]struct{}
+	ctx            context.Context
+	ctxCancel      func()
+	confMutex      sync.RWMutex
+	source         defs.Source
+	publisherQuery string
+	stream         *stream.Stream
+	recordAgent    *record.Agent
+	readyTime      time.Time
+	onUnDemandHook func(string)
+	onNotReadyHook func()
+	readers        map[defs.Reader]struct{}
+
 	describeRequestsOnHold         []defs.PathDescribeReq
 	readerAddRequestsOnHold        []defs.PathAddReaderReq
 	onDemandStaticSourceState      pathOnDemandState
@@ -114,9 +118,13 @@ type path struct {
 
 	// out
 	done chan struct{}
+
+	stor      storage.Storage
+	publisher *MaxPub
 }
 
-func (pa *path) initialize() {
+func (pa *path) initialize(stor storage.Storage,
+	publisher *MaxPub) {
 	ctx, ctxCancel := context.WithCancel(pa.parentCtx)
 
 	pa.ctx = ctx
@@ -138,6 +146,8 @@ func (pa *path) initialize() {
 	pa.chRemoveReader = make(chan defs.PathRemoveReaderReq)
 	pa.chAPIPathsGet = make(chan pathAPIPathsGetReq)
 	pa.done = make(chan struct{})
+	pa.stor = stor
+	pa.publisher = publisher
 
 	pa.Log(logger.Debug, "created")
 
@@ -146,7 +156,13 @@ func (pa *path) initialize() {
 }
 
 func (pa *path) close() {
+	pa.publisher.Max--
 	pa.ctxCancel()
+	pa.Log(logger.Debug, "closed")
+	if pa.logStreams{
+		pa.loggerPath.Close()
+	}
+
 }
 
 func (pa *path) wait() {
@@ -155,7 +171,12 @@ func (pa *path) wait() {
 
 // Log implements logger.Writer.
 func (pa *path) Log(level logger.Level, format string, args ...interface{}) {
-	pa.parent.Log(level, "[path "+pa.name+"] "+format, args...)
+	if pa.logStreams {
+		pa.loggerPath.Log(level, "[path "+pa.name+"] "+format, args...)	
+	} else {
+		pa.parent.Log(level, "[path "+pa.name+"] "+format, args...)
+	}
+	
 }
 
 func (pa *path) Name() string {
@@ -240,6 +261,7 @@ func (pa *path) run() {
 	}
 
 	pa.Log(logger.Debug, "destroyed: %v", err)
+	pa.publisher.Max--
 }
 
 func (pa *path) runInner() error {
@@ -820,7 +842,9 @@ func (pa *path) startRecording() {
 					nil)
 			}
 		},
-		Parent: pa,
+		Parent:      pa,
+		Stor:        pa.stor,
+		RecordAudio: pa.conf.RecordAudio,
 	}
 	pa.recordAgent.Initialize()
 }
@@ -951,10 +975,17 @@ func (pa *path) RemovePublisher(req defs.PathRemovePublisherReq) {
 // StartPublisher is called by a publisher.
 func (pa *path) StartPublisher(req defs.PathStartPublisherReq) (*stream.Stream, error) {
 	req.Res = make(chan defs.PathStartPublisherRes)
+	if pa.conf.MaxPublishers != 0 && pa.publisher.Max >= pa.conf.MaxPublishers {
+		return nil, fmt.Errorf("maximum publisher count reached")
+	}
+
 	select {
 	case pa.chStartPublisher <- req:
+
 		res := <-req.Res
+		pa.publisher.Max++
 		return res.Stream, res.Err
+
 	case <-pa.ctx.Done():
 		return nil, fmt.Errorf("terminated")
 	}

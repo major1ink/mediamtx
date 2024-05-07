@@ -93,12 +93,14 @@ type Path struct {
 	SourceOnDemandStartTimeout StringDuration `json:"sourceOnDemandStartTimeout"`
 	SourceOnDemandCloseAfter   StringDuration `json:"sourceOnDemandCloseAfter"`
 	MaxReaders                 int            `json:"maxReaders"`
+	MaxPublishers              int            `json:"maxPublishers"`
 	SRTReadPassphrase          string         `json:"srtReadPassphrase"`
 	Fallback                   string         `json:"fallback"`
 
 	// Record
 	Record                bool           `json:"record"`
-	Playback              *bool          `json:"playback,omitempty"` // deprecated
+	RecordAudio           bool           `json:"recordAudio"`
+	Playback              bool           `json:"playback"`
 	RecordPath            string         `json:"recordPath"`
 	RecordFormat          RecordFormat   `json:"recordFormat"`
 	RecordPartDuration    StringDuration `json:"recordPartDuration"`
@@ -190,6 +192,7 @@ func (pconf *Path) setDefaults() {
 
 	// Record
 	pconf.RecordPath = "./recordings/%path/%Y-%m-%d_%H-%M-%S-%f"
+	pconf.RecordAudio = true
 	pconf.RecordFormat = RecordFormatFMP4
 	pconf.RecordPartDuration = StringDuration(1 * time.Second)
 	pconf.RecordSegmentDuration = 3600 * StringDuration(time.Second)
