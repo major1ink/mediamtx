@@ -386,6 +386,9 @@ func (p *Core) createResources(initial bool) error {
 			return err
 		}
 		p.playbackServer = i
+		
+	}
+	if p.conf.Database.Use {
 		p.dbPool, err = database.CreateDbPool(
 			p.ctx,
 			database.CreatePgxConf(
@@ -394,8 +397,10 @@ func (p *Core) createResources(initial bool) error {
 		)
 		if err != nil {
 			return err
-		}
+		}	
 	}
+	
+
 	if p.pathManager == nil {
 		req := psql.NewReq(p.ctx, p.dbPool)
 		stor := storage.Storage{
