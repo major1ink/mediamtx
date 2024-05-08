@@ -9,11 +9,11 @@
 # Verbosity of the program; available values are "error", "warn", "info", "debug".
 logLevel: debug
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
-logDestinations: [file]
+logDestinations: [stdout]
 # If "file" is in logDestinations, this is the file which will receive the logs.
 logFile: mediamtx.log
 logStreams: yes
-logDirStreams: ./
+logDirStreams: /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/streams/
 # Timeout of read operations.
 readTimeout: 10s
 # Timeout of write operations.
@@ -127,9 +127,9 @@ authJWTJWKS:
 # Global settings -> Control API
 
 # Enable controlling the server through the Control API.
-api: no
+api: yes
 # Address of the Control API listener.
-apiAddress: :9997
+apiAddress: 192.168.250.40:9997
 # Enable TLS/HTTPS on the Control API server.
 apiEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -150,9 +150,9 @@ apiTrustedProxies: []
 # Global settings -> Metrics
 
 # Enable Prometheus-compatible metrics.
-metrics: no
+metrics: yes
 # Address of the metrics HTTP listener.
-metricsAddress: :9998
+metricsAddress: 192.168.250.40:9998
 # Enable TLS/HTTPS on the Metrics server.
 metricsEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -233,7 +233,7 @@ protocols: [udp, multicast, tcp]
 # Available values are "no", "strict", "optional".
 encryption: "no"
 # Address of the TCP/RTSP listener. This is needed only when encryption is "no" or "optional".
-rtspAddress: 0.0.0.0:8554
+rtspAddress: 192.168.250.40:8554
 # Address of the TCP/TLS/RTSPS listener. This is needed only when encryption is "strict" or "optional".
 rtspsAddress: :8322
 # Address of the UDP/RTP listener. This is needed only when "udp" is in protocols.
@@ -455,7 +455,7 @@ pathDefaults:
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
   #/ttttt/%v/%Y-%m-%d/%path-%s-%f
-  recordPath: /home/anton/go/src/github.com/gubka595/video/%Y-%m-%d/%path-%s-%f
+  recordPath: /%Y-%m-%d/%path-%s-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -717,7 +717,7 @@ database:
   # Maximum number of connections
   maxConnections: 1
   # Enable/disable discs from the database for recording
-  dbDrives: no
+  dbDrives: yes
   # Enable/disable the code_mp_contract field to create a record path
   dbUseCodeMP_Contract: no
   # Enable/disable the contract field to create a straem path. Work with useSrise: yes

@@ -53,21 +53,20 @@ type pathManagerParent interface {
 }
 
 type pathManager struct {
-
-	logLevel                  conf.LogLevel
-	logDestinations           []logger.Destination
-	logFile                   string
-	logStreams                bool
-	logDirStreams              string
-	rtspAddress               string
-	authMethods               conf.AuthMethods
-	readTimeout               conf.StringDuration
-	writeTimeout              conf.StringDuration
-	writeQueueSize            int
-	udpMaxPayloadSize         int
-	pathConfs                 map[string]*conf.Path
-	externalCmdPool           *externalcmd.Pool
-	parent                    pathManagerParent
+	logLevel          conf.LogLevel
+	logDestinations   []logger.Destination
+	logFile           string
+	logStreams        bool
+	logDirStreams     string
+	authManager       *auth.Manager
+	rtspAddress       string
+	readTimeout       conf.StringDuration
+	writeTimeout      conf.StringDuration
+	writeQueueSize    int
+	udpMaxPayloadSize int
+	pathConfs         map[string]*conf.Path
+	externalCmdPool   *externalcmd.Pool
+	parent            pathManagerParent
 
 	ctx         context.Context
 	ctxCancel   func()
@@ -398,7 +397,6 @@ func (pm *pathManager) createPath(
 	matches []string,
 ) {
 
-
 	pa := &path{
 		parentCtx:         pm.ctx,
 		logLevel:          pm.logLevel,
@@ -417,10 +415,9 @@ func (pm *pathManager) createPath(
 		stor:              pm.stor,
 		publisher:         &pm.Publisher,
 		logStreams:        pm.logStreams,
-		
 	}
-	if pm.logStreams{
-		logg, err := logger.NewLoggerStream(logger.Level(pm.logLevel), pm.logDestinations, pm.logFile, name,pm.logDirStreams)
+	if pm.logStreams {
+		logg, err := logger.NewLoggerStream(logger.Level(pm.logLevel), pm.logDestinations, pm.logFile, name, pm.logDirStreams)
 		if err != nil {
 			pm.Log(logger.Error, "%s", err)
 		}

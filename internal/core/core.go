@@ -386,16 +386,16 @@ func (p *Core) createResources(initial bool) error {
 			return err
 		}
 		p.playbackServer = i
-	p.dbPool, err = database.CreateDbPool(
-		p.ctx,
-		database.CreatePgxConf(
-			p.conf.Database,
-		),
-	)
-	if err != nil {
-		return err
+		p.dbPool, err = database.CreateDbPool(
+			p.ctx,
+			database.CreatePgxConf(
+				p.conf.Database,
+			),
+		)
+		if err != nil {
+			return err
+		}
 	}
-
 	if p.pathManager == nil {
 		req := psql.NewReq(p.ctx, p.dbPool)
 		stor := storage.Storage{
@@ -414,7 +414,7 @@ func (p *Core) createResources(initial bool) error {
 			if stor.UseSrise {
 				return errors.New("sRise and proxy can't be used at the same time")
 			}
-			p.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataForProxy))
+			p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataForProxy))
 			data, err := stor.Req.SelectData(stor.Sql.GetDataForProxy)
 			if err != nil {
 				return err
@@ -453,7 +453,7 @@ func (p *Core) createResources(initial bool) error {
 
 		if stor.UseSrise {
 			if stor.DbUseContract {
-				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",stor.Sql.GetDataContract))
+				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataContract))
 				data, err := stor.Req.SelectData(stor.Sql.GetDataContract)
 				if err != nil {
 					return err
@@ -507,7 +507,7 @@ func (p *Core) createResources(initial bool) error {
 					return err
 				}
 			} else {
-				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",stor.Sql.GetData))
+				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetData))
 				data, err := stor.Req.SelectData(stor.Sql.GetData)
 				if err != nil {
 					return err
@@ -578,25 +578,22 @@ func (p *Core) createResources(initial bool) error {
 		}
 
 		p.pathManager = &pathManager{
-
-			logLevel:                  p.conf.LogLevel,
-			logDestinations:           p.conf.LogDestinations,
-			logFile:                   p.conf.LogFile,
-			logStreams:                p.conf.LogStreams,
-			logDirStreams:              p.conf.LogDirStreams,
-			externalAuthenticationURL: p.conf.ExternalAuthenticationURL,
-			rtspAddress:               p.conf.RTSPAddress,
-			authMethods:               p.conf.AuthMethods,
-			readTimeout:               p.conf.ReadTimeout,
-			writeTimeout:              p.conf.WriteTimeout,
-			writeQueueSize:            p.conf.WriteQueueSize,
-			udpMaxPayloadSize:         p.conf.UDPMaxPayloadSize,
-			pathConfs:                 p.conf.Paths,
-			externalCmdPool:           p.externalCmdPool,
-			parent:                    p,
-			stor:                      stor,
-			Publisher:                 MaxPub{Max: len(p.conf.Paths) - 1},
-			max:                       p.conf.PathDefaults.MaxPublishers,
+			logLevel:          p.conf.LogLevel,
+			logDestinations:   p.conf.LogDestinations,
+			logFile:           p.conf.LogFile,
+			logStreams:        p.conf.LogStreams,
+			logDirStreams:     p.conf.LogDirStreams,
+			rtspAddress:       p.conf.RTSPAddress,
+			readTimeout:       p.conf.ReadTimeout,
+			writeTimeout:      p.conf.WriteTimeout,
+			writeQueueSize:    p.conf.WriteQueueSize,
+			udpMaxPayloadSize: p.conf.UDPMaxPayloadSize,
+			pathConfs:         p.conf.Paths,
+			externalCmdPool:   p.externalCmdPool,
+			parent:            p,
+			stor:              stor,
+			Publisher:         MaxPub{Max: len(p.conf.Paths) - 1},
+			max:               p.conf.PathDefaults.MaxPublishers,
 		}
 		p.pathManager.initialize()
 
@@ -865,8 +862,8 @@ func (p *Core) createResources(initial bool) error {
 			WebRTCServer:   p.webRTCServer,
 			SRTServer:      p.srtServer,
 			Parent:         p,
-      Publisher:    &p.pathManager.Publisher.Max,
-			Max:          p.conf.PathDefaults.MaxPublishers,
+			Publisher:      &p.pathManager.Publisher.Max,
+			Max:            p.conf.PathDefaults.MaxPublishers,
 		}
 		err = i.Initialize()
 
