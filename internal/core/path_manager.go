@@ -3,6 +3,8 @@ package core
 import (
 	"context"
 	"fmt"
+	"net/netip"
+	"reflect"
 	"sort"
 	"sync"
 
@@ -11,7 +13,10 @@ import (
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/logger"
+
 	"github.com/bluenviron/mediamtx/internal/stream"
+
+	"github.com/bluenviron/mediamtx/internal/storage"
 )
 
 func pathConfCanBeUpdated(oldPathConf *conf.Path, newPathConf *conf.Path) bool {
@@ -49,6 +54,10 @@ type pathManagerParent interface {
 
 type pathManager struct {
 	logLevel          conf.LogLevel
+	logDestinations   []logger.Destination
+	logFile           string
+	logStreams        bool
+	logDirStreams     string
 	authManager       *auth.Manager
 	rtspAddress       string
 	readTimeout       conf.StringDuration
@@ -67,6 +76,7 @@ type pathManager struct {
 	pathsByConf map[string]map[*path]struct{}
 
 	// in
+
 	chReloadConf   chan map[string]*conf.Path
 	chSetHLSServer chan pathManagerHLSServer
 	chClosePath    chan *path
@@ -78,6 +88,10 @@ type pathManager struct {
 	chAddPublisher chan defs.PathAddPublisherReq
 	chAPIPathsList chan pathAPIPathsListReq
 	chAPIPathsGet  chan pathAPIPathsGetReq
+
+	stor      storage.Storage
+	Publisher MaxPub
+	max       int
 }
 
 func (pm *pathManager) initialize() {
@@ -111,6 +125,49 @@ func (pm *pathManager) initialize() {
 	go pm.run()
 }
 
+type bdTable struct {
+	Id             int
+	Login          string
+	Pass           string
+	Ip_address_out netip.Prefix
+	Cam_path       string
+	Code_mp        string
+	State_public   int
+	Status_public  int
+	Contract       string
+	Record         bool
+}
+
+type prohys struct {
+	Ip_address_out string
+	Code_mp        string
+}
+
+func getTypeInt(item interface{}) int {
+
+	t := reflect.TypeOf(item)
+
+	if t.Kind() == reflect.Int8 {
+		return int(item.(int8))
+	}
+
+	if t.Kind() == reflect.Int16 {
+		return int(item.(int16))
+	}
+
+	if t.Kind() == reflect.Int32 {
+		return int(item.(int32))
+	}
+
+	return int(item.(int64))
+}
+
+func getTypeBool(item interface{}) bool {
+
+	s := getTypeInt(item)
+	return s == 1
+}
+
 func (pm *pathManager) close() {
 	pm.Log(logger.Debug, "path manager is shutting down")
 	pm.ctxCancel()
@@ -126,6 +183,7 @@ func (pm *pathManager) run() {
 	defer pm.wg.Done()
 
 outer:
+
 	for {
 		select {
 		case newPaths := <-pm.chReloadConf:
@@ -338,6 +396,7 @@ func (pm *pathManager) createPath(
 	name string,
 	matches []string,
 ) {
+
 	pa := &path{
 		parentCtx:         pm.ctx,
 		logLevel:          pm.logLevel,
@@ -353,8 +412,18 @@ func (pm *pathManager) createPath(
 		wg:                &pm.wg,
 		externalCmdPool:   pm.externalCmdPool,
 		parent:            pm,
+		stor:              pm.stor,
+		publisher:         &pm.Publisher,
+		logStreams:        pm.logStreams,
 	}
-	pa.initialize()
+	if pm.logStreams {
+		logg, err := logger.NewLoggerStream(logger.Level(pm.logLevel), pm.logDestinations, pm.logFile, name, pm.logDirStreams)
+		if err != nil {
+			pm.Log(logger.Error, "%s", err)
+		}
+		pa.loggerPath = logg
+	}
+	pa.initialize(pm.stor, &pm.Publisher)
 
 	pm.paths[name] = pa
 
@@ -368,6 +437,15 @@ func (pm *pathManager) removePath(pa *path) {
 	delete(pm.pathsByConf[pa.confName], pa)
 	if len(pm.pathsByConf[pa.confName]) == 0 {
 		delete(pm.pathsByConf, pa.confName)
+	}
+	if pm.stor.UseUpdaterStatus {
+		query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+		pa.Log(logger.Debug, "SQL status %s", query)
+		err := pm.stor.Req.ExecQuery(query)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+		}
+		pa.Log(logger.Debug, "The request was successfully completed")
 	}
 	delete(pm.paths, pa.name)
 }
@@ -384,6 +462,15 @@ func (pm *pathManager) ReloadPathConfs(pathConfs map[string]*conf.Path) {
 func (pm *pathManager) pathReady(pa *path) {
 	select {
 	case pm.chPathReady <- pa:
+		if pm.stor.UseUpdaterStatus {
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 1, pa.Name())
+			pa.Log(logger.Debug, "SQL status %s", query)
+			err := pm.stor.Req.ExecQuery(query)
+			if err != nil {
+				pa.Log(logger.Error, "%s", err)
+			}
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
 	}
@@ -393,6 +480,15 @@ func (pm *pathManager) pathReady(pa *path) {
 func (pm *pathManager) pathNotReady(pa *path) {
 	select {
 	case pm.chPathNotReady <- pa:
+		if pm.stor.UseUpdaterStatus {
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+			pa.Log(logger.Debug, "SQL status %s", query)
+			err := pm.stor.Req.ExecQuery(query)
+			if err != nil {
+				pa.Log(logger.Error, "%s", err)
+			}
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
 	}
@@ -402,6 +498,15 @@ func (pm *pathManager) pathNotReady(pa *path) {
 func (pm *pathManager) closePath(pa *path) {
 	select {
 	case pm.chClosePath <- pa:
+		if pm.stor.UseUpdaterStatus {
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+			pa.Log(logger.Debug, "SQL status %s", query)
+			err := pm.stor.Req.ExecQuery(query)
+			if err != nil {
+				pa.Log(logger.Error, "%s", err)
+			}
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
 	}

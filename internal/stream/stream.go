@@ -22,8 +22,7 @@ type ReadFunc func(unit.Unit) error
 // Stream is a media stream.
 // It stores tracks, readers and allows to write data to readers.
 type Stream struct {
-	desc *description.Session
-
+	desc          *description.Session
 	bytesReceived *uint64
 	bytesSent     *uint64
 	smedias       map[*description.Media]*streamMedia
@@ -53,6 +52,7 @@ func New(
 		if err != nil {
 			return nil, err
 		}
+
 	}
 
 	return s, nil

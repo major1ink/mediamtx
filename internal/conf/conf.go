@@ -126,6 +126,8 @@ type Conf struct {
 	LogLevel            LogLevel        `json:"logLevel"`
 	LogDestinations     LogDestinations `json:"logDestinations"`
 	LogFile             string          `json:"logFile"`
+  LogStreams                bool            `json:"logStreams"`
+	LogDirStreams             string          `json:"logDirStreams"`
 	ReadTimeout         StringDuration  `json:"readTimeout"`
 	WriteTimeout        StringDuration  `json:"writeTimeout"`
 	ReadBufferCount     *int            `json:"readBufferCount,omitempty"` // deprecated
@@ -248,6 +250,7 @@ type Conf struct {
 
 	// Record (deprecated)
 	Record                *bool           `json:"record,omitempty"`                // deprecated
+	RecordAudio           *bool           `json:"recordAudio,omitempty"`           // deprecated
 	RecordPath            *string         `json:"recordPath,omitempty"`            // deprecated
 	RecordFormat          *RecordFormat   `json:"recordFormat,omitempty"`          // deprecated
 	RecordPartDuration    *StringDuration `json:"recordPartDuration,omitempty"`    // deprecated
@@ -260,6 +263,9 @@ type Conf struct {
 	// Paths
 	OptionalPaths map[string]*OptionalPath `json:"paths"`
 	Paths         map[string]*Path         `json:"-"` // filled by Check()
+
+	// Database
+	Database Database `json:"database"`
 }
 
 func (conf *Conf) setDefaults() {
@@ -396,6 +402,8 @@ func (conf *Conf) setDefaults() {
 	conf.SRTAddress = ":8890"
 
 	conf.PathDefaults.setDefaults()
+
+	conf.Database.setDefaults()
 }
 
 // Load loads a Conf.
@@ -650,6 +658,9 @@ func (conf *Conf) Validate() error {
 	// Record (deprecated)
 	if conf.Record != nil {
 		conf.PathDefaults.Record = *conf.Record
+	}
+	if conf.RecordAudio != nil {
+		conf.PathDefaults.RecordAudio = *conf.RecordAudio
 	}
 	if conf.RecordPath != nil {
 		conf.PathDefaults.RecordPath = *conf.RecordPath
