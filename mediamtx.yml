@@ -73,9 +73,9 @@ authInternalUsers:
   # Default administrator.
   # This allows to use API, metrics and PPROF without authentication,
   # if the IP is localhost.
-- user: any
+- user: 
   pass:
-  ips: ['127.0.0.1', '::1']
+  ips: 
   permissions:
   - action: api
   - action: metrics
@@ -129,16 +129,16 @@ authJWTJWKS:
 # Enable controlling the server through the Control API.
 api: yes
 # Address of the Control API listener.
-apiAddress: 192.168.250.40:9997
+apiAddress: 192.168.250.43:9997
 # Enable TLS/HTTPS on the Control API server.
 apiEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
 # This can be generated with:
 # openssl genrsa -out server.key 2048
 # openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650
-apiServerKey: server.key
+apiServerKey: 
 # Path to the server certificate.
-apiServerCert: server.crt
+apiServerCert: 
 # Value of the Access-Control-Allow-Origin header provided in every HTTP response.
 apiAllowOrigin: '*'
 # List of IPs or CIDRs of proxies placed before the HTTP server.
@@ -152,7 +152,7 @@ apiTrustedProxies: []
 # Enable Prometheus-compatible metrics.
 metrics: yes
 # Address of the metrics HTTP listener.
-metricsAddress: 192.168.250.40:9998
+metricsAddress: 192.168.250.43:9998
 # Enable TLS/HTTPS on the Metrics server.
 metricsEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -233,7 +233,7 @@ protocols: [udp, multicast, tcp]
 # Available values are "no", "strict", "optional".
 encryption: "no"
 # Address of the TCP/RTSP listener. This is needed only when encryption is "no" or "optional".
-rtspAddress: 192.168.250.40:8554
+rtspAddress: 192.168.250.43:8554
 # Address of the TCP/TLS/RTSPS listener. This is needed only when encryption is "strict" or "optional".
 rtspsAddress: :8322
 # Address of the UDP/RTP listener. This is needed only when "udp" is in protocols.
@@ -455,7 +455,7 @@ pathDefaults:
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
   #/ttttt/%v/%Y-%m-%d/%path-%s-%f
-  recordPath: /%Y-%m-%d/%path-%s-%f
+  recordPath: ./%Y-%m-%d/%path-%s-%f
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -717,7 +717,7 @@ database:
   # Maximum number of connections
   maxConnections: 1
   # Enable/disable discs from the database for recording
-  dbDrives: yes
+  dbDrives: no
   # Enable/disable the code_mp_contract field to create a record path
   dbUseCodeMP_Contract: no
   # Enable/disable the contract field to create a straem path. Work with useSrise: yes
