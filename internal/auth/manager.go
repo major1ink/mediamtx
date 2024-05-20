@@ -153,7 +153,6 @@ func (m *Manager) authenticateInner(req *Request) error {
 			}
 		}
 	}
-
 	switch m.Method {
 	case conf.AuthMethodInternal:
 		return m.authenticateInternal(req, &rtspAuthHeader)

@@ -7,12 +7,14 @@ import (
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
+	"github.com/bluenviron/mediamtx/internal/errorSQL"
 )
 
 // Agent writes recordings to disk.
 type Agent struct {
 	WriteQueueSize    int
 	PathFormat        string
+	PathFormats       []string
 	Format            conf.RecordFormat
 	PartDuration      time.Duration
 	SegmentDuration   time.Duration
@@ -32,6 +34,11 @@ type Agent struct {
 
 	Stor        storage.Storage
 	RecordAudio bool
+
+	PathStream string
+	CodeMp     string
+
+	Filesqlerror *errorsql.Filesqlerror
 }
 
 // Initialize initializes Agent.

@@ -1,6 +1,8 @@
 package record
 
-import "syscall"
+import (
+	"syscall"
+)
 
 type DiskStatus struct {
 	// всего места на диске
@@ -67,4 +69,35 @@ func getMostFreeDisk(drives []interface{}) (mostFree string) {
 	}
 
 	return mostFree
+}
+
+func getMostFreeDiskGroup(drives []string) (mostFree string) {
+
+	var min float64
+	infoDisks := allDiskUsagesGroup(drives)
+
+	for _, min = range infoDisks {
+		break
+	}
+
+	for disk, free := range infoDisks {
+		if free > min {
+			continue
+		}
+
+		mostFree, min = disk, free
+	}
+
+	return mostFree
+}
+
+func allDiskUsagesGroup(drives []string) map[string]float64 {
+
+	infoDisks := make(map[string]float64)
+
+	for _, path := range drives {
+		disk := diskUsage(path)
+		infoDisks[path] = (float64(disk.All) - float64(disk.Avail)) / float64(disk.All)
+	}
+	return infoDisks
 }

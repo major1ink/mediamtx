@@ -15,5 +15,6 @@ type Storage struct {
 	UseUpdaterStatus     bool
 	UseSrise             bool
 	UseProxy             bool
+	FileSQLErr           string
 	Sql                  conf.Sql
 }

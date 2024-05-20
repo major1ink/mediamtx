@@ -15,6 +15,7 @@ type Database struct {
 	UseUpdaterStatus     bool   `json:"useUpdaterStatus"`
 	UseSrise             bool   `json:"useSrise"`
 	UseProxy             bool   `json:"useProxy"`
+	FileSQLErr           string `json:"fileSQLErr"`
 	Sql                  Sql    `json:"sql"`
 }
 
@@ -45,6 +46,7 @@ func (db *Database) setDefaults() {
 	db.UseUpdaterStatus = false
 	db.UseSrise = false
 	db.UseProxy = false
+	db.FileSQLErr = "./"
 	db.Sql = Sql{
 		InsertPath:    "",
 		GetPathStream: "",

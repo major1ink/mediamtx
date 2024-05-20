@@ -20,6 +20,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/record"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
+	"github.com/bluenviron/mediamtx/internal/errorSQL"
 )
 
 func emptyTimer() *time.Timer {
@@ -121,12 +122,14 @@ type path struct {
 
 	stor      storage.Storage
 	publisher *MaxPub
+
+	filesqlerror *errorsql.Filesqlerror
 }
 
 func (pa *path) initialize(stor storage.Storage,
 	publisher *MaxPub) {
 	ctx, ctxCancel := context.WithCancel(pa.parentCtx)
-
+	
 	pa.ctx = ctx
 	pa.ctxCancel = ctxCancel
 	pa.readers = make(map[defs.Reader]struct{})
@@ -159,7 +162,7 @@ func (pa *path) close() {
 	pa.publisher.Max--
 	pa.ctxCancel()
 	pa.Log(logger.Debug, "closed")
-	if pa.logStreams{
+	if pa.logStreams {
 		pa.loggerPath.Close()
 	}
 
@@ -172,11 +175,11 @@ func (pa *path) wait() {
 // Log implements logger.Writer.
 func (pa *path) Log(level logger.Level, format string, args ...interface{}) {
 	if pa.logStreams {
-		pa.loggerPath.Log(level, "[path "+pa.name+"] "+format, args...)	
+		pa.loggerPath.Log(level, "[path "+pa.name+"] "+format, args...)
 	} else {
 		pa.parent.Log(level, "[path "+pa.name+"] "+format, args...)
 	}
-	
+
 }
 
 func (pa *path) Name() string {
@@ -809,11 +812,13 @@ func (pa *path) startRecording() {
 	pa.recordAgent = &record.Agent{
 		WriteQueueSize:  pa.writeQueueSize,
 		PathFormat:      pa.conf.RecordPath,
+		PathFormats:     pa.conf.RecordPaths,
 		Format:          pa.conf.RecordFormat,
 		PartDuration:    time.Duration(pa.conf.RecordPartDuration),
 		SegmentDuration: time.Duration(pa.conf.RecordSegmentDuration),
 		PathName:        pa.name,
 		Stream:          pa.stream,
+		Filesqlerror: pa.filesqlerror,
 		OnSegmentCreate: func(segmentPath string) {
 			if pa.conf.RunOnRecordSegmentCreate != "" {
 				env := pa.ExternalCmdEnv()
@@ -845,6 +850,59 @@ func (pa *path) startRecording() {
 		Parent:      pa,
 		Stor:        pa.stor,
 		RecordAudio: pa.conf.RecordAudio,
+	}
+
+	pa.recordAgent.StreamName = pa.recordAgent.PathName
+	paths := strings.Split(pa.recordAgent.PathName, "/")
+	if len(paths) > 1 {
+		pa.recordAgent.StreamName = paths[len(paths)-1]
+	}
+	var err error
+
+	if pa.recordAgent.Stor.Use {
+		for {
+			if pa.recordAgent.Stor.DbUseCodeMP_Contract && pa.recordAgent.Stor.UseDbPathStream {
+				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName)))
+				pa.recordAgent.CodeMp, err = pa.recordAgent.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName))
+				if err != nil {
+					pa.Log(logger.Error, "%s", err)
+					time.Sleep(15 * time.Second)
+					continue
+				}
+				pa.Log(logger.Debug, "The result of executing the sql query: %s", pa.recordAgent.CodeMp)
+				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName)))
+				pa.recordAgent.PathStream, err = pa.recordAgent.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName))
+				if err != nil {
+					pa.Log(logger.Error, "%s", err)
+					time.Sleep(15 * time.Second)
+					continue
+				}
+				pa.Log(logger.Debug, "The result of executing the sql query: %s", pa.recordAgent.PathStream)
+			} else {
+				if pa.recordAgent.Stor.DbUseCodeMP_Contract {
+					pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName)))
+					pa.recordAgent.CodeMp, err = pa.recordAgent.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName))
+					if err != nil {
+						pa.Log(logger.Error, "%s", err)
+						time.Sleep(15 * time.Second)
+						continue
+					}
+					pa.Log(logger.Debug, "The result of executing the sql query: %s", pa.recordAgent.CodeMp)
+				}
+				if pa.recordAgent.Stor.UseDbPathStream {
+					pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName)))
+					pa.recordAgent.PathStream, err = pa.recordAgent.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName))
+					if err != nil {
+						pa.Log(logger.Error, "%s", err)
+						time.Sleep(15 * time.Second)
+						continue
+					}
+					pa.Log(logger.Debug, "The result of executing the sql query: %s", pa.recordAgent.PathStream)
+				}
+			}
+			break
+		}
+
 	}
 	pa.recordAgent.Initialize()
 }

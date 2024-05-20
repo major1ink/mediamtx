@@ -126,8 +126,8 @@ type Conf struct {
 	LogLevel            LogLevel        `json:"logLevel"`
 	LogDestinations     LogDestinations `json:"logDestinations"`
 	LogFile             string          `json:"logFile"`
-  LogStreams                bool            `json:"logStreams"`
-	LogDirStreams             string          `json:"logDirStreams"`
+	LogStreams          bool            `json:"logStreams"`
+	LogDirStreams       string          `json:"logDirStreams"`
 	ReadTimeout         StringDuration  `json:"readTimeout"`
 	WriteTimeout        StringDuration  `json:"writeTimeout"`
 	ReadBufferCount     *int            `json:"readBufferCount,omitempty"` // deprecated
@@ -249,9 +249,10 @@ type Conf struct {
 	SRTAddress string `json:"srtAddress"`
 
 	// Record (deprecated)
-	Record                *bool           `json:"record,omitempty"`                // deprecated
-	RecordAudio           *bool           `json:"recordAudio,omitempty"`           // deprecated
-	RecordPath            *string         `json:"recordPath,omitempty"`            // deprecated
+	Record                *bool           `json:"record,omitempty"`      // deprecated
+	RecordAudio           *bool           `json:"recordAudio,omitempty"` // deprecated
+	RecordPath            *string         `json:"recordPath,omitempty"`        
+	RecordPaths           *[]string         `json:"recordPaths,omitempty"`              
 	RecordFormat          *RecordFormat   `json:"recordFormat,omitempty"`          // deprecated
 	RecordPartDuration    *StringDuration `json:"recordPartDuration,omitempty"`    // deprecated
 	RecordSegmentDuration *StringDuration `json:"recordSegmentDuration,omitempty"` // deprecated
@@ -654,7 +655,6 @@ func (conf *Conf) Validate() error {
 			return fmt.Errorf("at least one between 'webrtcIPsFromInterfaces' or 'webrtcAdditionalHosts' must be filled")
 		}
 	}
-
 	// Record (deprecated)
 	if conf.Record != nil {
 		conf.PathDefaults.Record = *conf.Record
@@ -664,6 +664,9 @@ func (conf *Conf) Validate() error {
 	}
 	if conf.RecordPath != nil {
 		conf.PathDefaults.RecordPath = *conf.RecordPath
+	}
+	if conf.RecordPaths != nil {
+		conf.PathDefaults.RecordPaths = *conf.RecordPaths
 	}
 	if conf.RecordFormat != nil {
 		conf.PathDefaults.RecordFormat = *conf.RecordFormat
