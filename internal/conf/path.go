@@ -102,6 +102,7 @@ type Path struct {
 	RecordAudio           bool           `json:"recordAudio"`
 	Playback              bool           `json:"playback"`
 	RecordPath            string         `json:"recordPath"`
+	RecordPaths           []string        `json:"recordPaths"`   
 	RecordFormat          RecordFormat   `json:"recordFormat"`
 	RecordPartDuration    StringDuration `json:"recordPartDuration"`
 	RecordSegmentDuration StringDuration `json:"recordSegmentDuration"`

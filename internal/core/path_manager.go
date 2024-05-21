@@ -17,6 +17,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/stream"
 
 	"github.com/bluenviron/mediamtx/internal/storage"
+	"github.com/bluenviron/mediamtx/internal/errorSQL"
 )
 
 func pathConfCanBeUpdated(oldPathConf *conf.Path, newPathConf *conf.Path) bool {
@@ -92,6 +93,8 @@ type pathManager struct {
 	stor      storage.Storage
 	Publisher MaxPub
 	max       int
+
+	filesqlerror *errorsql.Filesqlerror
 }
 
 func (pm *pathManager) initialize() {
@@ -309,7 +312,6 @@ func (pm *pathManager) doDescribe(req defs.PathDescribeReq) {
 		req.Res <- defs.PathDescribeRes{Err: err}
 		return
 	}
-
 	err = pm.authManager.Authenticate(req.AccessRequest.ToAuthRequest())
 	if err != nil {
 		req.Res <- defs.PathDescribeRes{Err: err}
@@ -330,7 +332,6 @@ func (pm *pathManager) doAddReader(req defs.PathAddReaderReq) {
 		req.Res <- defs.PathAddReaderRes{Err: err}
 		return
 	}
-
 	if !req.AccessRequest.SkipAuth {
 		err = pm.authManager.Authenticate(req.AccessRequest.ToAuthRequest())
 		if err != nil {
@@ -423,6 +424,7 @@ func (pm *pathManager) createPath(
 		}
 		pa.loggerPath = logg
 	}
+	pa.filesqlerror = pm.filesqlerror
 	pa.initialize(pm.stor, &pm.Publisher)
 
 	pm.paths[name] = pa

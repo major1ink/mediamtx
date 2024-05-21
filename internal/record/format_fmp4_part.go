@@ -56,63 +56,31 @@ func (p *formatFMP4Part) initialize() {
 
 func (p *formatFMP4Part) close() error {
 	if p.s.fi == nil {
-
 		if p.s.f.a.stor.DbDrives {
-			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", p.s.f.a.stor.Sql.GetDrives))
-			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
-			if err != nil {
-				return err
-			}
-			p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
-			drives := []interface{}{}
-			for _, line := range data {
-				drives = append(drives, line[0].(string))
-			}
-			p.s.f.a.free = getMostFreeDisk(drives)
-
-			if p.s.f.a.stor.DbUseCodeMP_Contract && p.s.f.a.stor.UseDbPathStream {
-				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName)))
-				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
+			// проверка на использование бд, если бд не используеться будет записываться по локальным путям
+			if p.s.f.a.stor.Use {
+				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", p.s.f.a.stor.Sql.GetDrives))
+				data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
 				if err != nil {
-					return err
+					//записываем ошибку в лог и пробуем создать путь по локальному пути
+					p.s.f.a.agent.Log(logger.Error, "%v", err)
+					p.localCreatePath()
+				} else {
+					p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
+					drives := []interface{}{}
+					for _, line := range data {
+						drives = append(drives, line[0].(string))
+					}
+					p.s.f.a.free = getMostFreeDisk(drives)
+					p.dbCreatingPaths()
 				}
-				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.codeMp )
-				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName)))
-				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
-				if err != nil {
-					return err
-				}
-				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.pathStream )
-				p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.codeMp, p.s.f.a.pathStream)
-			}
-
-			if p.s.f.a.stor.UseDbPathStream {
-				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s",fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName)))
-				p.s.f.a.pathStream, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
-				if err != nil {
-					return err
-				}
-				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.pathStream )
-				p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.pathStream)
-			}
-
-			if p.s.f.a.stor.DbUseCodeMP_Contract {
-				p.s.f.a.agent.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName)))
-				p.s.f.a.codeMp, err = p.s.f.a.stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
-				if err != nil {
-					return err
-				}
-				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s",p.s.f.a.codeMp )
-				p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.codeMp)
-			}
-
-			if !p.s.f.a.stor.DbUseCodeMP_Contract && !p.s.f.a.stor.UseDbPathStream {
-				p.s.path = fmt.Sprintf(p.s.f.a.free + Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat))
+			} else {
+				p.localCreatePath()
 			}
 		} else {
-			p.s.path = Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat)
+			p.localCreatePath()
 		}
-		
+
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 
 		err := os.MkdirAll(filepath.Dir(p.s.path), 0o755)
@@ -129,54 +97,41 @@ func (p *formatFMP4Part) close() error {
 			paths := strings.Split(p.s.path, "/")
 			pathRec := strings.Join(paths[:len(paths)-1], "/")
 			if p.s.f.a.stor.UseDbPathStream {
-				
-				p.s.f.a.agent.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(
+				query :=  fmt.Sprintf(
 					p.s.f.a.stor.Sql.InsertPath,
 					pathRec+"/",
 					paths[len(paths)-1],
 					p.s.f.a.timeStart,
-					p.s.f.a.pathStream,
+					p.s.f.a.agent.PathStream,
 					p.s.f.a.free,
-				)))
-				err := p.s.f.a.stor.Req.ExecQuery(
-					fmt.Sprintf(
-						p.s.f.a.stor.Sql.InsertPath,
-						pathRec+"/",
-						paths[len(paths)-1],
-						p.s.f.a.timeStart,
-						p.s.f.a.pathStream,
-						p.s.f.a.free,
-					),
 				)
+				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
+				err := p.s.f.a.stor.Req.ExecQuery(query)
 				if err != nil {
-					os.Remove(p.s.path)
-					return err
+					p.s.f.a.agent.Log(logger.Error, "%v", err)
+					message := []byte(query + "\n")
+					p.s.f.a.agent.Filesqlerror.SavingRequest(p.s.f.a.stor.FileSQLErr, message)
+				} else {
+					p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 				}
-				p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 			} else {
-				p.s.f.a.agent.Log(logger.Debug,fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(
+				query := fmt.Sprintf(
 					p.s.f.a.stor.Sql.InsertPath,
 					pathRec+"/",
 					paths[len(paths)-1],
 					p.s.f.a.timeStart,
 					p.s.f.a.agent.PathName,
 					p.s.f.a.free,
-				)))
-				err := p.s.f.a.stor.Req.ExecQuery(
-					fmt.Sprintf(
-						p.s.f.a.stor.Sql.InsertPath,
-						pathRec+"/",
-						paths[len(paths)-1],
-						p.s.f.a.timeStart,
-						p.s.f.a.agent.PathName,
-						p.s.f.a.free,
-					),
 				)
+				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
+				err := p.s.f.a.stor.Req.ExecQuery(query)
 				if err != nil {
-					os.Remove(p.s.path)
-					return err
+					p.s.f.a.agent.Log(logger.Error, "%v", err)
+					message := []byte(query + "\n")
+					p.s.f.a.agent.Filesqlerror.SavingRequest(p.s.f.a.stor.FileSQLErr, message)
+				} else {
+					p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 				}
-				p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 			}
 
 		}
@@ -213,4 +168,36 @@ func (p *formatFMP4Part) record(track *formatFMP4Track, sample *sample) error {
 
 func (p *formatFMP4Part) duration() time.Duration {
 	return p.endDTS - p.startDTS
+}
+
+func (p *formatFMP4Part) dbCreatingPaths() {
+	if p.s.f.a.stor.DbUseCodeMP_Contract && p.s.f.a.stor.UseDbPathStream {
+		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.agent.CodeMp, p.s.f.a.agent.PathStream)
+	}
+
+	if p.s.f.a.stor.UseDbPathStream {
+		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.agent.PathStream)
+	}
+
+	if p.s.f.a.stor.DbUseCodeMP_Contract {
+		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.agent.CodeMp)
+	}
+
+	if !p.s.f.a.stor.DbUseCodeMP_Contract && !p.s.f.a.stor.UseDbPathStream {
+		p.s.path = fmt.Sprintf(p.s.f.a.free + Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat))
+	}
+}
+
+func (p *formatFMP4Part) localCreatePath() {
+	if len(p.s.f.a.agent.PathFormats) == 0 {
+		p.s.path = Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat)
+	} else {
+		if p.s.f.a.stor.Use {
+			p.s.f.a.free = getMostFreeDiskGroup(p.s.f.a.agent.PathFormats)
+			p.dbCreatingPaths()
+		} else {
+			p.s.f.a.free = getMostFreeDiskGroup(p.s.f.a.agent.PathFormats)
+			p.s.path = fmt.Sprintf(p.s.f.a.free + Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat))
+		}
+	}
 }

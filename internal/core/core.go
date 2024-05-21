@@ -40,13 +40,14 @@ import (
 	"github.com/bluenviron/mediamtx/internal/servers/webrtc"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/storage/psql"
+	"github.com/bluenviron/mediamtx/internal/errorSQL"
 )
 
 type MaxPub struct {
 	Max int
 }
 
-var version = "v1.5.1-8"
+var version = "v1.8.1-1"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -123,6 +124,8 @@ type Core struct {
 
 	// out
 	done chan struct{}
+
+	filesqlerror *errorsql.Filesqlerror
 }
 
 // New allocates a Core.
@@ -165,7 +168,6 @@ func New(args []string) (*Core, bool) {
 		fmt.Printf("ERR: %s\n", err)
 		return nil, false
 	}
-
 	err = p.createResources(true)
 	if err != nil {
 		if p.logger != nil {
@@ -277,7 +279,7 @@ func (p *Core) createResources(initial bool) error {
 			return err
 		}
 	}
-
+	p.filesqlerror = errorsql.CreateFilesqlerror()
 	if initial {
 		p.Log(logger.Info, "MediaMTX %s", version)
 
@@ -386,7 +388,7 @@ func (p *Core) createResources(initial bool) error {
 			return err
 		}
 		p.playbackServer = i
-		
+
 	}
 	if p.conf.Database.Use {
 		p.dbPool, err = database.CreateDbPool(
@@ -397,9 +399,8 @@ func (p *Core) createResources(initial bool) error {
 		)
 		if err != nil {
 			return err
-		}	
+		}
 	}
-	
 
 	if p.pathManager == nil {
 		req := psql.NewReq(p.ctx, p.dbPool)
@@ -413,6 +414,7 @@ func (p *Core) createResources(initial bool) error {
 			UseUpdaterStatus:     p.conf.Database.UseUpdaterStatus,
 			UseSrise:             p.conf.Database.UseSrise,
 			UseProxy:             p.conf.Database.UseProxy,
+			FileSQLErr:           p.conf.Database.FileSQLErr,
 			Sql:                  p.conf.Database.Sql,
 		}
 		if stor.UseProxy {
@@ -588,6 +590,7 @@ func (p *Core) createResources(initial bool) error {
 			logFile:           p.conf.LogFile,
 			logStreams:        p.conf.LogStreams,
 			logDirStreams:     p.conf.LogDirStreams,
+			authManager:       p.authManager,
 			rtspAddress:       p.conf.RTSPAddress,
 			readTimeout:       p.conf.ReadTimeout,
 			writeTimeout:      p.conf.WriteTimeout,
@@ -599,6 +602,7 @@ func (p *Core) createResources(initial bool) error {
 			stor:              stor,
 			Publisher:         MaxPub{Max: len(p.conf.Paths) - 1},
 			max:               p.conf.PathDefaults.MaxPublishers,
+			filesqlerror:      p.filesqlerror,
 		}
 		p.pathManager.initialize()
 
@@ -1247,6 +1251,9 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 
 	if closeDB && p.dbPool != nil {
 		database.ClosePool(p.dbPool)
+	}
+	if p.filesqlerror.File!=nil{
+		p.filesqlerror.CloseFile()
 	}
 }
 

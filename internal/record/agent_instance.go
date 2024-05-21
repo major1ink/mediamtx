@@ -34,14 +34,11 @@ type agentInstance struct {
 	stor        storage.Storage
 	recordAudio bool
 	free        string
-	pathStream  string
-	codeMp      string
 	endTime     string
 	timeStart   string
 }
 
 func (a *agentInstance) initialize() {
-	a.agent.StreamName = a.agent.PathName
 	a.pathFormat = a.agent.PathFormat
 
 	a.pathFormat = PathAddExtension(
@@ -54,10 +51,7 @@ func (a *agentInstance) initialize() {
 
 	a.writer = asyncwriter.New(a.agent.WriteQueueSize, a.agent)
 
-	paths := strings.Split(a.agent.PathName, "/")
-	if len(paths) > 1 {
-		a.agent.StreamName = paths[len(paths)-1]
-	}
+
 
 	switch a.agent.Format {
 	case conf.RecordFormatMPEGTS:

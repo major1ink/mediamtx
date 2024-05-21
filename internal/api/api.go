@@ -312,7 +312,6 @@ func (a *API) middlewareOrigin(ctx *gin.Context) {
 
 func (a *API) middlewareAuth(ctx *gin.Context) {
 	user, pass, hasCredentials := ctx.Request.BasicAuth()
-
 	err := a.AuthManager.Authenticate(&auth.Request{
 		User:   user,
 		Pass:   pass,
