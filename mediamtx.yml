@@ -12,7 +12,9 @@ logLevel: debug
 logDestinations: [file]
 # If "file" is in logDestinations, this is the file which will receive the logs.
 logFile: mediamtx.log
+# Enabling the creation of separate log files by streams
 logStreams: yes
+# The path for creating log files by streams is specified, if the path is empty, log files will be created along the path of the main log file
 logDirStreams: /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/streams/
 # Timeout of read operations.
 readTimeout: 10s
@@ -456,7 +458,7 @@ pathDefaults:
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
   #/ttttt/%v/%Y-%m-%d/%path-%s-%f
   recordPath: /%v/%Y-%m-%d/%path-%s-%f
-  
+  # if the db Drive s field is "no", then local paths for saving video files are specified.
   recordPaths: 
     - /media/anton/Tom2/video
     - /media/anton/Tom/video
@@ -735,8 +737,9 @@ database:
   useSrise: no
   # Enable/disable the server start with proxy streams from the database.
   useProxy: no
-  # SQL queryes 
+  # Specifies the path and file name to save the file with outstanding sql queries
   fileSQLErr: ./SQL_ERROR.txt
+    # SQL queryes 
   sql:
     # SQL query to insert video record
     # EXAMPLE insertPath: "INSERT INTO \"video_record\" (\"stream\", \"path_record\", \"file_name\", \"date_time_start\") VALUES ('%s', '%s', '%s', '%s')" 
