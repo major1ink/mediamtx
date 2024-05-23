@@ -1,0 +1,60 @@
+2024/05/22 13:32:23 INF MediaMTX v1.8.1-1
+2024/05/22 13:32:23 INF configuration loaded from /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.yml
+2024/05/22 13:32:23 ERR listen tcp 192.168.250.43:9998: bind: cannot assign requested address
+2024/05/22 13:32:23 INF waiting for running hooks
+2024/05/22 13:32:44 INF MediaMTX v1.8.1-1
+2024/05/22 13:32:44 INF configuration loaded from /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.yml
+2024/05/22 13:32:44 ERR listen tcp 192.168.250.43:9998: bind: cannot assign requested address
+2024/05/22 13:32:44 INF waiting for running hooks
+2024/05/22 13:33:12 INF MediaMTX v1.8.1-1
+2024/05/22 13:33:12 INF configuration loaded from /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.yml
+2024/05/22 13:33:12 ERR listen tcp 192.168.250.43:9998: bind: cannot assign requested address
+2024/05/22 13:33:12 INF waiting for running hooks
+2024/05/22 13:33:13 INF MediaMTX v1.8.1-1
+2024/05/22 13:33:13 INF configuration loaded from /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.yml
+2024/05/22 13:33:13 ERR listen tcp 192.168.250.43:9998: bind: cannot assign requested address
+2024/05/22 13:33:13 INF waiting for running hooks
+2024/05/22 13:34:28 INF MediaMTX v1.8.1-1
+2024/05/22 13:34:28 INF configuration loaded from /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.yml
+2024/05/22 13:34:28 ERR listen tcp 192.168.250.43:9998: bind: cannot assign requested address
+2024/05/22 13:34:28 INF waiting for running hooks
+2024/05/22 13:35:35 INF MediaMTX v1.8.1-1
+2024/05/22 13:35:35 INF configuration loaded from /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.yml
+2024/05/22 13:35:35 INF [metrics] listener opened on 192.168.250.40:9998
+2024/05/22 13:35:35 DEB path manager created
+2024/05/22 13:35:35 INF [RTSP] listener opened on 192.168.250.40:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/05/22 13:35:35 INF [RTMP] listener opened on :1935
+2024/05/22 13:35:35 INF [HLS] listener opened on :8888
+2024/05/22 13:35:35 INF [WebRTC] listener opened on :8889 (HTTP), :8189 (ICE/UDP)
+2024/05/22 13:35:35 INF [SRT] listener opened on :8890 (UDP)
+2024/05/22 13:35:35 INF [API] listener opened on 192.168.250.40:9997
+2024/05/22 13:36:13 INF shutting down gracefully
+2024/05/22 13:36:13 INF [API] listener is closing
+2024/05/22 13:36:13 INF [SRT] listener is closing
+2024/05/22 13:36:13 INF [WebRTC] listener is closing
+2024/05/22 13:36:13 INF [HLS] listener is closing
+2024/05/22 13:36:13 INF [RTMP] listener is closing
+2024/05/22 13:36:13 INF [RTSP] listener is closing
+2024/05/22 13:36:13 DEB path manager is shutting down
+2024/05/22 13:36:13 INF [metrics] listener is closing
+2024/05/22 13:36:13 INF waiting for running hooks
+2024/05/22 13:37:39 INF MediaMTX v1.8.1-1
+2024/05/22 13:37:39 INF configuration loaded from /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/mediamtx.yml
+2024/05/22 13:37:39 INF [metrics] listener opened on 192.168.250.40:9998
+2024/05/22 13:37:39 DEB path manager created
+2024/05/22 13:37:39 INF [RTSP] listener opened on 192.168.250.40:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/05/22 13:37:39 INF [RTMP] listener opened on :1935
+2024/05/22 13:37:39 INF [HLS] listener opened on :8888
+2024/05/22 13:37:39 INF [WebRTC] listener opened on :8889 (HTTP), :8189 (ICE/UDP)
+2024/05/22 13:37:39 INF [SRT] listener opened on :8890 (UDP)
+2024/05/22 13:37:39 INF [API] listener opened on 192.168.250.40:9997
+2024/05/22 13:37:54 INF shutting down gracefully
+2024/05/22 13:37:54 INF [API] listener is closing
+2024/05/22 13:37:54 INF [SRT] listener is closing
+2024/05/22 13:37:54 INF [WebRTC] listener is closing
+2024/05/22 13:37:54 INF [HLS] listener is closing
+2024/05/22 13:37:54 INF [RTMP] listener is closing
+2024/05/22 13:37:54 INF [RTSP] listener is closing
+2024/05/22 13:37:54 DEB path manager is shutting down
+2024/05/22 13:37:54 INF [metrics] listener is closing
+2024/05/22 13:37:54 INF waiting for running hooks

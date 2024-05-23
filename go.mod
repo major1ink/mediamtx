@@ -35,8 +35,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/chenzhuoyu/iasm v0.9.0 // indirect
-
 require (
 	github.com/asticode/go-astikit v0.42.0 // indirect
 	github.com/asticode/go-astits v1.13.0 // indirect

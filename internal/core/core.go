@@ -26,6 +26,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/confwatcher"
 	"github.com/bluenviron/mediamtx/internal/database"
+	errorsql "github.com/bluenviron/mediamtx/internal/errorSQL"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/metrics"
@@ -40,7 +41,6 @@ import (
 	"github.com/bluenviron/mediamtx/internal/servers/webrtc"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/storage/psql"
-	"github.com/bluenviron/mediamtx/internal/errorSQL"
 )
 
 type MaxPub struct {
@@ -414,6 +414,8 @@ func (p *Core) createResources(initial bool) error {
 			UseUpdaterStatus:     p.conf.Database.UseUpdaterStatus,
 			UseSrise:             p.conf.Database.UseSrise,
 			UseProxy:             p.conf.Database.UseProxy,
+			Login:                p.conf.Database.Login,
+			Pass:                 p.conf.Database.Pass,
 			FileSQLErr:           p.conf.Database.FileSQLErr,
 			Sql:                  p.conf.Database.Sql,
 		}
@@ -443,7 +445,7 @@ func (p *Core) createResources(initial bool) error {
 			"name": "%s",
 			"source": "%s",
 			"sourceOnDemand": true,
-		}`, i.Code_mp, fmt.Sprintf("rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@%v/%s", i.Ip_address_out, i.Code_mp)))
+		}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v/%s", stor.Login, stor.Pass, i.Ip_address_out, i.Code_mp)))
 				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
 				if err != nil {
 					return err
@@ -1252,7 +1254,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 	if closeDB && p.dbPool != nil {
 		database.ClosePool(p.dbPool)
 	}
-	if p.filesqlerror.File!=nil{
+	if p.filesqlerror.File != nil {
 		p.filesqlerror.CloseFile()
 	}
 }

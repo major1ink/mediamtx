@@ -131,7 +131,7 @@ authJWTJWKS:
 # Enable controlling the server through the Control API.
 api: yes
 # Address of the Control API listener.
-apiAddress: 192.168.250.43:9997
+apiAddress: 192.168.250.40:9997
 # Enable TLS/HTTPS on the Control API server.
 apiEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -154,7 +154,7 @@ apiTrustedProxies: []
 # Enable Prometheus-compatible metrics.
 metrics: yes
 # Address of the metrics HTTP listener.
-metricsAddress: 192.168.250.43:9998
+metricsAddress: 192.168.250.40:9998
 # Enable TLS/HTTPS on the Metrics server.
 metricsEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -235,7 +235,7 @@ protocols: [udp, multicast, tcp]
 # Available values are "no", "strict", "optional".
 encryption: "no"
 # Address of the TCP/RTSP listener. This is needed only when encryption is "no" or "optional".
-rtspAddress: 192.168.250.43:8554
+rtspAddress: 192.168.250.40:8554
 # Address of the TCP/TLS/RTSPS listener. This is needed only when encryption is "strict" or "optional".
 rtspsAddress: :8322
 # Address of the UDP/RTP listener. This is needed only when "udp" is in protocols.
@@ -737,6 +737,8 @@ database:
   useSrise: no
   # Enable/disable the server start with proxy streams from the database.
   useProxy: no
+  login:
+  pass:
   # Specifies the path and file name to save the file with outstanding sql queries
   fileSQLErr: ./SQL_ERROR.txt
     # SQL queryes 
