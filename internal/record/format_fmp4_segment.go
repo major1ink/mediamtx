@@ -78,8 +78,6 @@ func (s *formatFMP4Segment) close() error {
 
 					if err4 != nil {
 						if err4.Error() == "context canceled" {
-							s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
 							if err4 != nil {
 								s.f.a.agent.Log(logger.Error, "%v", err4)

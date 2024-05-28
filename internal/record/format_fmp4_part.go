@@ -66,13 +66,18 @@ func (p *formatFMP4Part) close() error {
 					p.s.f.a.agent.Log(logger.Error, "%v", err)
 					p.localCreatePath()
 				} else {
-					p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
-					drives := []interface{}{}
-					for _, line := range data {
-						drives = append(drives, line[0].(string))
+					p.s.f.a.agent.Log(logger.Debug, "ERROR: The result of executing the sql query: %v", data)
+					if len(data) == 0 {
+						p.localCreatePath()
+					} else {
+						drives := []interface{}{}
+						for _, line := range data {
+							drives = append(drives, line[0].(string))
+						}
+						p.s.f.a.free = getMostFreeDisk(drives)
+						p.dbCreatingPaths()
 					}
-					p.s.f.a.free = getMostFreeDisk(drives)
-					p.dbCreatingPaths()
+
 				}
 			} else {
 				p.localCreatePath()
@@ -97,7 +102,7 @@ func (p *formatFMP4Part) close() error {
 			paths := strings.Split(p.s.path, "/")
 			pathRec := strings.Join(paths[:len(paths)-1], "/")
 			if p.s.f.a.stor.UseDbPathStream {
-				query :=  fmt.Sprintf(
+				query := fmt.Sprintf(
 					p.s.f.a.stor.Sql.InsertPath,
 					pathRec+"/",
 					paths[len(paths)-1],

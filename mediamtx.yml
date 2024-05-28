@@ -760,7 +760,7 @@ database:
     # L6
     # updateSize: "UPDATE \"video_record\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'"
     # request to get a list of discs to burn
-    getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='3' AND sd.\"state\"='0' AND sd.\"status\"='0' ORDER BY sd.\"mount_point\"111111111111111111111111111111111111111"
+    getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='3' AND sd.\"state\"='0' AND sd.\"status\"='4' ORDER BY sd.\"mount_point\""
     # request to update stream statuses
     # L3
     updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"

@@ -47,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.1-1"
+var version = "v1.8.1-2"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",

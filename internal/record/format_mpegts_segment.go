@@ -56,8 +56,6 @@ func (s *formatMPEGTSSegment) close() error {
 
 					if err4 != nil {
 						if err4.Error() == "context canceled" {
-							s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
 							if err4 != nil {
 								s.f.a.agent.Log(logger.Error, "%v", err4)
@@ -98,12 +96,18 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 					s.localCreatePath()
 				} else {
 					s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
-					drives := []interface{}{}
-					for _, line := range data {
-						drives = append(drives, line[0].(string))
+					if len(data) == 0 {
+						s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
+						s.localCreatePath()
+					}else {
+						drives := []interface{}{}
+						for _, line := range data {
+							drives = append(drives, line[0].(string))
+						}
+						s.f.a.free = getMostFreeDisk(drives)
+						s.dbCreatingPaths()
 					}
-					s.f.a.free = getMostFreeDisk(drives)
-					s.dbCreatingPaths()
+					
 				}
 
 			} else {
