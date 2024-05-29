@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
@@ -98,49 +97,6 @@ func (p *formatFMP4Part) close() error {
 			return err
 		}
 		p.s.f.a.timeStart = p.s.startNTP.Format("2006-01-02 15:04:05")
-		if p.s.f.a.stor.Use {
-			paths := strings.Split(p.s.path, "/")
-			pathRec := strings.Join(paths[:len(paths)-1], "/")
-			if p.s.f.a.stor.UseDbPathStream {
-				query := fmt.Sprintf(
-					p.s.f.a.stor.Sql.InsertPath,
-					pathRec+"/",
-					paths[len(paths)-1],
-					p.s.f.a.timeStart,
-					p.s.f.a.agent.PathStream,
-					p.s.f.a.free,
-				)
-				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-				err := p.s.f.a.stor.Req.ExecQuery(query)
-				if err != nil {
-					p.s.f.a.agent.Log(logger.Error, "%v", err)
-					message := []byte(query + "\n")
-					p.s.f.a.agent.Filesqlerror.SavingRequest(p.s.f.a.stor.FileSQLErr, message)
-				} else {
-					p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
-				}
-			} else {
-				query := fmt.Sprintf(
-					p.s.f.a.stor.Sql.InsertPath,
-					pathRec+"/",
-					paths[len(paths)-1],
-					p.s.f.a.timeStart,
-					p.s.f.a.agent.PathName,
-					p.s.f.a.free,
-				)
-				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-				err := p.s.f.a.stor.Req.ExecQuery(query)
-				if err != nil {
-					p.s.f.a.agent.Log(logger.Error, "%v", err)
-					message := []byte(query + "\n")
-					p.s.f.a.agent.Filesqlerror.SavingRequest(p.s.f.a.stor.FileSQLErr, message)
-				} else {
-					p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
-				}
-			}
-
-		}
-
 		p.s.f.a.agent.OnSegmentCreate(p.s.path)
 
 		err = writeInit(fi, p.s.f.tracks)

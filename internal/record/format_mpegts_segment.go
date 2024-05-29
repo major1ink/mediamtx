@@ -44,31 +44,50 @@ func (s *formatMPEGTSSegment) close() error {
 
 				if err3 == nil {
 					paths := strings.Split(s.path, "/")
-					query := fmt.Sprintf(
-						s.f.a.stor.Sql.UpdateSize,
-						fmt.Sprint(stat.Size()),
-						s.f.a.endTime,
-						paths[len(paths)-1],
-					)
+					pathRec := strings.Join(paths[:len(paths)-1], "/")
+					var query string
+					if s.f.a.stor.UseDbPathStream {
+						query = fmt.Sprintf(
+							s.f.a.stor.Sql.InsertPath,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.agent.PathStream,
+							s.f.a.endTime,
+							s.f.a.free,
+						)
+					} else {
+						query = fmt.Sprintf(
+							s.f.a.stor.Sql.InsertPath,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.agent.PathName,
+							s.f.a.endTime,
+							s.f.a.free,
+						)	
+					}
+
 					s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-
 					err4 := s.f.a.stor.Req.ExecQuery(query)
-
+				
 					if err4 != nil {
 						if err4.Error() == "context canceled" {
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
 							if err4 != nil {
 								s.f.a.agent.Log(logger.Error, "%v", err4)
-								message := []byte(query + "\n")
-								s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, message)
+								errsql:= s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+								s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 								return err4
 							}
 							s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 							return err
 						}
 						s.f.a.agent.Log(logger.Error, "%v", err4)
-						message := []byte(query + "\n")
-						s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, message)
+						errsql:= s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+						s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 						return err
 					}
 					s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
@@ -99,7 +118,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 					if len(data) == 0 {
 						s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
 						s.localCreatePath()
-					}else {
+					} else {
 						drives := []interface{}{}
 						for _, line := range data {
 							drives = append(drives, line[0].(string))
@@ -107,7 +126,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 						s.f.a.free = getMostFreeDisk(drives)
 						s.dbCreatingPaths()
 					}
-					
+
 				}
 
 			} else {
@@ -129,52 +148,6 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 		fi, err := os.Create(s.path)
 		if err != nil {
 			return 0, err
-		}
-
-		if s.f.a.stor.Use {
-			paths := strings.Split(s.path, "/")
-			pathRec := strings.Join(paths[:len(paths)-1], "/")
-			if s.f.a.stor.UseDbPathStream {
-				query := fmt.Sprintf(
-					s.f.a.stor.Sql.InsertPath,
-					pathRec+"/",
-					paths[len(paths)-1],
-					s.f.a.timeStart,
-					s.f.a.agent.PathStream,
-				s.f.a.free,
-				)
-				s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-
-				err := s.f.a.stor.Req.ExecQuery(query)
-
-				if err != nil {
-					s.f.a.agent.Log(logger.Error, "%v", err)
-					message := []byte(query + "\n")
-					s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, message)
-				} else {
-					s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
-				}
-
-			} else {
-				query := fmt.Sprintf(
-					s.f.a.stor.Sql.InsertPath,
-					pathRec+"/",
-					paths[len(paths)-1],
-					s.f.a.timeStart,
-					s.f.a.agent.PathName,
-					s.f.a.free,
-				)
-				s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-				err := s.f.a.stor.Req.ExecQuery(query)
-				if err != nil {
-					s.f.a.agent.Log(logger.Error, "%v", err)
-					message := []byte(query + "\n")
-					s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, message)
-				} else {
-					s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
-				}
-			}
-
 		}
 
 		s.f.a.agent.OnSegmentCreate(s.path)

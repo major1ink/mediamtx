@@ -4,6 +4,8 @@ package logger
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -12,9 +14,9 @@ import (
 
 // Logger is a log handler.
 type Logger struct {
-	level                  Level
-	destinations           []destination
-	mutex                  sync.Mutex
+	level        Level
+	destinations []destination
+	mutex        sync.Mutex
 }
 
 // New allocates a log handler.
@@ -29,6 +31,10 @@ func New(level Level, destinations []Destination, filePath string) (*Logger, err
 			lh.destinations = append(lh.destinations, newDestionationStdout())
 
 		case DestinationFile:
+			err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
+			if err != nil {
+				return nil, err
+			}
 			dest, err := newDestinationFile(filePath)
 			if err != nil {
 				lh.Close()

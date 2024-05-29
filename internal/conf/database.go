@@ -25,7 +25,6 @@ type Sql struct {
 	InsertPath      string `json:"insertPath"`
 	GetPathStream   string `json:"getPathStream"`
 	GetCodeMP       string `json:"getCodeMP"`
-	UpdateSize      string `json:"updateSize"`
 	GetDrives       string `json:"getDrives"`
 	UpdateStatus    string `json:"updateStatus"`
 	GetData         string `json:"getData"`
@@ -54,7 +53,6 @@ func (db *Database) setDefaults() {
 	db.Sql = Sql{
 		InsertPath:    "",
 		GetPathStream: "",
-		UpdateSize:    "",
 		GetDrives:     "",
 		GetCodeMP:     "",
 		UpdateStatus:  "",

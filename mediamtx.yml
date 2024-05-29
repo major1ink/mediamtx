@@ -11,11 +11,11 @@ logLevel: debug
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
 logDestinations: [file]
 # If "file" is in logDestinations, this is the file which will receive the logs.
-logFile: mediamtx.log
+logFile: ./log/mediamtx.log
 # Enabling the creation of separate log files by streams
 logStreams: yes
 # The path for creating log files by streams is specified, if the path is empty, log files will be created along the path of the main log file
-logDirStreams: /home/major/go/src/github.com/major1ink/bluenviron/mediamtx/streams/
+logDirStreams: 
 # Timeout of read operations.
 readTimeout: 10s
 # Timeout of write operations.
@@ -131,7 +131,7 @@ authJWTJWKS:
 # Enable controlling the server through the Control API.
 api: yes
 # Address of the Control API listener.
-apiAddress: 192.168.250.40:9997
+apiAddress: 192.168.250.43:9997
 # Enable TLS/HTTPS on the Control API server.
 apiEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -154,7 +154,7 @@ apiTrustedProxies: []
 # Enable Prometheus-compatible metrics.
 metrics: yes
 # Address of the metrics HTTP listener.
-metricsAddress: 192.168.250.40:9998
+metricsAddress: 192.168.250.43:9998
 # Enable TLS/HTTPS on the Metrics server.
 metricsEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -235,7 +235,7 @@ protocols: [udp, multicast, tcp]
 # Available values are "no", "strict", "optional".
 encryption: "no"
 # Address of the TCP/RTSP listener. This is needed only when encryption is "no" or "optional".
-rtspAddress: 192.168.250.40:8554
+rtspAddress: 192.168.250.43:8554
 # Address of the TCP/TLS/RTSPS listener. This is needed only when encryption is "strict" or "optional".
 rtspsAddress: :8322
 # Address of the UDP/RTP listener. This is needed only when "udp" is in protocols.
@@ -449,7 +449,7 @@ pathDefaults:
 
   # Record streams to disk.
 
-  record: yes
+  record: no
   # Save audio from stream.
   recordAudio: no
 
@@ -740,23 +740,19 @@ database:
   login:
   pass:
   # Specifies the path and file name to save the file with outstanding sql queries
-  fileSQLErr: ./SQL_ERROR.txt
+  fileSQLErr: ./sqlerrrrrrr/SQL_ERROR.txt
     # SQL queryes 
   sql:
     # SQL query to insert video record
     # EXAMPLE insertPath: "INSERT INTO \"video_record\" (\"stream\", \"path_record\", \"file_name\", \"date_time_start\") VALUES ('%s', '%s', '%s', '%s')" 
     # L3
-    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\", \"stream\", \"id_storage\") VALUES ('%s', '%s','%s','%s', '4'22222222)"
-    # L6
+    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"stream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))123"
+     # L6
     # insertPath: "INSERT INTO \"video_record\" (\"path_record\", \"file_name\",\"date_time_start\", \"code_mp_cam\", \"id_storage\") VALUES ('%s', '%s','%s','%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))"
     #
     getPathStream: "SELECT \"codeMP\" FROM \"DataDevice\" WHERE \"UID\" = '%s'"
     # equest to get a code_mp_contract
     getCodeMP: "SELECT \"code_mp_contract\" FROM \"public\".\"mount_place_cam\" WHERE \"code_mp_cam\" = '%s'"
-    # SQL query to update video record
-    # EXAMPLE updateSize: "UPDATE \"video_record\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'" 
-    # L3
-    updateSize: "UPDATE \"VideoRecord\" SET \"file_size\"='%s', \"end_record_time\"='%s' WHERE \"fileName\"='%s'"
     # L6
     # updateSize: "UPDATE \"video_record\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'"
     # request to get a list of discs to burn

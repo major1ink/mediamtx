@@ -22,12 +22,14 @@ func NewLoggerStream(level Level, destinations []Destination, filePath string, n
 				filePath = fmt.Sprintf("%s_%s.log", strings.Split(filePath, ".log")[0], nameStream)
 			} else {
 				if _, err := os.Stat(logdir); os.IsNotExist(err) {
-					errf = fmt.Errorf("the %s directory does not exist", logdir)
-					filePath = fmt.Sprintf("%s_%s.log", strings.Split(filePath, ".log")[0], nameStream)
+					err := os.MkdirAll(logdir, os.ModePerm)
+					if err != nil {
+						filePath = fmt.Sprintf("%s_%s.log", strings.Split(filePath, ".log")[0], nameStream)
+					}
+					filePath = fmt.Sprintf("%s/%s_%s.log", logdir, strings.Split(strings.Split(filePath, ".log")[0], "/")[len(strings.Split(filePath, "/"))-1], nameStream)
 				} else {
 					filePath = fmt.Sprintf("%s/%s_%s.log", logdir, strings.Split(strings.Split(filePath, ".log")[0], "/")[len(strings.Split(filePath, "/"))-1], nameStream)
 				}
-
 			}
 			dest, err := newDestinationFile(filePath)
 			if err != nil {
