@@ -11,11 +11,11 @@ logLevel: debug
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
 logDestinations: [file]
 # If "file" is in logDestinations, this is the file which will receive the logs.
-logFile: ./log/mediamtx.log
+logFile: ./mediamtx.log
 # Enabling the creation of separate log files by streams
 logStreams: yes
 # The path for creating log files by streams is specified, if the path is empty, log files will be created along the path of the main log file
-logDirStreams: 
+logDirStreams: ./logs/
 # Timeout of read operations.
 readTimeout: 10s
 # Timeout of write operations.
