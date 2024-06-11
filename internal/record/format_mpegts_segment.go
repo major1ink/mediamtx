@@ -124,10 +124,10 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 						s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
 						s.localCreatePath()
 					} else {
-						idDisks := make(map[string]int32)
+						idDisks := make(map[string]int16)
 						drives := []interface{}{}
 						for _, line := range data {
-							idDisks[line[1].(string)] = line[0].(int32)
+							idDisks[line[1].(string)] = line[0].(int16)
 							drives = append(drives, line[1].(string))
 						}
 						s.f.a.free = getMostFreeDisk(drives)
@@ -191,12 +191,7 @@ func (s *formatMPEGTSSegment) localCreatePath() {
 	} else {
 		if s.f.a.stor.Use {
 			s.f.a.free = getMostFreeDiskGroup(s.f.a.agent.PathFormats)
-			for id, path := range s.f.a.agent.PathFormats {
-				if s.f.a.free == path {
-					s.f.a.idDsk = id
-					break
-				}
-			}
+			s.f.a.idDsk = s.f.a.agent.PathFormats[s.f.a.free]
 			s.dbCreatingPaths()
 		} else {
 			s.f.a.free = getMostFreeDiskGroup(s.f.a.agent.PathFormats)
