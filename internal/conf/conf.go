@@ -249,10 +249,11 @@ type Conf struct {
 	SRTAddress string `json:"srtAddress"`
 
 	// Record (deprecated)
-	Record                *bool           `json:"record,omitempty"`      // deprecated
-	RecordAudio           *bool           `json:"recordAudio,omitempty"` // deprecated
-	RecordPath            *string         `json:"recordPath,omitempty"`        
-	RecordPaths           *[]string         `json:"recordPaths,omitempty"`              
+	Record      *bool           `json:"record,omitempty"`      // deprecated
+	RecordAudio *bool           `json:"recordAudio,omitempty"` // deprecated
+	RecordPath  *string         `json:"recordPath,omitempty"`
+	RecordPaths *map[string]string `json:"recordPaths,omitempty"`
+
 	RecordFormat          *RecordFormat   `json:"recordFormat,omitempty"`          // deprecated
 	RecordPartDuration    *StringDuration `json:"recordPartDuration,omitempty"`    // deprecated
 	RecordSegmentDuration *StringDuration `json:"recordSegmentDuration,omitempty"` // deprecated

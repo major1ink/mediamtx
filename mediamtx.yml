@@ -460,9 +460,9 @@ pathDefaults:
   recordPath: /%v/%Y-%m-%d/%path-%s-%f
   # if the db Drive s field is "no", then local paths for saving video files are specified.
   recordPaths: 
-    - /media/anton/Tom2/video
-    - /media/anton/Tom/video
-    - /home/anton/go/video
+    "99": /media/anton/Tom2/video
+    "98": /media/anton/Tom/video
+    "97": /home/anton/go/video
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -740,13 +740,13 @@ database:
   login:
   pass:
   # Specifies the path and file name to save the file with outstanding sql queries
-  fileSQLErr: ./sqlerrrrrrr/SQL_ERROR.txt
+  fileSQLErr: ./sqlerr/SQL_ERROR.txt
     # SQL queryes 
   sql:
     # SQL query to insert video record
     # EXAMPLE insertPath: "INSERT INTO \"video_record\" (\"stream\", \"path_record\", \"file_name\", \"date_time_start\") VALUES ('%s', '%s', '%s', '%s')" 
     # L3
-    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"stream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))123"
+    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"stream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
      # L6
     # insertPath: "INSERT INTO \"video_record\" (\"path_record\", \"file_name\",\"date_time_start\", \"code_mp_cam\", \"id_storage\") VALUES ('%s', '%s','%s','%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))"
     #
@@ -756,17 +756,22 @@ database:
     # L6
     # updateSize: "UPDATE \"video_record\" SET \"file_size\"='%s', \"date_time_end\"='%s' WHERE \"file_name\"='%s'"
     # request to get a list of discs to burn
-    getDrives: "SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='3' AND sd.\"state\"='0' AND sd.\"status\"='4' ORDER BY sd.\"mount_point\""
+    getDrives: "SELECT sd.\"id\", sd.\"mount_point\" FROM \"storage_disks\" sd,\"storage_servers\" ss WHERE ss.\"state\"='3' AND sd.\"state\"='3' AND sd.\"status\"='3' ORDER BY sd.\"mount_point\""
+    # SELECT sd.\"mount_point\" FROM \"storage_disks\" sd JOIN \"storage_servers\" ss ON ss.\"id\"=sd.\"id_storage\" WHERE ss.\"state\"='3' AND sd.\"state\"='0' AND sd.\"status\"='4' ORDER BY sd.\"mount_point\"
+    # 
     # request to update stream statuses
     # L3
     updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"
     # L6
     # updateStatus: "UPDATE public.\"videocameras\" SET \"status_public\"='%d' WHERE \"code_mp\"='%s'"
     # request for a list of streams
-    getData: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" ISNULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" ISNULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" ISNULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" ISNULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" ISNULL THEN '0' ELSE vc.\"status_public\" END), vcont.\"record_status\" FROM \"public\".\"videocameras\" vc JOIN \"mount_place_cam\" mpc ON vc.\"code_mp\"=mpc.\"code_mp_cam\" JOIN \"video_contract\" vcont ON mpc.\"code_mp_contract\" = vcont.\"code_mp\" WHERE vc.\"cam_path\" NOTNULL AND vc.\"state_public\" = '1'"
+    getData: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" IS NULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" IS NULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" IS NULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" IS NULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" IS NULL THEN '0' ELSE vc.\"status_public\" END), vcont.\"record_status\" FROM \"public\".\"videocameras\" vc, \"mount_place_cam\" mpc, \"video_contract\" vcont WHERE vc.\"code_mp\"=mpc.\"code_mp_cam\" AND mpc.\"code_mp_contract\" = vcont.\"code_mp\" AND vc.\"cam_path\" IS NOT NULL AND vc.\"state_public\" = '1'"
+     #SELECT vc.\"id\", (CASE WHEN vc.\"login\" ISNULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" ISNULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" ISNULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" ISNULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" ISNULL THEN '0' ELSE vc.\"status_public\" END), vcont.\"record_status\" FROM \"public\".\"videocameras\" vc JOIN \"mount_place_cam\" mpc ON vc.\"code_mp\"=mpc.\"code_mp_cam\" JOIN \"video_contract\" vcont ON mpc.\"code_mp_contract\" = vcont.\"code_mp\" WHERE vc.\"cam_path\" NOTNULL AND vc.\"state_public\" = '1'
     #
-    getDataContract: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" ISNULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" ISNULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" ISNULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" ISNULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" ISNULL THEN '0' ELSE vc.\"status_public\" END), mpc.\"code_mp_contract\", vcont.\"record_status\" FROM \"public\".\"videocameras\" vc JOIN \"public\".\"mount_place_cam\" mpc ON vc.\"code_mp\"=mpc.\"code_mp_cam\" JOIN \"video_contract\" vcont ON mpc.\"code_mp_contract\" = vcont.\"code_mp\" WHERE vc.\"cam_path\" NOTNULL AND vc.\"state_public\" = '1'"
+    getDataContract: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" IS NULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" IS NULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\",  (CASE WHEN vc.\"cam_path\" IS NULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" IS NULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" IS NULL THEN '0' ELSE vc.\"status_public\" END), mpc.\"code_mp_contract\", vcont.\"record_status\" FROM \"public\".\"videocameras\" vc, \"public\".\"mount_place_cam\" mpc, \"public\".\"video_contract\" vcont WHERE vc.\"code_mp\" = mpc.\"code_mp_cam\" AND mpc.\"code_mp_contract\" = vcont.\"code_mp\" AND vc.\"cam_path\" IS NOT NULL AND vc.\"state_public\" = '1'"
+    #SELECT vc.\"id\", (CASE WHEN vc.\"login\" ISNULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" ISNULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" ISNULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" ISNULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" ISNULL THEN '0' ELSE vc.\"status_public\" END), mpc.\"code_mp_contract\", vcont.\"record_status\" FROM \"public\".\"videocameras\" vc JOIN \"public\".\"mount_place_cam\" mpc ON vc.\"code_mp\"=mpc.\"code_mp_cam\" JOIN \"video_contract\" vcont ON mpc.\"code_mp_contract\" = vcont.\"code_mp\" WHERE vc.\"cam_path\" NOTNULL AND vc.\"state_public\" = '1'
+    # 
     # for l3
-    getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp JOIN \"DataDevice\" dd ON vp.\"Stream\" = dd.\"UID\" JOIN \"MountPlace\" mp ON dd.\"codeMP\" = mp.\"codeMP\" JOIN \"video_servers\" vs ON mp.\"id_video_servers\" = vs.\"id\" WHERE vp.\"StatePublic\" = '1' LIMIT 20"    
-
-
+    getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp, \"DataDevice\" dd, \"MountPlace\" mp, \"video_servers\" vs WHERE vp.\"Stream\" = dd.\"UID\" AND dd.\"codeMP\" = mp.\"codeMP\" AND mp.\"id_video_servers\" = vs.\"id\" AND vp.\"StatePublic\" = '1' LIMIT 20"
+    #SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp JOIN \"DataDevice\" dd ON vp.\"Stream\" = dd.\"UID\" JOIN \"MountPlace\" mp ON dd.\"codeMP\" = mp.\"codeMP\" JOIN \"video_servers\" vs ON mp.\"id_video_servers\" = vs.\"id\" WHERE vp.\"StatePublic\" = '1' LIMIT 20    
+     # 

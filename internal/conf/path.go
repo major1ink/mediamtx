@@ -98,11 +98,12 @@ type Path struct {
 	Fallback                   string         `json:"fallback"`
 
 	// Record
-	Record                bool           `json:"record"`
-	RecordAudio           bool           `json:"recordAudio"`
-	Playback              bool           `json:"playback"`
-	RecordPath            string         `json:"recordPath"`
-	RecordPaths           []string        `json:"recordPaths"`   
+	Record      bool           `json:"record"`
+	RecordAudio bool           `json:"recordAudio"`
+	Playback    bool           `json:"playback"`
+	RecordPath  string         `json:"recordPath"`
+	RecordPaths map[string]string `json:"recordPaths"`
+
 	RecordFormat          RecordFormat   `json:"recordFormat"`
 	RecordPartDuration    StringDuration `json:"recordPartDuration"`
 	RecordSegmentDuration StringDuration `json:"recordSegmentDuration"`

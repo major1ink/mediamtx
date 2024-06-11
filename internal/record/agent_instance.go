@@ -36,6 +36,7 @@ type agentInstance struct {
 	free        string
 	endTime     string
 	timeStart   string
+	idDsk string
 }
 
 func (a *agentInstance) initialize() {

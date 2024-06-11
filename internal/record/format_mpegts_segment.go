@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -55,7 +56,7 @@ func (s *formatMPEGTSSegment) close() error {
 							fmt.Sprint(stat.Size()),
 							s.f.a.agent.PathStream,
 							s.f.a.endTime,
-							s.f.a.free,
+							s.f.a.idDsk,
 						)
 					} else {
 						query = fmt.Sprintf(
@@ -66,19 +67,19 @@ func (s *formatMPEGTSSegment) close() error {
 							fmt.Sprint(stat.Size()),
 							s.f.a.agent.PathName,
 							s.f.a.endTime,
-							s.f.a.free,
-						)	
+							s.f.a.idDsk,
+						)
 					}
 
 					s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
 					err4 := s.f.a.stor.Req.ExecQuery(query)
-				
+
 					if err4 != nil {
 						if err4.Error() == "context canceled" {
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
 							if err4 != nil {
 								s.f.a.agent.Log(logger.Error, "%v", err4)
-								errsql:= s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+								errsql := s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
 								if errsql != nil {
 									s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 								}
@@ -88,7 +89,7 @@ func (s *formatMPEGTSSegment) close() error {
 							return err
 						}
 						s.f.a.agent.Log(logger.Error, "%v", err4)
-						errsql:= s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+						errsql := s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
 						if errsql != nil {
 							s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 						}
@@ -123,11 +124,15 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 						s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
 						s.localCreatePath()
 					} else {
+						idDisks := make(map[string]int32)
 						drives := []interface{}{}
 						for _, line := range data {
-							drives = append(drives, line[0].(string))
+							idDisks[line[1].(string)] = line[0].(int32)
+							drives = append(drives, line[1].(string))
 						}
 						s.f.a.free = getMostFreeDisk(drives)
+						s.f.a.idDsk = strconv.Itoa(int(idDisks[s.f.a.free]))
+
 						s.dbCreatingPaths()
 					}
 
@@ -186,10 +191,17 @@ func (s *formatMPEGTSSegment) localCreatePath() {
 	} else {
 		if s.f.a.stor.Use {
 			s.f.a.free = getMostFreeDiskGroup(s.f.a.agent.PathFormats)
+			for id, path := range s.f.a.agent.PathFormats {
+				if s.f.a.free == path {
+					s.f.a.idDsk = id
+					break
+				}
+			}
 			s.dbCreatingPaths()
 		} else {
 			s.f.a.free = getMostFreeDiskGroup(s.f.a.agent.PathFormats)
 			s.path = fmt.Sprintf(s.f.a.free + Path{Start: s.startNTP}.Encode(s.f.a.pathFormat))
+			s.f.a.idDsk = "0"
 		}
 	}
 }

@@ -14,7 +14,7 @@ import (
 type Agent struct {
 	WriteQueueSize    int
 	PathFormat        string
-	PathFormats       []string
+	PathFormats       map[string]string
 	Format            conf.RecordFormat
 	PartDuration      time.Duration
 	SegmentDuration   time.Duration

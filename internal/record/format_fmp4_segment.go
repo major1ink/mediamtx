@@ -78,7 +78,7 @@ func (s *formatFMP4Segment) close() error {
 							fmt.Sprint(stat.Size()),
 							s.f.a.agent.PathStream,
 							s.f.a.endTime,
-							s.f.a.free,
+							s.f.a.idDsk,
 						)
 					} else {
 						query = fmt.Sprintf(
@@ -89,7 +89,7 @@ func (s *formatFMP4Segment) close() error {
 							fmt.Sprint(stat.Size()),
 							s.f.a.agent.PathName,
 							s.f.a.endTime,
-							s.f.a.free,
+							s.f.a.idDsk,
 						)
 					}
 

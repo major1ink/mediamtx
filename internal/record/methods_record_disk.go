@@ -71,7 +71,7 @@ func getMostFreeDisk(drives []interface{}) (mostFree string) {
 	return mostFree
 }
 
-func getMostFreeDiskGroup(drives []string) (mostFree string) {
+func getMostFreeDiskGroup(drives   map[string]string) (mostFree string) {
 
 	var min float64
 	infoDisks := allDiskUsagesGroup(drives)
@@ -91,7 +91,7 @@ func getMostFreeDiskGroup(drives []string) (mostFree string) {
 	return mostFree
 }
 
-func allDiskUsagesGroup(drives []string) map[string]float64 {
+func allDiskUsagesGroup(drives   map[string]string) map[string]float64 {
 
 	infoDisks := make(map[string]float64)
 
