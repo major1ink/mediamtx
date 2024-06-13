@@ -11,6 +11,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/logger"
+
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
@@ -86,12 +87,15 @@ type Server struct {
 	muxers     map[string]*muxer
 
 	// in
+
 	chPathReady    chan defs.Path
 	chPathNotReady chan defs.Path
 	chGetMuxer     chan serverGetMuxerReq
 	chCloseMuxer   chan *muxer
 	chAPIMuxerList chan serverAPIMuxersListReq
 	chAPIMuxerGet  chan serverAPIMuxersGetReq
+
+	// stor storage.Storage
 }
 
 // Initialize initializes the server.
@@ -119,6 +123,7 @@ func (s *Server) Initialize() error {
 		pathManager:    s.PathManager,
 		parent:         s,
 	}
+
 	err := s.httpServer.initialize()
 	if err != nil {
 		ctxCancel()

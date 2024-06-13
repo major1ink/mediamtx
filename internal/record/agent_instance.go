@@ -9,6 +9,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/asyncwriter"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/storage"
 )
 
 type sample struct {
@@ -26,6 +27,12 @@ type agentInstance struct {
 
 	terminate chan struct{}
 	done      chan struct{}
+
+	stor        storage.Storage
+	recordAudio bool
+	free        string
+	endTime     string
+	timeStart   string
 }
 
 func (a *agentInstance) initialize() {
@@ -40,6 +47,8 @@ func (a *agentInstance) initialize() {
 	a.done = make(chan struct{})
 
 	a.writer = asyncwriter.New(a.agent.WriteQueueSize, a.agent)
+
+
 
 	switch a.agent.Format {
 	case conf.RecordFormatMPEGTS:
