@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
@@ -66,15 +66,19 @@ func (p *formatFMP4Part) close() error {
 					p.s.f.a.agent.Log(logger.Error, "%v", err)
 					p.localCreatePath()
 				} else {
-					p.s.f.a.agent.Log(logger.Debug, "ERROR: The result of executing the sql query: %v", data)
+					p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
 					if len(data) == 0 {
+						p.s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
 						p.localCreatePath()
 					} else {
+						idDisks := make(map[string]int32)
 						drives := []interface{}{}
 						for _, line := range data {
-							drives = append(drives, line[0].(string))
+							idDisks[line[1].(string)] = line[0].(int32)
+							drives = append(drives, line[1].(string))
 						}
 						p.s.f.a.free = getMostFreeDisk(drives)
+						p.s.f.a.idDsk = strconv.Itoa(int(idDisks[p.s.f.a.free]))
 						p.dbCreatingPaths()
 					}
 
@@ -98,49 +102,6 @@ func (p *formatFMP4Part) close() error {
 			return err
 		}
 		p.s.f.a.timeStart = p.s.startNTP.Format("2006-01-02 15:04:05")
-		if p.s.f.a.stor.Use {
-			paths := strings.Split(p.s.path, "/")
-			pathRec := strings.Join(paths[:len(paths)-1], "/")
-			if p.s.f.a.stor.UseDbPathStream {
-				query := fmt.Sprintf(
-					p.s.f.a.stor.Sql.InsertPath,
-					pathRec+"/",
-					paths[len(paths)-1],
-					p.s.f.a.timeStart,
-					p.s.f.a.agent.PathStream,
-					p.s.f.a.free,
-				)
-				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-				err := p.s.f.a.stor.Req.ExecQuery(query)
-				if err != nil {
-					p.s.f.a.agent.Log(logger.Error, "%v", err)
-					message := []byte(query + "\n")
-					p.s.f.a.agent.Filesqlerror.SavingRequest(p.s.f.a.stor.FileSQLErr, message)
-				} else {
-					p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
-				}
-			} else {
-				query := fmt.Sprintf(
-					p.s.f.a.stor.Sql.InsertPath,
-					pathRec+"/",
-					paths[len(paths)-1],
-					p.s.f.a.timeStart,
-					p.s.f.a.agent.PathName,
-					p.s.f.a.free,
-				)
-				p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
-				err := p.s.f.a.stor.Req.ExecQuery(query)
-				if err != nil {
-					p.s.f.a.agent.Log(logger.Error, "%v", err)
-					message := []byte(query + "\n")
-					p.s.f.a.agent.Filesqlerror.SavingRequest(p.s.f.a.stor.FileSQLErr, message)
-				} else {
-					p.s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
-				}
-			}
-
-		}
-
 		p.s.f.a.agent.OnSegmentCreate(p.s.path)
 
 		err = writeInit(fi, p.s.f.tracks)
@@ -199,10 +160,17 @@ func (p *formatFMP4Part) localCreatePath() {
 	} else {
 		if p.s.f.a.stor.Use {
 			p.s.f.a.free = getMostFreeDiskGroup(p.s.f.a.agent.PathFormats)
+			for id, path := range p.s.f.a.agent.PathFormats {
+				if p.s.f.a.free == path {
+					p.s.f.a.idDsk = id
+					break
+				}
+			}
 			p.dbCreatingPaths()
 		} else {
 			p.s.f.a.free = getMostFreeDiskGroup(p.s.f.a.agent.PathFormats)
 			p.s.path = fmt.Sprintf(p.s.f.a.free + Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat))
+			p.s.f.a.idDsk = "0"
 		}
 	}
 }

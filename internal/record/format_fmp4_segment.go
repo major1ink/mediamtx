@@ -71,11 +71,32 @@ func (s *formatFMP4Segment) close() error {
 				stat, err3 := os.Stat(s.path)
 				if err3 == nil {
 					paths := strings.Split(s.path, "/")
-					query := fmt.Sprintf(
-						s.f.a.stor.Sql.UpdateSize,
-						fmt.Sprint(stat.Size()),
-						s.f.a.endTime,
-						paths[len(paths)-1])
+					pathRec := strings.Join(paths[:len(paths)-1], "/")
+					var query string
+					if s.f.a.stor.UseDbPathStream {
+						query = fmt.Sprintf(
+							s.f.a.stor.Sql.InsertPath,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.agent.PathStream,
+							s.f.a.endTime,
+							s.f.a.idDsk,
+						)
+					} else {
+						query = fmt.Sprintf(
+							s.f.a.stor.Sql.InsertPath,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.agent.PathName,
+							s.f.a.endTime,
+							s.f.a.idDsk,
+						)
+					}
+
 					s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
 
 					err4 := s.f.a.stor.Req.ExecQuery(query)
@@ -85,16 +106,21 @@ func (s *formatFMP4Segment) close() error {
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
 							if err4 != nil {
 								s.f.a.agent.Log(logger.Error, "%v", err4)
-								message := []byte(query + "\n")
-								s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, message)
+								errsql := s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+								if errsql != nil {
+									s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
+								}
+
 								return err4
 							}
 							s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 							return err
 						}
 						s.f.a.agent.Log(logger.Error, "%v", err4)
-						message := []byte(query + "\n")
-						s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, message)
+						errsql := s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+						if errsql != nil {
+							s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
+						}
 						return err
 					}
 					s.f.a.agent.Log(logger.Debug, "The request was successfully completed")

@@ -47,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.1-2"
+var version = "v1.8.1-4"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -1132,7 +1132,6 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.Database.DbPassword != p.conf.Database.DbPassword ||
 		newConf.Database.MaxConnections != p.conf.Database.MaxConnections ||
 		newConf.Database.Sql.InsertPath != p.conf.Database.Sql.InsertPath ||
-		newConf.Database.Sql.UpdateSize != p.conf.Database.Sql.UpdateSize ||
 		closePathManager
 
 	if newConf == nil && p.confWatcher != nil {
