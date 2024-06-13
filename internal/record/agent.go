@@ -10,6 +10,12 @@ import (
 	"github.com/bluenviron/mediamtx/internal/errorSQL"
 )
 
+// OnSegmentCreateFunc is the prototype of the function passed as OnSegmentCreate
+type OnSegmentCreateFunc = func(path string)
+
+// OnSegmentCompleteFunc is the prototype of the function passed as OnSegmentComplete
+type OnSegmentCompleteFunc = func(path string, duration time.Duration)
+
 // Agent writes recordings to disk.
 type Agent struct {
 	WriteQueueSize    int
@@ -21,8 +27,8 @@ type Agent struct {
 	PathName          string
 	StreamName        string
 	Stream            *stream.Stream
-	OnSegmentCreate   OnSegmentFunc
-	OnSegmentComplete OnSegmentFunc
+	OnSegmentCreate   OnSegmentCreateFunc
+	OnSegmentComplete OnSegmentCompleteFunc
 	Parent            logger.Writer
 
 	restartPause time.Duration
@@ -48,7 +54,7 @@ func (w *Agent) Initialize() {
 		}
 	}
 	if w.OnSegmentComplete == nil {
-		w.OnSegmentComplete = func(string) {
+		w.OnSegmentComplete = func(string, time.Duration) {
 		}
 	}
 	if w.restartPause == 0 {

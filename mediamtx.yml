@@ -120,7 +120,7 @@ authHTTPExclude:
 #     }
 #   ]
 # }
-# Users are then expected to pass the JWT as a query parameter, i.e. ?jwt=...
+# Users are expected to pass the JWT in the Authorization header or as a query parameter.
 # This is the JWKS URL that will be used to pull (once) the public key that allows
 # to validate JWTs.
 authJWTJWKS:
@@ -334,6 +334,9 @@ hlsSegmentMaxSize: 50M
 # This decreases performance, since reading from disk is less performant than
 # reading from RAM, but allows to save RAM.
 hlsDirectory: ''
+# The muxer will be closed when there are no
+# reader requests and this amount of time has passed.
+hlsMuxerCloseAfter: 60s
 
 ###############################################
 # Global settings -> WebRTC server
@@ -383,6 +386,10 @@ webrtcICEServers2: []
   # username: ''
   # password: ''
   # clientOnly: false
+# Time to wait for the WebRTC handshake to complete.
+webrtcHandshakeTimeout: 10s
+# Maximum time to gather video tracks.
+webrtcTrackGatherTimeout: 2s
 
 ###############################################
 # Global settings -> SRT server
@@ -685,6 +692,7 @@ pathDefaults:
   # * G1, G2, ...: regular expression groups, if path name is
   #   a regular expression.
   # * MTX_SEGMENT_PATH: segment file path
+  # * MTX_SEGMENT_DURATION: segment duration
   runOnRecordSegmentComplete:
 
 ###############################################
