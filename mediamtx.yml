@@ -5,6 +5,7 @@
 
 ###############################################
 # Global settings -> General
+# Service version
 mediaMTX_ver: v1.8.3-3
 # Verbosity of the program; available values are "error", "warn", "info", "debug".
 logLevel: debug
@@ -549,6 +550,11 @@ pathDefaults:
   # auto-white-balance fixed gains. This can be used in place of rpiCameraAWB.
   # format: [red,blue]
   rpiCameraAWBGains: [0, 0]
+  # denoise operating mode.
+  # values: off, cdn_off, cdn_fast, cdn_hq
+  rpiCameraDenoise: "off"
+  # fixed shutter speed, in microseconds.
+  rpiCameraShutter: 0
   # metering mode of the AEC/AGC algorithm.
   # values: centre, spot, matrix, custom
   rpiCameraMetering: centre
@@ -756,8 +762,9 @@ database:
      # L6
     # insertPath: "INSERT INTO \"video_record\" (\"path_record\", \"file_name\",\"date_time_start\", \"code_mp_cam\", \"id_storage\") VALUES ('%s', '%s','%s','%s', (SELECT \"id_storage\" FROM \"public\".\"storage_disks\" WHERE \"mount_point\" ='%s'))"
     #This request will be executed when enabled useDbPathStream
+    # Specifies the request to be executed with the useDbPathStream: yes, and PathStream are unequal to 0    
     insertPathStream: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"pathStream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')1222"
-   
+   # The request to get Status_record and PathStream is executed when useDbPathStream: yes
     getPathStream: "SELECT mp.\"Status_record\", mp.\"codeMP\" FROM \"public\".\"MountPlace\" as mp, \"public\".\"DataDevice\" as dd WHERE dd.\"codeMP\" = mp.\"codeMP\" AND dd.\"UID\"  = '%s'"
     # equest to get a code_mp_contract
     getCodeMP: "SELECT \"code_mp_contract\" FROM \"public\".\"mount_place_cam\" WHERE \"code_mp_cam\" = '%s'123"
@@ -782,5 +789,5 @@ database:
     # for l3
     getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp, \"DataDevice\" dd, \"MountPlace\" mp, \"video_servers\" vs WHERE vp.\"Stream\" = dd.\"UID\" AND dd.\"codeMP\" = mp.\"codeMP\" AND mp.\"id_video_servers\" = vs.\"id\" AND vp.\"StatePublic\" = '1' LIMIT 20"
     #SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp JOIN \"DataDevice\" dd ON vp.\"Stream\" = dd.\"UID\" JOIN \"MountPlace\" mp ON dd.\"codeMP\" = mp.\"codeMP\" JOIN \"video_servers\" vs ON mp.\"id_video_servers\" = vs.\"id\" WHERE vp.\"StatePublic\" = '1' LIMIT 20    
-     # 
+    # A request for Status_record is specified
     getStatus_records: "SELECT mp.\"Status_record\", dd.\"UID\" FROM \"public\".\"MountPlace\" as mp, \"public\".\"DataDevice\" as dd WHERE dd.\"codeMP\" = mp.\"codeMP\" AND dd.\"UID\" in "
