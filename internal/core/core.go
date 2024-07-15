@@ -47,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.1-4"
+var version = "v1.8.3-3"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -121,6 +121,10 @@ type Core struct {
 
 	// in
 	chAPIConfigSet chan *conf.Conf
+	chConfigSet    chan []struct {
+		Name   string
+		Record bool
+	}
 
 	// out
 	done chan struct{}
@@ -160,7 +164,11 @@ func New(args []string) (*Core, bool) {
 		ctx:            ctx,
 		ctxCancel:      ctxCancel,
 		chAPIConfigSet: make(chan *conf.Conf),
-		done:           make(chan struct{}),
+		chConfigSet: make(chan []struct {
+			Name   string
+			Record bool
+		}),
+		done: make(chan struct{}),
 	}
 
 	p.conf, p.confPath, err = conf.Load(cli.Confpath, defaultConfPaths)
@@ -168,6 +176,11 @@ func New(args []string) (*Core, bool) {
 		fmt.Printf("ERR: %s\n", err)
 		return nil, false
 	}
+	if p.conf.MediamMTX_ver != version {
+		fmt.Println("config version mismatch")
+		os.Exit(1)
+	}
+
 	err = p.createResources(true)
 	if err != nil {
 		if p.logger != nil {
@@ -239,18 +252,49 @@ outer:
 				p.Log(logger.Error, "%s", err)
 				break outer
 			}
+		case pathConf := <-p.chConfigSet:
+			newConf := p.conf.Clone()
+			for i := range pathConf {
+				p.Log(logger.Info, "reloading configuration (path %s)", pathConf[i].Name)
+				var s conf.OptionalPath
+				postJson := []byte(fmt.Sprintf(`
+				{	
+					"record": %t
+				}`, pathConf[i].Record))
+				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
+				if err != nil {
+					p.Log(logger.Error, "%s", err)
+					return
+				}
+
+				err = newConf.PatchPath(pathConf[i].Name, &s)
+				if err != nil {
+					p.Log(logger.Error, "%s", err)
+					return
+				}
+				err = newConf.Validate()
+				if err != nil {
+					p.Log(logger.Error, "%s", err)
+					return
+				}
+			}
+			err := p.reloadConf(newConf, true)
+			if err != nil {
+				p.Log(logger.Error, "%s", err)
+				break outer
+			}
 
 		case <-interrupt:
 			p.Log(logger.Info, "shutting down gracefully")
-			if p.pathManager.stor.UseUpdaterStatus {
-				for key := range p.pathManager.paths {
+			if p.pathManager.stor.UseUpdaterStatus && p.pathManager.stor.Use{
+				for key, path := range p.pathManager.paths {
 					query := fmt.Sprintf(p.pathManager.stor.Sql.UpdateStatus, 0, key)
-					p.Log(logger.Debug, "SQL query sent:%s", query)
+					path.Log(logger.Debug, "SQL query sent:%s", query)
 					err := p.pathManager.stor.Req.ExecQuery(query)
 					if err != nil {
-						fmt.Println(err)
+						p.Log(logger.Error, "%s", err)
 					}
-					p.Log(logger.Debug, "The request was successfully completed")
+					path.Log(logger.Debug, "The request was successfully completed")
 				}
 
 			}
@@ -279,6 +323,7 @@ func (p *Core) createResources(initial bool) error {
 			return err
 		}
 	}
+
 	p.filesqlerror = errorsql.CreateFilesqlerror()
 	if initial {
 		p.Log(logger.Info, "MediaMTX %s", version)
@@ -306,7 +351,29 @@ func (p *Core) createResources(initial bool) error {
 
 		p.externalCmdPool = externalcmd.NewPool()
 	}
-
+	if p.conf.Database.Use && p.conf.Database.DbUseCodeMP_Contract && p.conf.Database.UseDbPathStream {
+		err := fmt.Errorf("only one dbUseCodeMP_Contract or useDbPathStream field should be included")
+		return err
+	}
+	if p.conf.Database.Use && p.conf.Database.UseUpdaterStatus && p.conf.Database.UseProxy {
+		err := fmt.Errorf("only one useUpdaterStatus or useProxy field should be included")
+		return err
+	}
+	if p.dbPool == nil && p.conf.Database.Use {
+		p.dbPool, err = database.CreateDbPool(
+			p.ctx,
+			database.CreatePgxConf(
+				p.conf.Database,
+			),
+		)
+		if err != nil {
+			return err
+		}
+		p.Log(logger.Info, "Connected to the database")
+	}
+	if p.conf.Database.TimeStatus <= 0 {
+		p.conf.Database.TimeStatus = 15
+	}
 	if p.authManager == nil {
 		p.authManager = &auth.Manager{
 			Method:          p.conf.AuthMethod,
@@ -390,17 +457,6 @@ func (p *Core) createResources(initial bool) error {
 		p.playbackServer = i
 
 	}
-	if p.conf.Database.Use {
-		p.dbPool, err = database.CreateDbPool(
-			p.ctx,
-			database.CreatePgxConf(
-				p.conf.Database,
-			),
-		)
-		if err != nil {
-			return err
-		}
-	}
 
 	if p.pathManager == nil {
 		req := psql.NewReq(p.ctx, p.dbPool)
@@ -411,6 +467,7 @@ func (p *Core) createResources(initial bool) error {
 			DbUseCodeMP_Contract: p.conf.Database.DbUseCodeMP_Contract,
 			DbUseContract:        p.conf.Database.DbUseContract,
 			UseDbPathStream:      p.conf.Database.UseDbPathStream,
+			TimeStatus:           p.conf.Database.TimeStatus,
 			UseUpdaterStatus:     p.conf.Database.UseUpdaterStatus,
 			UseSrise:             p.conf.Database.UseSrise,
 			UseProxy:             p.conf.Database.UseProxy,
@@ -419,14 +476,14 @@ func (p *Core) createResources(initial bool) error {
 			FileSQLErr:           p.conf.Database.FileSQLErr,
 			Sql:                  p.conf.Database.Sql,
 		}
-		if stor.UseProxy {
+		if stor.UseProxy && stor.Use {
 			if stor.UseSrise {
 				return errors.New("sRise and proxy can't be used at the same time")
 			}
 			p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataForProxy))
 			data, err := stor.Req.SelectData(stor.Sql.GetDataForProxy)
 			if err != nil {
-				return err
+				p.Log(logger.Error, "%v", err)
 			}
 			p.Log(logger.Debug, "The result of executing the sql query: %v", data)
 			var result []prohys
@@ -460,12 +517,12 @@ func (p *Core) createResources(initial bool) error {
 
 		}
 
-		if stor.UseSrise {
+		if stor.UseSrise && stor.Use {
 			if stor.DbUseContract {
 				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataContract))
 				data, err := stor.Req.SelectData(stor.Sql.GetDataContract)
 				if err != nil {
-					return err
+					p.Log(logger.Error, "%v", err)
 				}
 				p.Log(logger.Debug, "The result of executing the sql query: %v", data)
 				var result []bdTable
@@ -496,8 +553,6 @@ func (p *Core) createResources(initial bool) error {
 						"sourceProtocol": "tcp",
 						"sourceOnDemandCloseAfter": "10s",
 						"sourceOnDemandStartTimeout": "10s",
-						"readPass": "",
-						"readUser": "",
 						"runOnDemandCloseAfter": "10s",
 						"runOnDemandStartTimeout": "10s",
 						"runOnReadyRestart": true,
@@ -519,7 +574,7 @@ func (p *Core) createResources(initial bool) error {
 				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetData))
 				data, err := stor.Req.SelectData(stor.Sql.GetData)
 				if err != nil {
-					return err
+					p.Log(logger.Error, "%v", err)
 				}
 				p.Log(logger.Debug, "The result of executing the sql query: %v", data)
 				var result []bdTable
@@ -549,8 +604,6 @@ func (p *Core) createResources(initial bool) error {
 						"sourceProtocol": "tcp",
 						"sourceOnDemandCloseAfter": "10s",
 						"sourceOnDemandStartTimeout": "10s",
-						"readPass": "",
-						"readUser": "",
 						"runOnDemandCloseAfter": "10s",
 						"runOnDemandStartTimeout": "10s",
 						"runOnReadyRestart": true,
@@ -601,6 +654,7 @@ func (p *Core) createResources(initial bool) error {
 			pathConfs:         p.conf.Paths,
 			externalCmdPool:   p.externalCmdPool,
 			parent:            p,
+			ChConfigSet:       p.chConfigSet,
 			stor:              stor,
 			Publisher:         MaxPub{Max: len(p.conf.Paths) - 1},
 			max:               p.conf.PathDefaults.MaxPublishers,
@@ -967,7 +1021,8 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.UDPMaxPayloadSize != p.conf.UDPMaxPayloadSize ||
 		closeMetrics ||
 		closeAuthManager ||
-		closeLogger
+		closeLogger ||
+		newConf.Database != p.conf.Database
 	if !closePathManager && !reflect.DeepEqual(newConf.Paths, p.conf.Paths) {
 		p.pathManager.ReloadPathConfs(newConf.Paths)
 	}
@@ -1130,9 +1185,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.Database.DbName != p.conf.Database.DbName ||
 		newConf.Database.DbUser != p.conf.Database.DbUser ||
 		newConf.Database.DbPassword != p.conf.Database.DbPassword ||
-		newConf.Database.MaxConnections != p.conf.Database.MaxConnections ||
-		newConf.Database.Sql.InsertPath != p.conf.Database.Sql.InsertPath ||
-		closePathManager
+		newConf.Database.MaxConnections != p.conf.Database.MaxConnections
 
 	if newConf == nil && p.confWatcher != nil {
 		p.confWatcher.Close()
@@ -1251,16 +1304,18 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		p.externalCmdPool.Close()
 	}
 
-	if closeLogger && p.logger != nil {
-		p.logger.Close()
-		p.logger = nil
-	}
-
 	if closeDB && p.dbPool != nil {
+		p.Log(logger.Info, "Closing database")
 		database.ClosePool(p.dbPool)
+		p.dbPool = nil
 	}
 	if p.filesqlerror.File != nil {
 		p.filesqlerror.CloseFile()
+	}
+
+	if closeLogger && p.logger != nil {
+		p.logger.Close()
+		p.logger = nil
 	}
 }
 

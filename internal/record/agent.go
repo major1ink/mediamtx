@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
+	errorsql "github.com/bluenviron/mediamtx/internal/errorSQL"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
-	"github.com/bluenviron/mediamtx/internal/errorSQL"
 )
 
 // OnSegmentCreateFunc is the prototype of the function passed as OnSegmentCreate
@@ -41,10 +41,17 @@ type Agent struct {
 	Stor        storage.Storage
 	RecordAudio bool
 
-	PathStream string
-	CodeMp     string
+	PathStream    string
+	CodeMp        string
+	Status_record int8
 
 	Filesqlerror *errorsql.Filesqlerror
+
+	Pathrecord  bool
+	ChConfigSet chan []struct {
+		Name   string
+		Record bool
+	}
 }
 
 // Initialize initializes Agent.

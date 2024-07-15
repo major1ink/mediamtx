@@ -12,6 +12,7 @@ type Storage struct {
 	DbUseCodeMP_Contract bool
 	DbUseContract        bool
 	UseDbPathStream      bool
+	TimeStatus           int
 	UseUpdaterStatus     bool
 	UseSrise             bool
 	UseProxy             bool

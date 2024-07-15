@@ -553,7 +553,7 @@ func (a *API) onConfigPathsDelete(ctx *gin.Context) {
 		a.writeError(ctx, http.StatusBadRequest, err)
 		return
 	}
-
+	
 	a.Conf = newConf
 	a.Parent.APIConfigSet(newConf)
 

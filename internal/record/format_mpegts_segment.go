@@ -44,7 +44,6 @@ func (s *formatMPEGTSSegment) close() error {
 			duration := s.lastDTS - s.startDTS
 			s.f.a.agent.OnSegmentComplete(s.path, duration)
 
-
 			if s.f.a.stor.Use {
 				stat, err3 := os.Stat(s.path)
 
@@ -52,9 +51,9 @@ func (s *formatMPEGTSSegment) close() error {
 					paths := strings.Split(s.path, "/")
 					pathRec := strings.Join(paths[:len(paths)-1], "/")
 					var query string
-					if s.f.a.stor.UseDbPathStream {
+					if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0" {
 						query = fmt.Sprintf(
-							s.f.a.stor.Sql.InsertPath,
+							s.f.a.stor.Sql.InsertPathStream,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
@@ -63,6 +62,7 @@ func (s *formatMPEGTSSegment) close() error {
 							s.f.a.endTime,
 							s.f.a.idDsk,
 						)
+
 					} else {
 						query = fmt.Sprintf(
 							s.f.a.stor.Sql.InsertPath,
@@ -108,47 +108,81 @@ func (s *formatMPEGTSSegment) close() error {
 
 		}
 	}
-
 	return err
 }
 
 func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
+	if !s.f.a.agent.Pathrecord {
+		s.f.a.agent.ChConfigSet <- []struct {
+			Name   string
+			Record bool
+		}{{Name: s.f.a.agent.PathName, Record: false}}
+		err := fmt.Errorf("status_record = 0")
+		return 0, err
+
+	}
 	if s.fi == nil {
 		var err error
-		if s.f.a.stor.DbDrives {
-			// проверка на использование бд, если бд не используеться будет записываться по локальным путям
-			if s.f.a.stor.Use {
-				s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", s.f.a.stor.Sql.GetDrives))
-				data, err := s.f.a.stor.Req.SelectData(s.f.a.stor.Sql.GetDrives)
-				if err != nil {
-					//записываем ошибку в лог и пробуем создать путь по локальному пути
-					s.f.a.agent.Log(logger.Error, "%v", err)
+		if s.f.a.stor.DbDrives && s.f.a.stor.Use {
+			// Проверка на использование бд, если бд не используеться будет записываться по локальным путям
+			s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", s.f.a.stor.Sql.GetDrives))
+			data, err := s.f.a.stor.Req.SelectData(s.f.a.stor.Sql.GetDrives)
+			if err != nil {
+				//записываем ошибку в лог и пробуем создать путь по локальному пути
+				s.f.a.agent.Log(logger.Error, "%v", err)
+				s.localCreatePath()
+			} else {
+				s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
+				if len(data) == 0 {
+					s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
 					s.localCreatePath()
 				} else {
-					s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", data)
-					if len(data) == 0 {
-						s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
-						s.localCreatePath()
-					} else {
-						idDisks := make(map[string]int16)
-						drives := []interface{}{}
-						for _, line := range data {
-							idDisks[line[1].(string)] = line[0].(int16)
-							drives = append(drives, line[1].(string))
-						}
-						s.f.a.free = getMostFreeDisk(drives)
-						s.f.a.idDsk = strconv.Itoa(int(idDisks[s.f.a.free]))
-
-						s.dbCreatingPaths()
+					idDisks := make(map[string]int16)
+					drives := []interface{}{}
+					for _, line := range data {
+						idDisks[line[1].(string)] = line[0].(int16)
+						drives = append(drives, line[1].(string))
 					}
+					s.f.a.free = getMostFreeDisk(drives)
+					s.f.a.idDsk = strconv.Itoa(int(idDisks[s.f.a.free]))
 
+					s.dbCreatingPaths()
 				}
 
-			} else {
-				s.localCreatePath()
 			}
+
 		} else {
 			s.localCreatePath()
+		}
+		if s.f.a.agent.PathStream == "0" && s.f.a.stor.Use && s.f.a.stor.UseDbPathStream {
+			s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(s.f.a.agent.Stor.Sql.GetPathStream, s.f.a.agent.StreamName)))
+			s.f.a.agent.Status_record, s.f.a.agent.PathStream, err = s.f.a.agent.Stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.agent.Stor.Sql.GetPathStream, s.f.a.agent.StreamName))
+			if err != nil {
+				s.f.a.agent.PathStream = "0"
+				s.f.a.agent.Status_record = 0
+				s.f.a.agent.Log(logger.Error, "%s", err)
+			} else {
+				s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %b, %s", s.f.a.agent.Status_record, s.f.a.agent.PathStream)
+				if s.f.a.agent.Status_record == 0 {
+					s.f.a.agent.ChConfigSet <- []struct {
+						Name   string
+						Record bool
+					}{{Name: s.f.a.agent.PathName, Record: false}}
+					err := fmt.Errorf("status_record = 0")
+					return 0, err
+				}
+			}
+
+		}
+		if s.f.a.agent.CodeMp == "0" && s.f.a.stor.Use && s.f.a.stor.DbUseCodeMP_Contract {
+			s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(s.f.a.agent.Stor.Sql.GetCodeMP, s.f.a.agent.StreamName)))
+			s.f.a.agent.CodeMp, err = s.f.a.agent.Stor.Req.SelectCodeMP_Contract(fmt.Sprintf(s.f.a.agent.Stor.Sql.GetCodeMP, s.f.a.agent.StreamName))
+			if err != nil {
+				s.f.a.agent.Log(logger.Error, "%s", err)
+				s.f.a.agent.CodeMp = "0"
+			} else {
+				s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s", s.f.a.agent.CodeMp)
+			}
 		}
 
 		s.f.a.agent.Log(logger.Debug, "creating segment %s", s.path)
@@ -174,21 +208,24 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 }
 
 func (s *formatMPEGTSSegment) dbCreatingPaths() {
-	if s.f.a.stor.DbUseCodeMP_Contract && s.f.a.stor.UseDbPathStream {
-		s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.agent.CodeMp, s.f.a.agent.PathStream)
-	} else {
-
-		if s.f.a.stor.DbUseCodeMP_Contract {
-
+	if s.f.a.stor.DbUseCodeMP_Contract {
+		if s.f.a.agent.CodeMp != "0" {
 			s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.agent.CodeMp)
+			return
 		}
-		if s.f.a.stor.UseDbPathStream {
-			s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.agent.PathStream)
-		}
-		if !s.f.a.stor.DbUseCodeMP_Contract && !s.f.a.stor.UseDbPathStream {
-			s.path = fmt.Sprintf(s.f.a.free + Path{Start: s.startNTP}.Encode(s.f.a.pathFormat))
-		}
+		s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), fmt.Sprintf("code_mp_cam/%v", s.f.a.agent.PathName))
+		return
 	}
+	if s.f.a.stor.UseDbPathStream {
+		if s.f.a.agent.PathStream != "0" {
+			s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.agent.PathStream)
+			return
+		}
+		s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), fmt.Sprintf("stream/%v", s.f.a.agent.PathName))
+		return
+	}
+		s.path = fmt.Sprintf(s.f.a.free + Path{Start: s.startNTP}.Encode(s.f.a.pathFormat))
+
 }
 
 func (s *formatMPEGTSSegment) localCreatePath() {

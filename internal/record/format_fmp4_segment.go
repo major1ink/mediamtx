@@ -73,9 +73,9 @@ func (s *formatFMP4Segment) close() error {
 					paths := strings.Split(s.path, "/")
 					pathRec := strings.Join(paths[:len(paths)-1], "/")
 					var query string
-					if s.f.a.stor.UseDbPathStream {
+					if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0" {
 						query = fmt.Sprintf(
-							s.f.a.stor.Sql.InsertPath,
+							s.f.a.stor.Sql.InsertPathStream,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
