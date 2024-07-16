@@ -8,66 +8,53 @@ import (
 	"time"
 )
 
-func (f *Filesqlerror) SavingRequest(dir, query string) error {
+func  SavingRequest(dir, query, name string) error {
 	data := time.Now().Format("2006-01-02")
-	if f.File == nil {
-		err := f.createFile(data, dir, query)
-		if err != nil {
-			return err
-		}
+	file, err := createFile(data, dir, query, name)
+	if err != nil {
+		return err
 	}
-	if data != f.Data {
-		f.File.Close()
-		err := f.createFile(data, dir, query)
-		if err != nil {
-			return err
-		}
-	}
-
+	defer file.Close()
 	message := []byte(fmt.Sprintf("%s,\n", strings.Split(query, "VALUES")[1]))
-	_, err := f.File.Write(message)
+	_, err = file.Write(message)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (f *Filesqlerror) createFile(data, dir, query string) error {
-
-	f.Data = data
+func  createFile(data, dir, query, name string) (*os.File, error) {
 	dir = fmt.Sprintf("%s/%s", dir, data)
 	if strings.Contains(query, "pathStream") {
-		dir = fmt.Sprintf("%s/%s", dir, "PathStream.txt")
+		dir = fmt.Sprintf("%s/%s/%s.txt", dir, "PathStream",name)
 	} else {
-		dir = fmt.Sprintf("%s/%s", dir, "Stream.txt")
+		dir = fmt.Sprintf("%s/%s/%s.txt", dir, "Stream", name)
 	}
 	_, err := os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			err := os.MkdirAll(filepath.Dir(dir), os.ModePerm)
 			if err != nil {
-				return err 
+				return nil,err 
 			}
 			file, err := os.OpenFile(dir, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 			if err != nil {
-				return err
+				return nil,err 
 			}
-			f.File = file
 			insert := []byte(fmt.Sprintf("%sVALUES\n", strings.Split(query, "VALUES")[0]))
-			_, err = f.File.Write(insert)
+			_, err = file.Write(insert)
 			if err != nil {
-				return err
+				return nil,err 
 			}
-			return nil
+			return file,nil
 
 		} else {
-			return err
+			return nil,err 
 		}
 	}
 	file, err := os.OpenFile(dir, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		return err
+		return nil,err 
 	}
-	f.File = file
-	return nil
+	return file, nil
 }

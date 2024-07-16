@@ -14,7 +14,6 @@ import (
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
-	errorsql "github.com/bluenviron/mediamtx/internal/errorSQL"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/hooks"
 	"github.com/bluenviron/mediamtx/internal/logger"
@@ -123,7 +122,6 @@ type path struct {
 	stor      storage.Storage
 	publisher *MaxPub
 
-	filesqlerror *errorsql.Filesqlerror
 	ChConfigSet  chan []struct {
 		Name   string
 		Record bool
@@ -820,7 +818,6 @@ func (pa *path) startRecording() {
 		SegmentDuration: time.Duration(pa.conf.RecordSegmentDuration),
 		PathName:        pa.name,
 		Stream:          pa.stream,
-		Filesqlerror:    pa.filesqlerror,
 		Pathrecord:      pa.conf.Record,
 		OnSegmentCreate: func(segmentPath string) {
 			if pa.conf.RunOnRecordSegmentCreate != "" {

@@ -26,7 +26,6 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/confwatcher"
 	"github.com/bluenviron/mediamtx/internal/database"
-	errorsql "github.com/bluenviron/mediamtx/internal/errorSQL"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/metrics"
@@ -129,7 +128,6 @@ type Core struct {
 	// out
 	done chan struct{}
 
-	filesqlerror *errorsql.Filesqlerror
 }
 
 // New allocates a Core.
@@ -324,7 +322,6 @@ func (p *Core) createResources(initial bool) error {
 		}
 	}
 
-	p.filesqlerror = errorsql.CreateFilesqlerror()
 	if initial {
 		p.Log(logger.Info, "MediaMTX %s", version)
 
@@ -658,7 +655,6 @@ func (p *Core) createResources(initial bool) error {
 			stor:              stor,
 			Publisher:         MaxPub{Max: len(p.conf.Paths) - 1},
 			max:               p.conf.PathDefaults.MaxPublishers,
-			filesqlerror:      p.filesqlerror,
 		}
 		p.pathManager.initialize()
 
@@ -1309,9 +1305,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		database.ClosePool(p.dbPool)
 		p.dbPool = nil
 	}
-	if p.filesqlerror.File != nil {
-		p.filesqlerror.CloseFile()
-	}
+
 
 	if closeLogger && p.logger != nil {
 		p.logger.Close()

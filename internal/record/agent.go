@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
-	errorsql "github.com/bluenviron/mediamtx/internal/errorSQL"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
@@ -45,7 +44,6 @@ type Agent struct {
 	CodeMp        string
 	Status_record int8
 
-	Filesqlerror *errorsql.Filesqlerror
 
 	Pathrecord  bool
 	ChConfigSet chan []struct {

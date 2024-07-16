@@ -12,7 +12,6 @@ import (
 	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
-	errorsql "github.com/bluenviron/mediamtx/internal/errorSQL"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/logger"
 
@@ -99,7 +98,6 @@ type pathManager struct {
 	Publisher MaxPub
 	max       int
 
-	filesqlerror *errorsql.Filesqlerror
 }
 
 func (pm *pathManager) initialize() {
@@ -480,7 +478,6 @@ func (pm *pathManager) createPath(
 		}
 		pa.loggerPath = logg
 	}
-	pa.filesqlerror = pm.filesqlerror
 	pa.initialize(pm.stor, &pm.Publisher)
 
 	pm.paths[name] = pa
