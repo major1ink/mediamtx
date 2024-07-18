@@ -371,6 +371,9 @@ func (p *Core) createResources(initial bool) error {
 	if p.conf.Database.TimeStatus <= 0 {
 		p.conf.Database.TimeStatus = 15
 	}
+	if p.conf.Database.QueryTimeOut <= 0 {
+		p.conf.Database.QueryTimeOut = 2
+	}
 	if p.authManager == nil {
 		p.authManager = &auth.Manager{
 			Method:          p.conf.AuthMethod,
@@ -456,7 +459,7 @@ func (p *Core) createResources(initial bool) error {
 	}
 
 	if p.pathManager == nil {
-		req := psql.NewReq(p.ctx, p.dbPool)
+		req := psql.NewReq(p.ctx, p.dbPool,p.conf.Database.QueryTimeOut)
 		stor := storage.Storage{
 			Use:                  p.conf.Database.Use,
 			Req:                  req,

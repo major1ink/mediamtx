@@ -9,11 +9,13 @@ import (
 type Req struct {
 	ctx  context.Context
 	pool *pgxpool.Pool
+	queryTimeOut int
 }
 
-func NewReq(ctx context.Context, pool *pgxpool.Pool) *Req {
+func NewReq(ctx context.Context, pool *pgxpool.Pool, queryTimeOut int) *Req {
 	return &Req{
 		ctx:  ctx,
 		pool: pool,
+		queryTimeOut: queryTimeOut,
 	}
 }

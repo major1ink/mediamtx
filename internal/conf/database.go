@@ -19,6 +19,7 @@ type Database struct {
 	Login                string `json:"login"`
 	Pass                 string `json:"pass"`
 	FileSQLErr           string `json:"fileSQLErr"`
+	QueryTimeOut         int    `json:"queryTimeOut"`
 	Sql                  Sql    `json:"sql"`
 }
 

@@ -2,11 +2,13 @@ package psql
 
 import (
 	"context"
+	"time"
 )
 
 func (r *Req) ExecQuery(query string) error {
-
-	_, err := r.pool.Exec(r.ctx, query)
+	ctx, cancel := context.WithTimeout(r.ctx, time.Duration(r.queryTimeOut)* time.Second)
+    defer cancel()
+	_, err := r.pool.Exec(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -16,7 +18,9 @@ func (r *Req) ExecQuery(query string) error {
 
 func (r *Req) ExecQueryNoCtx(query string) error {
 	r.ctx = context.Background()
-	_, err := r.pool.Exec(r.ctx, query)
+		ctx, cancel := context.WithTimeout(r.ctx, time.Duration(r.queryTimeOut)* time.Second)
+    defer cancel()
+	_, err := r.pool.Exec(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -25,11 +29,13 @@ func (r *Req) ExecQueryNoCtx(query string) error {
 }
 
 func (r *Req) SelectData(query string) ([][]interface{}, error) {
+
 	if r.ctx.Err() != nil {
 		return nil, r.ctx.Err()
 	}
-
-	rows, err := r.pool.Query(r.ctx, query)
+	ctx, cancel := context.WithTimeout(r.ctx, time.Duration(r.queryTimeOut)* time.Second)
+    defer cancel()
+	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +72,9 @@ func (r *Req) SelectPathStream(query string) (int8, string, error) {
 	if r.ctx.Err() != nil {
 		return 0, "", r.ctx.Err()
 	}
-
-	rows, err := r.pool.Query(r.ctx, query)
+	ctx, cancel := context.WithTimeout(r.ctx, time.Duration(r.queryTimeOut)* time.Second)
+    defer cancel()
+	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return 0, "", err
 	}
@@ -92,8 +99,9 @@ func (r *Req) SelectCodeMP_Contract(query string) (string, error) {
 	if r.ctx.Err() != nil {
 		return "", r.ctx.Err()
 	}
-
-	rows, err := r.pool.Query(r.ctx, query)
+	ctx, cancel := context.WithTimeout(r.ctx, time.Duration(r.queryTimeOut)* time.Second)
+    defer cancel()
+	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return "", err
 	}
