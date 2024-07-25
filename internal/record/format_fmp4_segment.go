@@ -10,6 +10,7 @@ import (
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4/seekablebuffer"
 
+	errorsql "github.com/bluenviron/mediamtx/internal/errorSQL"
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
@@ -73,9 +74,9 @@ func (s *formatFMP4Segment) close() error {
 					paths := strings.Split(s.path, "/")
 					pathRec := strings.Join(paths[:len(paths)-1], "/")
 					var query string
-					if s.f.a.stor.UseDbPathStream {
+					if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0" {
 						query = fmt.Sprintf(
-							s.f.a.stor.Sql.InsertPath,
+							s.f.a.stor.Sql.InsertPathStream,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
@@ -106,7 +107,7 @@ func (s *formatFMP4Segment) close() error {
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
 							if err4 != nil {
 								s.f.a.agent.Log(logger.Error, "%v", err4)
-								errsql := s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+								errsql := errorsql.SavingRequest(s.f.a.stor.FileSQLErr, query,s.f.a.agent.PathName)
 								if errsql != nil {
 									s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 								}
@@ -117,7 +118,7 @@ func (s *formatFMP4Segment) close() error {
 							return err
 						}
 						s.f.a.agent.Log(logger.Error, "%v", err4)
-						errsql := s.f.a.agent.Filesqlerror.SavingRequest(s.f.a.stor.FileSQLErr, query)
+						errsql := errorsql.SavingRequest(s.f.a.stor.FileSQLErr, query,s.f.a.agent.PathName)
 						if errsql != nil {
 							s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 						}

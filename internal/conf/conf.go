@@ -158,6 +158,7 @@ var defaultAuthInternalUsers = AuthInternalUsers{
 // WARNING: Avoid using slices directly due to https://github.com/golang/go/issues/21092
 type Conf struct {
 	// General
+	MediamMTX_ver       string          `json:"mediaMTX_ver"`
 	LogLevel            LogLevel        `json:"logLevel"`
 	LogDestinations     LogDestinations `json:"logDestinations"`
 	LogFile             string          `json:"logFile"`
@@ -287,9 +288,9 @@ type Conf struct {
 	SRTAddress string `json:"srtAddress"`
 
 	// Record (deprecated)
-	Record      *bool           `json:"record,omitempty"`      // deprecated
-	RecordAudio *bool           `json:"recordAudio,omitempty"` // deprecated
-	RecordPath  *string         `json:"recordPath,omitempty"`
+	Record      *bool              `json:"record,omitempty"`      // deprecated
+	RecordAudio *bool              `json:"recordAudio,omitempty"` // deprecated
+	RecordPath  *string            `json:"recordPath,omitempty"`
 	RecordPaths *map[string]string `json:"recordPaths,omitempty"`
 
 	RecordFormat          *RecordFormat   `json:"recordFormat,omitempty"`          // deprecated

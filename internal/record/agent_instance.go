@@ -33,7 +33,7 @@ type agentInstance struct {
 	free        string
 	endTime     string
 	timeStart   string
-	idDsk string
+	idDsk       string
 }
 
 func (a *agentInstance) initialize() {
@@ -48,8 +48,6 @@ func (a *agentInstance) initialize() {
 	a.done = make(chan struct{})
 
 	a.writer = asyncwriter.New(a.agent.WriteQueueSize, a.agent)
-
-
 
 	switch a.agent.Format {
 	case conf.RecordFormatMPEGTS:

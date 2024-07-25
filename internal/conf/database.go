@@ -12,24 +12,28 @@ type Database struct {
 	DbUseCodeMP_Contract bool   `json:"dbUseCodeMP_Contract"`
 	DbUseContract        bool   `json:"dbUseContract"`
 	UseDbPathStream      bool   `json:"useDbPathStream"`
+	TimeStatus           int    `json:"timeStatus"`
 	UseUpdaterStatus     bool   `json:"useUpdaterStatus"`
 	UseSrise             bool   `json:"useSrise"`
 	UseProxy             bool   `json:"useProxy"`
 	Login                string `json:"login"`
 	Pass                 string `json:"pass"`
 	FileSQLErr           string `json:"fileSQLErr"`
+	QueryTimeOut         int    `json:"queryTimeOut"`
 	Sql                  Sql    `json:"sql"`
 }
 
 type Sql struct {
-	InsertPath      string `json:"insertPath"`
-	GetPathStream   string `json:"getPathStream"`
-	GetCodeMP       string `json:"getCodeMP"`
-	GetDrives       string `json:"getDrives"`
-	UpdateStatus    string `json:"updateStatus"`
-	GetData         string `json:"getData"`
-	GetDataContract string `json:"getDataContract"`
-	GetDataForProxy string `json:"getDataForProxy"`
+	InsertPath        string `json:"insertPath"`
+	InsertPathStream string `json:"insertPathStream"`
+	GetPathStream     string `json:"getPathStream"`
+	GetCodeMP         string `json:"getCodeMP"`
+	GetDrives         string `json:"getDrives"`
+	UpdateStatus      string `json:"updateStatus"`
+	GetData           string `json:"getData"`
+	GetDataContract   string `json:"getDataContract"`
+	GetDataForProxy   string `json:"getDataForProxy"`
+	GetStatus_records string `json:"getStatus_records"`
 }
 
 func (db *Database) setDefaults() {
