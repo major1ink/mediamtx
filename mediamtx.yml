@@ -762,9 +762,9 @@ database:
     # SQL queryes
   sql:
     # SQL query to insert video record
-    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"stream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')123"
+    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"stream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
     # Specifies the request to be executed with the useDbPathStream: yes, and PathStream are unequal to 0    
-    insertPathStream: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"pathStream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')1222"
+    insertPathStream: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"pathStream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
    # The request to get Status_record and PathStream is executed when useDbPathStream: yes
     getPathStream: "SELECT mp.\"Status_record\", mp.\"codeMP\" FROM \"public\".\"MountPlace\" as mp, \"public\".\"DataDevice\" as dd WHERE dd.\"codeMP\" = mp.\"codeMP\" AND dd.\"UID\"  = '%s'"
     # equest to get a code_mp_contract
