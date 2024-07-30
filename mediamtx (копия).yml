@@ -8,22 +8,22 @@
 # Service version
 mediaMTX_ver: v1.8.3-3
 # Verbosity of the program; available values are "error", "warn", "info", "debug".
-logLevel: info
+logLevel: debug
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
-logDestinations: [stdout]
+logDestinations: [file]
 # If "file" is in logDestinations, this is the file which will receive the logs.
-logFile: mediamtx.log
+logFile: ./mediamtx.log
 # Enabling the creation of separate log files by streams
-logStreams: no
+logStreams: yes
 # The path for creating log files by streams is specified, if the path is empty, log files will be created along the path of the main log file
-logDirStreams: 
+logDirStreams: ./logs/
 # Timeout of read operations.
 readTimeout: 10s
 # Timeout of write operations.
 writeTimeout: 10s
 # Size of the queue of outgoing packets.
 # A higher value allows to increase throughput, a lower value allows to save RAM.
-writeQueueSize: 512
+writeQueueSize: 1024
 # Maximum size of outgoing UDP packets.
 # This can be decreased to avoid fragmentation on networks with a low UDP MTU.
 udpMaxPayloadSize: 1472
@@ -78,7 +78,7 @@ authInternalUsers:
   # if the IP is localhost.
 - user: any
   pass:
-  ips: ['127.0.0.1', '::1']
+  ips: []
   permissions:
   - action: api
   - action: metrics
@@ -131,9 +131,9 @@ authJWTJWKS:
 # Global settings -> Control API
 
 # Enable controlling the server through the Control API.
-api: no
+api: yes
 # Address of the Control API listener.
-apiAddress: :9997
+apiAddress: 192.168.250.43:9997
 # Enable TLS/HTTPS on the Control API server.
 apiEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -154,9 +154,9 @@ apiTrustedProxies: []
 # Global settings -> Metrics
 
 # Enable Prometheus-compatible metrics.
-metrics: no
+metrics: yes
 # Address of the metrics HTTP listener.
-metricsAddress: :9998
+metricsAddress: 192.168.250.43:9998
 # Enable TLS/HTTPS on the Metrics server.
 metricsEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -237,7 +237,7 @@ protocols: [udp, multicast, tcp]
 # Available values are "no", "strict", "optional".
 encryption: "no"
 # Address of the TCP/RTSP listener. This is needed only when encryption is "no" or "optional".
-rtspAddress: :8554
+rtspAddress: 192.168.250.43:8554
 # Address of the TCP/TLS/RTSPS listener. This is needed only when encryption is "strict" or "optional".
 rtspsAddress: :8322
 # Address of the UDP/RTP listener. This is needed only when "udp" is in protocols.
@@ -458,30 +458,33 @@ pathDefaults:
 
   # Record streams to disk.
 
-  record: no
+  record: yes
   # Save audio from stream.
-  recordAudio: yes
+  recordAudio: no
 
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
   #/ttttt/%v/%Y-%m-%d/%path-%s-%f
-  recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordPath: /%v/%Y-%m-%d/%path-%s-%f
   # if the db Drive s field is "no", then local paths for saving video files are specified.
   recordPaths: 
+    /media/anton/Tom2/video: "3" 
+    /media/anton/Tom/video: "3"
+    /home/anton/go/video: "3"
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
-  recordFormat: fmp4
+  recordFormat: mpegts
   # fMP4 segments are concatenation of small MP4 files (parts), each with this duration.
   # MPEG-TS segments are concatenation of 188-bytes packets, flushed to disk with this period.
   # When a system failure occurs, the last part gets lost.
   # Therefore, the part duration is equal to the RPO (recovery point objective).
   recordPartDuration: 1s
   # Minimum duration of each segment.
-  recordSegmentDuration: 1h
+  recordSegmentDuration: 15s
   # Delete segments after this timespan.
   # Set to 0s to disable automatic deletion.
-  recordDeleteAfter: 24h
+  recordDeleteAfter: 0s
 
   ###############################################
   # Default path settings -> Publisher source (when source is "publisher")
@@ -717,64 +720,64 @@ paths:
 # Database settings
 database:
   # Use database or not (use PostgreSQL)
-  use: no
+  use: yes
   # Database address
-  dbAddress: 127.0.0.1
+  dbAddress: 192.168.250.40
   # Database port
   dbPort: 5432
   # Database name
-  dbName: postgres
+  dbName: l6
   # Database user
-  dbUser: postgres
+  dbUser: major
   # Database password
-  dbPassword: ""
+  dbPassword: "980601"
   # Maximum number of connections
-  maxConnections: 0
+  maxConnections: 1
   # Enable/disable discs from the database for recording
   dbDrives: no
   # Enable/disable the code_mp_contract field to create a record path
-  dbDrives: no
+  dbDrives: yes
   # Enable/disable updating the status of a stream in the database
-  useUpdaterStatus: no
+  useUpdaterStatus: yes
   #L3
   # Enable/disable the PathStream field to create a record path
   useDbPathStream: no
   # Works with the enabled use Db Path Stream. Indicates the time in seconds how often the status needs to be checked
-  timeStatus: 0
+  timeStatus: 10
   # Enable/disable the server start with proxy streams from the database.
   useProxy: no
   login:
   pass:
   #l6
   # Enable/disable the code_mp_contract field to create a record path
-  dbUseCodeMP_Contract: no
+  dbUseCodeMP_Contract: yes
   # Enable/disable the contract field to create a straem path. Work with useSrise: yes
   dbUseContract: no
   # Enable/disable the server start with streams from the database
-  useSrise: no
+  useSrise: yes
   # Specifies the path and file name to save the file with outstanding sql queries
-  fileSQLErr: ./
+  fileSQLErr: ./sqlerr
   # Timeout for the sql query
-  queryTimeOut: 0
+  queryTimeOut: 2
     # SQL queryes
   sql:
     # SQL query to insert video record
-    insertPath: 
+    insertPath: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"stream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
     # Specifies the request to be executed with the useDbPathStream: yes, and PathStream are unequal to 0    
-    insertPathStream: 
+    insertPathStream: "INSERT INTO \"VideoRecord\" (\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\", \"pathStream\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
    # The request to get Status_record and PathStream is executed when useDbPathStream: yes
-    getPathStream:
+    getPathStream: "SELECT mp.\"Status_record\", mp.\"codeMP\" FROM \"public\".\"MountPlace\" as mp, \"public\".\"DataDevice\" as dd WHERE dd.\"codeMP\" = mp.\"codeMP\" AND dd.\"UID\"  = '%s'"
     # equest to get a code_mp_contract
-    getCodeMP: 
+    getCodeMP: "SELECT \"code_mp_contract\" FROM \"public\".\"mount_place_cam\" WHERE \"code_mp_cam\" = '%s'123"
     # request to get a list of discs to burn
-    getDrives:
+    getDrives: "SELECT sd.\"id_storage\", sd.\"mount_point\" FROM \"storage_disks\" sd,\"storage_servers\" ss WHERE sd.\"id_storage\"=ss.\"id\" AND ss.\"state\"='3' AND sd.\"state\"='3' AND sd.\"status\"='3'   ORDER BY sd.\"mount_point\"123"
     # request to update stream statuses
-    updateStatus:
+    updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"
     # request for a list of streams
-    getData:
+    getData: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" IS NULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" IS NULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" IS NULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" IS NULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" IS NULL THEN '0' ELSE vc.\"status_public\" END), vcont.\"record_status\" FROM \"public\".\"videocameras\" vc, \"mount_place_cam\" mpc, \"video_contract\" vcont WHERE vc.\"code_mp\"=mpc.\"code_mp_cam\" AND mpc.\"code_mp_contract\" = vcont.\"code_mp\" AND vc.\"cam_path\" IS NOT NULL AND vc.\"state_public\" = '1'"
     #
-    getDataContract:
+    getDataContract: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" IS NULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" IS NULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\",  (CASE WHEN vc.\"cam_path\" IS NULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" IS NULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" IS NULL THEN '0' ELSE vc.\"status_public\" END), mpc.\"code_mp_contract\", vcont.\"record_status\" FROM \"public\".\"videocameras\" vc, \"public\".\"mount_place_cam\" mpc, \"public\".\"video_contract\" vcont WHERE vc.\"code_mp\" = mpc.\"code_mp_cam\" AND mpc.\"code_mp_contract\" = vcont.\"code_mp\" AND vc.\"cam_path\" IS NOT NULL AND vc.\"state_public\" = '1'"
     # for l3
-    getDataForProxy: 
+    getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp, \"DataDevice\" dd, \"MountPlace\" mp, \"video_servers\" vs WHERE vp.\"Stream\" = dd.\"UID\" AND dd.\"codeMP\" = mp.\"codeMP\" AND mp.\"id_video_servers\" = vs.\"id\" AND vp.\"StatePublic\" = '1' LIMIT 20"
     #request to get Status_record for all streams
-    getStatus_records: 
+    getStatus_records: "SELECT mp.\"Status_record\", dd.\"UID\" FROM \"public\".\"MountPlace\" as mp, \"public\".\"DataDevice\" as dd WHERE dd.\"codeMP\" = mp.\"codeMP\" AND dd.\"UID\" in "

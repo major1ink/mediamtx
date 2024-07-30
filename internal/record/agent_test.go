@@ -164,6 +164,8 @@ func TestAgent(t *testing.T) {
 				SegmentDuration: 1 * time.Second,
 				PathName:        "mypath",
 				Stream:          stream,
+				Pathrecord:      true,
+				RecordAudio:     true,
 				OnSegmentCreate: func(segPath string) {
 					switch n {
 					case 0:
@@ -225,11 +227,9 @@ func TestAgent(t *testing.T) {
 					f, err2 := os.Open(filepath.Join(dir, "mypath", "2008-05-20_22-15-25-000000."+ext))
 					require.NoError(t, err2)
 					defer f.Close()
-
 					err2 = init.Unmarshal(f)
 					require.NoError(t, err2)
 				}()
-
 				require.Equal(t, fmp4.Init{
 					Tracks: []*fmp4.InitTrack{
 						{
@@ -359,6 +359,7 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 		PathName:        "mypath",
 		Stream:          stream,
 		Parent:          test.NilLogger,
+		Pathrecord:      true,
 		RecordAudio:     true,
 	}
 	w.Initialize()
