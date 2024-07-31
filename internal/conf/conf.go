@@ -311,6 +311,7 @@ type Conf struct {
 
 func (conf *Conf) setDefaults() {
 	// General
+	conf.MediamMTX_ver = "v1.8.3-3"
 	conf.LogLevel = LogLevel(logger.Info)
 	conf.LogDestinations = LogDestinations{logger.DestinationStdout}
 	conf.LogFile = "mediamtx.log"

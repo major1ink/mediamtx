@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io"
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -44,11 +45,8 @@ func TestConfFromFile(t *testing.T) {
 		require.Equal(t, tmpf, confPath)
 
 		require.Equal(t, LogLevel(logger.Debug), conf.LogLevel)
-
+		log.Println(conf.Paths)
 		pa, ok := conf.Paths["cam1"]
-		recordPaths := make(map[string]string)
-		recordPaths["./recordings"] = "1"
-		recordPaths["recordings2"] = "1"
 		require.Equal(t, true, ok)
 		require.Equal(t, &Path{
 			Name:                       "cam1",
@@ -56,7 +54,6 @@ func TestConfFromFile(t *testing.T) {
 			SourceOnDemandStartTimeout: 10 * StringDuration(time.Second),
 			SourceOnDemandCloseAfter:   10 * StringDuration(time.Second),
 			RecordPath:                 "./recordings/%path/%Y-%m-%d_%H-%M-%S-%f",
-			RecordPaths: recordPaths,
 			RecordAudio:                true,
 			RecordFormat:               RecordFormatFMP4,
 			RecordPartDuration:         StringDuration(1 * time.Second),
