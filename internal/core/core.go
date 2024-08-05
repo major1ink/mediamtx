@@ -27,6 +27,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/confwatcher"
 	"github.com/bluenviron/mediamtx/internal/database"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
+	RMS "github.com/bluenviron/mediamtx/internal/grps"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/metrics"
 	"github.com/bluenviron/mediamtx/internal/playback"
@@ -46,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.3-3"
+var version = "v1.8.3-4"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -117,6 +118,7 @@ type Core struct {
 	api             *api.API
 	confWatcher     *confwatcher.ConfWatcher
 	dbPool          *pgxpool.Pool
+	clientGRPC      RMS.GrpcClient
 
 	// in
 	chAPIConfigSet chan *conf.Conf
@@ -168,7 +170,6 @@ func New(args []string) (*Core, bool) {
 		}),
 		done: make(chan struct{}),
 	}
-
 	p.conf, p.confPath, err = conf.Load(cli.Confpath, defaultConfPaths)
 	if err != nil {
 		fmt.Printf("ERR: %s\n", err)
@@ -367,6 +368,14 @@ func (p *Core) createResources(initial bool) error {
 			return err
 		}
 		p.Log(logger.Info, "Connected to the database")
+	}
+
+	if p.conf.GRPC.Use &&p.clientGRPC.Conn==nil {
+		p.clientGRPC, err = RMS.CreateGrpcClient( p.ctx,p.conf.GRPC)
+		if err != nil {
+			return err
+		}
+		p.Log(logger.Info, "Connected to the RMS on %s:%v", p.conf.GRPC.GrpcAddress, p.conf.GRPC.GrpcPort)
 	}
 	if p.conf.Database.TimeStatus <= 0 {
 		p.conf.Database.TimeStatus = 15
@@ -656,6 +665,7 @@ func (p *Core) createResources(initial bool) error {
 			parent:            p,
 			ChConfigSet:       p.chConfigSet,
 			stor:              stor,
+			clientGRPC:        p.clientGRPC,
 			Publisher:         MaxPub{Max: len(p.conf.Paths) - 1},
 			max:               p.conf.PathDefaults.MaxPublishers,
 		}
@@ -1177,6 +1187,12 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		closeSRTServer ||
 		closeLogger
 
+	closeGRPC := newConf == nil ||
+		newConf.GRPC.Use != p.conf.GRPC.Use ||
+		newConf.GRPC.GrpcAddress != p.conf.GRPC.GrpcAddress ||
+		newConf.GRPC.GrpcPort != p.conf.GRPC.GrpcPort ||
+		newConf.GRPC.ServerName != p.conf.GRPC.ServerName  
+
 	closeDB := newConf == nil ||
 		newConf.Database.Use != p.conf.Database.Use ||
 		newConf.Database.DbAddress != p.conf.Database.DbAddress ||
@@ -1307,6 +1323,11 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		p.Log(logger.Info, "Closing database")
 		database.ClosePool(p.dbPool)
 		p.dbPool = nil
+	}
+	if p.conf.GRPC.Use && closeGRPC{
+		p.clientGRPC.Close()
+		p.clientGRPC.Conn = nil
+		p.Log(logger.Info, "GRPC client closed")
 	}
 
 

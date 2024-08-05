@@ -15,6 +15,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
+	RMS "github.com/bluenviron/mediamtx/internal/grps"
 	"github.com/bluenviron/mediamtx/internal/hooks"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/record"
@@ -119,6 +120,7 @@ type path struct {
 	// out
 	done chan struct{}
 
+	clientGRPC      RMS.GrpcClient
 	stor      storage.Storage
 	publisher *MaxPub
 
@@ -850,6 +852,7 @@ func (pa *path) startRecording() {
 		},
 		Parent:      pa,
 		Stor:        pa.stor,
+		ClientGRPC:  pa.clientGRPC,
 		RecordAudio: pa.conf.RecordAudio,
 		ChConfigSet: pa.ChConfigSet,
 	}

@@ -45,6 +45,78 @@ func (s *formatMPEGTSSegment) close() error {
 			duration := s.lastDTS - s.startDTS
 			s.f.a.agent.OnSegmentComplete(s.path, duration)
 
+			if s.f.a.clientGRPC.Use {
+				stat, err3 := os.Stat(s.path)
+				if err3 == nil {
+					paths := strings.Split(s.path, "/")
+					pathRec := strings.Join(paths[:len(paths)-1], "/")
+					var query string
+					var attribute string
+					if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0"{
+						attribute = "pathStream"
+						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','5')",
+							s.f.a.agent.PathStream,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.endTime,
+							// s.f.a.idDsk,
+						)
+					} else {
+						if strings.Contains(s.f.a.stor.Sql.InsertPath, "code_mp_cam"){
+							attribute = "code_mp_cam"
+						} else {
+							attribute = "stream"
+						}
+						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','5')",
+							s.f.a.agent.PathName,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.endTime,
+							// s.f.a.idDsk,
+						)
+					}
+					r, err4 := s.f.a.clientGRPC.Post(attribute, query)
+					if err4 != nil {
+						if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0"	{
+							query = fmt.Sprintf(
+							s.f.a.stor.Sql.InsertPathStream,
+							s.f.a.agent.PathStream,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.endTime,
+							s.f.a.idDsk,
+						)
+						} else {
+							query = fmt.Sprintf(
+							s.f.a.stor.Sql.InsertPath,
+							s.f.a.agent.PathName,
+							pathRec+"/",
+							paths[len(paths)-1],
+							s.f.a.timeStart,
+							fmt.Sprint(stat.Size()),
+							s.f.a.endTime,
+							s.f.a.idDsk,
+						)
+						}
+						errsql := errorsql.SavingRequest(s.f.a.stor.FileSQLErr, query,s.f.a.agent.PathName)
+						if errsql != nil {
+							s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
+						}
+						return err
+					} else {
+						s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", r)
+					}
+					
+				}
+				
+			}
+
 			if s.f.a.stor.Use {
 				stat, err3 := os.Stat(s.path)
 
@@ -55,11 +127,11 @@ func (s *formatMPEGTSSegment) close() error {
 					if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0" {
 						query = fmt.Sprintf(
 							s.f.a.stor.Sql.InsertPathStream,
+							s.f.a.agent.PathStream,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
 							fmt.Sprint(stat.Size()),
-							s.f.a.agent.PathStream,
 							s.f.a.endTime,
 							s.f.a.idDsk,
 						)
@@ -67,11 +139,11 @@ func (s *formatMPEGTSSegment) close() error {
 					} else {
 						query = fmt.Sprintf(
 							s.f.a.stor.Sql.InsertPath,
+							s.f.a.agent.PathName,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
 							fmt.Sprint(stat.Size()),
-							s.f.a.agent.PathName,
 							s.f.a.endTime,
 							s.f.a.idDsk,
 						)

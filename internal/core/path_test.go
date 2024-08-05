@@ -482,7 +482,6 @@ func TestPathRunOnRecordSegment(t *testing.T) {
 			"sh -c 'echo \"$MTX_SEGMENT_PATH $MTX_SEGMENT_DURATION\" > " + onRecordSegmentComplete + "'\n")
 		require.Equal(t, true, ok)
 		defer p.Close()
-
 		media0 := test.UniqueMediaH264()
 
 		source := gortsplib.Client{}

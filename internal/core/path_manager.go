@@ -13,6 +13,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
+	RMS "github.com/bluenviron/mediamtx/internal/grps"
 	"github.com/bluenviron/mediamtx/internal/logger"
 
 	"github.com/bluenviron/mediamtx/internal/stream"
@@ -94,6 +95,7 @@ type pathManager struct {
 	chAPIPathsList chan pathAPIPathsListReq
 	chAPIPathsGet  chan pathAPIPathsGetReq
 
+	clientGRPC      RMS.GrpcClient
 	stor      storage.Storage
 	Publisher MaxPub
 	max       int
@@ -466,6 +468,7 @@ func (pm *pathManager) createPath(
 		wg:                &pm.wg,
 		externalCmdPool:   pm.externalCmdPool,
 		parent:            pm,
+		clientGRPC:        pm.clientGRPC,
 		stor:              pm.stor,
 		publisher:         &pm.Publisher,
 		logStreams:        pm.logStreams,

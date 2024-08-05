@@ -8,6 +8,7 @@ import (
 
 	"github.com/bluenviron/mediamtx/internal/asyncwriter"
 	"github.com/bluenviron/mediamtx/internal/conf"
+	RMS "github.com/bluenviron/mediamtx/internal/grps"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/storage"
 )
@@ -28,6 +29,7 @@ type agentInstance struct {
 	terminate chan struct{}
 	done      chan struct{}
 
+	clientGRPC      RMS.GrpcClient
 	stor        storage.Storage
 	recordAudio bool
 	free        string

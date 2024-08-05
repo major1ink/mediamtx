@@ -25,7 +25,6 @@ func TestSource(t *testing.T) {
 				if ca == "plain" {
 					return net.Listen("tcp", "127.0.0.1:1935")
 				}
-
 				serverCertFpath, err := test.CreateTempFile(test.TLSCertPub)
 				require.NoError(t, err)
 				defer os.Remove(serverCertFpath)
@@ -33,11 +32,9 @@ func TestSource(t *testing.T) {
 				serverKeyFpath, err := test.CreateTempFile(test.TLSCertKey)
 				require.NoError(t, err)
 				defer os.Remove(serverKeyFpath)
-
 				var cert tls.Certificate
 				cert, err = tls.LoadX509KeyPair(serverCertFpath, serverKeyFpath)
 				require.NoError(t, err)
-
 				return tls.Listen("tcp", "127.0.0.1:1936", &tls.Config{Certificates: []tls.Certificate{cert}})
 			}()
 			require.NoError(t, err)

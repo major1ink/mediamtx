@@ -7,6 +7,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
+	RMS "github.com/bluenviron/mediamtx/internal/grps"
 )
 
 // OnSegmentCreateFunc is the prototype of the function passed as OnSegmentCreate
@@ -37,6 +38,7 @@ type Agent struct {
 	terminate chan struct{}
 	done      chan struct{}
 
+	ClientGRPC      RMS.GrpcClient
 	Stor        storage.Storage
 	RecordAudio bool
 
@@ -72,6 +74,7 @@ func (w *Agent) Initialize() {
 	w.currentInstance = &agentInstance{
 		agent:       w,
 		stor:        w.Stor,
+		clientGRPC:  w.ClientGRPC,
 		recordAudio: w.RecordAudio,
 	}
 	w.currentInstance.initialize()

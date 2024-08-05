@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io"
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -45,7 +44,7 @@ func TestConfFromFile(t *testing.T) {
 		require.Equal(t, tmpf, confPath)
 
 		require.Equal(t, LogLevel(logger.Debug), conf.LogLevel)
-		log.Println(conf.Paths)
+
 		pa, ok := conf.Paths["cam1"]
 		require.Equal(t, true, ok)
 		require.Equal(t, &Path{
