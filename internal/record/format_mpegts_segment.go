@@ -79,6 +79,7 @@ func (s *formatMPEGTSSegment) close() error {
 							// s.f.a.idDsk,
 						)
 					}
+					s.f.a.agent.Log(logger.Debug, "Sending an insert request to RMS:Server %s, atribute %s, query %s",s.f.a.clientGRPC.Server, attribute, query)
 					r, err4 := s.f.a.clientGRPC.Post(attribute, query)
 					if err4 != nil {
 						if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0"	{
@@ -104,6 +105,7 @@ func (s *formatMPEGTSSegment) close() error {
 							s.f.a.idDsk,
 						)
 						}
+						s.f.a.agent.Log(logger.Error, "ERROR: error when sending an insert request to RMS: %s", err4)
 						errsql := errorsql.SavingRequest(s.f.a.stor.FileSQLErr, query,s.f.a.agent.PathName)
 						if errsql != nil {
 							s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
@@ -117,7 +119,7 @@ func (s *formatMPEGTSSegment) close() error {
 				
 			}
 
-			if s.f.a.stor.Use {
+			if s.f.a.stor.Use  && !s.f.a.clientGRPC.Use {
 				stat, err3 := os.Stat(s.path)
 
 				if err3 == nil {

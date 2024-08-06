@@ -32,6 +32,14 @@ func CreateGrpcClient(ctx context.Context, cfg conf.GRPC) (GrpcClient, error) {
 func (c *GrpcClient) Post (attribute,query string) (*pb.AnswerInsert, error){
 	r,err := c.Client.Post(c.ctx, &pb.Insert{	Server: c.Server,	Attribute: attribute,	Query: query,})
 	if err != nil {
+		if err.Error() == "rpc error: code = Canceled desc = context canceled" {
+		ctx := context.Background()
+		r, err = c.Client.Post(ctx, &pb.Insert{Server: c.Server, Attribute: attribute, Query: query,})
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
+		}
 		return nil, err
 	}
 	return r, nil
