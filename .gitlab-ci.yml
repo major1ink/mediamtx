@@ -1,5 +1,7 @@
 build-job:
   stage: build
+  tegs:
+    -build
   script:
     - echo "Hello, $GITLAB_USER_LOGIN!"
 
