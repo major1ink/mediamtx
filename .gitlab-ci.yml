@@ -8,6 +8,7 @@ build:
     - build_runner
   script:
     - echo "Hello, $GITLAB_USER_LOGIN!"
+    - go test ./...
 
 
 # test-job1:
