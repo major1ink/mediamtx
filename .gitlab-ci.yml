@@ -1,5 +1,8 @@
 build-job:
-  stage: build
+  stages:
+    - build
+    - test
+    - deploy
   tegs:
     -build
   script:
