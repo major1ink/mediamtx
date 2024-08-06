@@ -3,7 +3,7 @@ stages:
   - test
   - deploy
 
-build-job:
+build:
   tags:
     - build_runner
   script:
