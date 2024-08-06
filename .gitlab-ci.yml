@@ -1,9 +1,10 @@
+stages:
+  - build
+  - test
+  - deploy
+
 build-job:
-  stages:
-    - build
-    - test
-    - deploy
-  tegs:
+  tags:
     -build
   script:
     - echo "Hello, $GITLAB_USER_LOGIN!"
