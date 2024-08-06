@@ -9,6 +9,7 @@ build:
   script:
     - echo "Hello, $GITLAB_USER_LOGIN!"
 
+
 # test-job1:
 #   stage: test
 #   script:
