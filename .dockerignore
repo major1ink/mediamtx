@@ -1,0 +1,8 @@
+# do not add .git, since it is needed to extract the tag
+# do not add /tmp, since it is needed by make dockerhub
+/binaries
+/coverage*.txt
+/apidocs/*.html
+/internal/servers/hls/hls.min.js
+/internal/protocols/rpicamera/exe/text_font.h
+/internal/protocols/rpicamera/exe/exe
