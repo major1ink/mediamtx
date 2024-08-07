@@ -9,6 +9,7 @@ build:
   script:
     - echo "Hello, $GITLAB_USER_LOGIN!"
     - export PATH=$PATH:/usr/local/go/bin
+    - go generate ./...
     - go test ./...
 
 
