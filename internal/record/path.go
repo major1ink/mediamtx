@@ -155,7 +155,7 @@ func (p *Path) Decode(format string, v string) bool {
 		switch k {
 		case "%path":
 			p.Path = v
-
+//
 		case "%Y":
 			tmp, _ := strconv.ParseInt(v, 10, 64)
 			year = int(tmp)
