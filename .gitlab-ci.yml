@@ -8,7 +8,8 @@ build:
     - build_runner
   script:
     - echo "Hello, $GITLAB_USER_LOGIN!"
-    # - go test ./...
+    - export PATH=$PATH:/usr/local/go/bin
+    - go test ./...
 
 
 # test-job1:
