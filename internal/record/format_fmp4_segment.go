@@ -103,7 +103,7 @@ func (s *formatFMP4Segment) close() error {
 							// s.f.a.idDsk,
 						)
 					}
-					r, err4 := s.f.a.clientGRPC.Post(attribute, query)
+					err4 := s.f.a.clientGRPC.Post(attribute, query)
 					if err4 != nil {
 						if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0"	{
 							query = fmt.Sprintf(
@@ -134,7 +134,7 @@ func (s *formatFMP4Segment) close() error {
 						}
 						return err
 					} else {
-						s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %v", r)
+						s.f.a.agent.Log(logger.Debug, "The request was successfully completed")
 					}
 					
 				}

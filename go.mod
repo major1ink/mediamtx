@@ -35,6 +35,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
+require github.com/golang/protobuf v1.5.4 // indirect
+
 require (
 	github.com/asticode/go-astikit v0.42.0 // indirect
 	github.com/asticode/go-astits v1.13.0 // indirect
@@ -56,7 +58,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/major1ink/repGrpc v1.1.3
+	github.com/major1ink/repGrpc v1.1.6
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect

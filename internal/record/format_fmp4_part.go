@@ -65,9 +65,61 @@ func (p *formatFMP4Part) close() error {
 
 	}
 	if p.s.fi == nil {
-		if p.s.f.a.stor.DbDrives && p.s.f.a.stor.Use {
-			// проверка на использование бд, если бд не используеться будет записываться по локальным путям
+		var err error
+			switch{
+			case p.s.f.a.agent.ClientGRPC.Use:
+			if p.s.f.a.stor.DbDrives	{	
+			p.s.f.a.agent.Log(logger.Debug, "sending a request to receive disks")
+			r,err := p.s.f.a.agent.ClientGRPC.Select(p.s.f.a.agent.StreamName,"MountPoint")
+			if err != nil {
+			p.s.f.a.agent.Log(logger.Error, "%v", err)
+			p.localCreatePath()
+			} else {
+				p.s.f.a.agent.Log(logger.Debug, "The result of executing the query: %v", r.MapDisks)
+				if len (r.MapDisks) == 0 {
+					p.s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
+					p.localCreatePath()
+				} else {
+					drives:=[]interface{}{}
+					for path := range r.MapDisks {
+						drives = append(drives, path)
+					}
+					p.s.f.a.free = getMostFreeDisk(drives)
+					p.s.f.a.idDsk = strconv.Itoa(int(r.MapDisks[p.s.f.a.free]))
+					p.dbCreatingPaths()
+				}
 
+			}}
+			if p.s.f.a.stor.UseDbPathStream && p.s.f.a.agent.PathStream != "0" {
+			p.s.f.a.agent.Log(logger.Debug, "A request has been sent to receive Cod_mp and status_record")
+			r, err :=p.s.f.a.agent.ClientGRPC.Select(p.s.f.a.agent.StreamName, "CodeMP")
+			if err != nil {
+				p.s.f.a.agent.Log(logger.Error, "%s", err)
+				p.s.f.a.agent.Status_record=0
+				p.s.f.a.agent.PathStream="0"
+			} else {
+				p.s.f.a.agent.Log(logger.Debug, "response received from GRPS: %s", r)
+				p.s.f.a.agent.PathStream = r.CodeMP
+				p.s.f.a.agent.Status_record = int8(r.StatusRecord)
+				if p.s.f.a.agent.Status_record == 0 {
+					p.s.f.a.agent.CodeMp="0"
+				}
+			}
+		}
+
+				if p.s.f.a.agent.Stor.DbUseCodeMP_Contract {
+			p.s.f.a.agent.Log(logger.Debug, "A request has been sent to receive CodeMP_Contract")
+			r,err:= p.s.f.a.agent.ClientGRPC.Select(p.s.f.a.agent.StreamName, "CodeMP_Contract")
+			if err != nil {
+				p.s.f.a.agent.Log(logger.Error, "%s", err)
+				p.s.f.a.agent.CodeMp="0"
+			} else {
+				p.s.f.a.agent.Log(logger.Debug, "response received from GRPS: %s", r)
+			}
+		}
+
+			case p.s.f.a.stor.Use:
+				if p.s.f.a.stor.DbDrives	{
 			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", p.s.f.a.stor.Sql.GetDrives))
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
 			if err != nil {
@@ -80,29 +132,28 @@ func (p *formatFMP4Part) close() error {
 					p.s.f.a.agent.Log(logger.Error, "ERROR:  No values were received in response to the request")
 					p.localCreatePath()
 				} else {
-					idDisks := make(map[string]int32)
+					idDisks := make(map[string]int16)
 					drives := []interface{}{}
 					for _, line := range data {
-						idDisks[line[1].(string)] = line[0].(int32)
+						idDisks[line[1].(string)] = line[0].(int16)
 						drives = append(drives, line[1].(string))
 					}
 					p.s.f.a.free = getMostFreeDisk(drives)
 					p.s.f.a.idDsk = strconv.Itoa(int(idDisks[p.s.f.a.free]))
+
 					p.dbCreatingPaths()
 				}
 
 			}
-		} else {
-			p.localCreatePath()
-		}
-		var err error
-		if p.s.f.a.agent.PathStream == "0" && p.s.f.a.stor.Use && p.s.f.a.stor.UseDbPathStream {
+			}
+
+			if p.s.f.a.agent.PathStream == "0" && p.s.f.a.stor.UseDbPathStream {
 			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetPathStream, p.s.f.a.agent.StreamName)))
 			p.s.f.a.agent.Status_record, p.s.f.a.agent.PathStream, err = p.s.f.a.agent.Stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
 			if err != nil {
-				p.s.f.a.agent.Log(logger.Error, "%s", err)
 				p.s.f.a.agent.PathStream = "0"
 				p.s.f.a.agent.Status_record = 0
+				p.s.f.a.agent.Log(logger.Error, "%s", err)
 			} else {
 				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %b, %s", p.s.f.a.agent.Status_record, p.s.f.a.agent.PathStream)
 				if p.s.f.a.agent.Status_record == 0 {
@@ -116,17 +167,20 @@ func (p *formatFMP4Part) close() error {
 			}
 
 		}
-		if p.s.f.a.agent.CodeMp == "0" && p.s.f.a.stor.Use && p.s.f.a.stor.DbUseCodeMP_Contract {
+		if p.s.f.a.agent.CodeMp == "0" && p.s.f.a.stor.DbUseCodeMP_Contract {
 			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName)))
 			p.s.f.a.agent.CodeMp, err = p.s.f.a.agent.Stor.Req.SelectCodeMP_Contract(fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
-				if err != nil {
-					p.s.f.a.agent.Log(logger.Error, "%s", err)
-					p.s.f.a.agent.CodeMp = "0"
-				} else {
-					p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s", p.s.f.a.agent.CodeMp)
-				}
+			if err != nil {
+				p.s.f.a.agent.Log(logger.Error, "%s", err)
+				p.s.f.a.agent.CodeMp = "0"
+			} else {
+				p.s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %s", p.s.f.a.agent.CodeMp)
+			}
 		}
 
+			default:
+				p.localCreatePath()
+		}
 		p.s.f.a.agent.Log(logger.Debug, "creating segment %s", p.s.path)
 
 		err = os.MkdirAll(filepath.Dir(p.s.path), 0o755)

@@ -862,10 +862,36 @@ func (pa *path) startRecording() {
 		pa.recordAgent.StreamName = paths[len(paths)-1]
 	}
 	var err error
-
-	if pa.recordAgent.Stor.Use {
-
-			if pa.recordAgent.Stor.DbUseCodeMP_Contract {
+	switch{
+	case pa.recordAgent.ClientGRPC.Use:
+		if pa.recordAgent.Stor.UseDbPathStream {
+			pa.Log(logger.Debug, "A request has been sent to receive Cod_mp and status_record")
+			r, err :=pa.recordAgent.ClientGRPC.Select(pa.recordAgent.StreamName, "CodeMP")
+			if err != nil {
+				pa.Log(logger.Error, "%s", err)
+				pa.recordAgent.Status_record=0
+				pa.recordAgent.PathStream="0"
+			} else {
+				pa.Log(logger.Debug, "response received from GRPS: %s", r)
+				pa.recordAgent.PathStream = r.CodeMP
+				pa.recordAgent.Status_record = int8(r.StatusRecord)
+				if pa.recordAgent.Status_record == 0 {
+					pa.recordAgent.CodeMp="0"
+				}
+			}
+		}
+		if pa.recordAgent.Stor.DbUseCodeMP_Contract {
+			pa.Log(logger.Debug, "A request has been sent to receive CodeMP_Contract")
+			r,err:= pa.recordAgent.ClientGRPC.Select(pa.recordAgent.StreamName, "CodeMP_Contract")
+			if err != nil {
+				pa.Log(logger.Error, "%s", err)
+				pa.recordAgent.CodeMp="0"
+			} else {
+				pa.Log(logger.Debug, "response received from GRPS: %s", r)
+			}
+		}
+	case pa.recordAgent.Stor.Use:
+				if pa.recordAgent.Stor.DbUseCodeMP_Contract {
 				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName)))
 				pa.recordAgent.CodeMp, err = pa.recordAgent.Stor.Req.SelectCodeMP_Contract(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName))
 				if err != nil {
@@ -889,8 +915,8 @@ func (pa *path) startRecording() {
 					}
 				}
 			}
-
 	}
+
 	pa.recordAgent.Initialize()
 }
 

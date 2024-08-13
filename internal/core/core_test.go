@@ -22,7 +22,6 @@ func newInstance(conf string) (*Core, bool) {
 		return nil, false
 	}
 	defer os.Remove(tmpf)
-
 	return New([]string{tmpf})
 }
 

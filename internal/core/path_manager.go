@@ -201,8 +201,35 @@ func (pm *pathManager) checkStatus() {
 		for {
 			select {
 			case <-time.After(time.Duration(pm.stor.TimeStatus) * time.Second):
+				
 				if len(pm.paths) > 0 {
-					query := pm.stor.Sql.GetStatus_records + "("
+					switch{
+						case pm.clientGRPC.Use:
+							var relodSt []struct {
+							Name string
+							Record bool
+							}
+							for name := range pm.paths {
+								pm.Log(logger.Debug, "sending a request to receive a Status Record via stream: %s", name)
+								r,err:=pm.clientGRPC.Select(name,"StatusRecord")
+								if err != nil {
+									pm.Log(logger.Error, "%v", err)
+									continue
+								}
+								pm.Log(logger.Debug, "StatusRecord = %v",r.StatusRecord)
+								if transformation(int16(r.StatusRecord)) != pm.paths[name].conf.Record {
+							pm.paths[name].Log(logger.Debug, "[record] status_record = %v",r.StatusRecord)
+							relodSt = append(relodSt, struct{Name string; Record bool}{Name: name, Record: transformation(int16(r.StatusRecord))})
+								}
+
+							}
+							if len(relodSt) > 0 {
+								pm.ChConfigSet <- relodSt
+							}
+
+						case pm.stor.Use:
+
+												query := pm.stor.Sql.GetStatus_records + "("
 					for name := range pm.paths {
 						query = query + "'" + name + "'" + ","
 					}
@@ -228,6 +255,8 @@ func (pm *pathManager) checkStatus() {
 					if len(relodSt) > 0 {
 					pm.ChConfigSet <- relodSt
 					}
+					}
+
 				}
 			case <-pm.ctx.Done():
 				break outer
@@ -237,7 +266,7 @@ func (pm *pathManager) checkStatus() {
 func (pm *pathManager) run() {
 	defer pm.wg.Done()
 
-	if pm.stor.UseDbPathStream && pm.stor.Use{
+	if pm.stor.UseDbPathStream && (pm.stor.Use || pm.clientGRPC.Use ){
 		go pm.checkStatus()
 	}
 outer:
