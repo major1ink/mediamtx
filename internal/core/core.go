@@ -47,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.3-4"
+var version = "v1.8.3-5"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -131,6 +131,7 @@ type Core struct {
 	done chan struct{}
 
 }
+
 
 // New allocates a Core.
 func New(args []string) (*Core, bool) {
@@ -285,7 +286,7 @@ outer:
 
 		case <-interrupt:
 			p.Log(logger.Info, "shutting down gracefully")
-			if p.pathManager.stor.UseUpdaterStatus && p.pathManager.stor.Use{
+			if p.pathManager.switches.UseUpdaterStatus && p.pathManager.stor.Use{
 				for key, path := range p.pathManager.paths {
 					query := fmt.Sprintf(p.pathManager.stor.Sql.UpdateStatus, 0, key)
 					path.Log(logger.Debug, "SQL query sent:%s", query)
@@ -349,11 +350,11 @@ func (p *Core) createResources(initial bool) error {
 
 		p.externalCmdPool = externalcmd.NewPool()
 	}
-	if p.conf.Database.Use && p.conf.Database.DbUseCodeMP_Contract && p.conf.Database.UseDbPathStream {
+	if p.conf.Database.Use && p.conf.Switches.UseCodeMP_Contract && p.conf.Switches.UsePathStream {
 		err := fmt.Errorf("only one dbUseCodeMP_Contract or useDbPathStream field should be included")
 		return err
 	}
-	if p.conf.Database.Use && p.conf.Database.UseUpdaterStatus && p.conf.Database.UseProxy {
+	if p.conf.Database.Use && p.conf.Switches.UseUpdaterStatus && p.conf.Switches.UseProxy {
 		err := fmt.Errorf("only one useUpdaterStatus or useProxy field should be included")
 		return err
 	}
@@ -377,11 +378,11 @@ func (p *Core) createResources(initial bool) error {
 		}
 		p.Log(logger.Info, "Connected to the RMS on %s:%v", p.conf.GRPC.GrpcAddress, p.conf.GRPC.GrpcPort)
 	}
-	if p.conf.Database.TimeStatus <= 0 {
-		p.conf.Database.TimeStatus = 15
+	if p.conf.Switches.TimeStatus <= 0 {
+		p.conf.Switches.TimeStatus = 15
 	}
-	if p.conf.Database.QueryTimeOut <= 0 {
-		p.conf.Database.QueryTimeOut = 2
+	if p.conf.Switches.QueryTimeOut <= 0 {
+		p.conf.Switches.QueryTimeOut = 2
 	}
 	if p.authManager == nil {
 		p.authManager = &auth.Manager{
@@ -468,25 +469,15 @@ func (p *Core) createResources(initial bool) error {
 	}
 
 	if p.pathManager == nil {
-		req := psql.NewReq(p.ctx, p.dbPool,p.conf.Database.QueryTimeOut)
+		req := psql.NewReq(p.ctx, p.dbPool,p.conf.Switches.QueryTimeOut)
 		stor := storage.Storage{
 			Use:                  p.conf.Database.Use,
 			Req:                  req,
-			DbDrives:             p.conf.Database.DbDrives,
-			DbUseCodeMP_Contract: p.conf.Database.DbUseCodeMP_Contract,
-			DbUseContract:        p.conf.Database.DbUseContract,
-			UseDbPathStream:      p.conf.Database.UseDbPathStream,
-			TimeStatus:           p.conf.Database.TimeStatus,
-			UseUpdaterStatus:     p.conf.Database.UseUpdaterStatus,
-			UseSrise:             p.conf.Database.UseSrise,
-			UseProxy:             p.conf.Database.UseProxy,
-			Login:                p.conf.Database.Login,
-			Pass:                 p.conf.Database.Pass,
-			FileSQLErr:           p.conf.Database.FileSQLErr,
 			Sql:                  p.conf.Database.Sql,
 		}
-		if stor.UseProxy && stor.Use {
-			if stor.UseSrise {
+		switches:= p.conf.Switches
+		if switches.UseProxy && stor.Use {
+			if switches.UseSrise {
 				return errors.New("sRise and proxy can't be used at the same time")
 			}
 			p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataForProxy))
@@ -511,7 +502,7 @@ func (p *Core) createResources(initial bool) error {
 			"name": "%s",
 			"source": "%s",
 			"sourceOnDemand": true,
-		}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v/%s", stor.Login, stor.Pass, i.Ip_address_out, i.Code_mp)))
+		}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v/%s", switches.Login, switches.Pass, i.Ip_address_out, i.Code_mp)))
 				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
 				if err != nil {
 					return err
@@ -526,8 +517,8 @@ func (p *Core) createResources(initial bool) error {
 
 		}
 
-		if stor.UseSrise && stor.Use {
-			if stor.DbUseContract {
+		if switches.UseSrise && stor.Use {
+			if switches.UseContract {
 				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataContract))
 				data, err := stor.Req.SelectData(stor.Sql.GetDataContract)
 				if err != nil {

@@ -76,7 +76,7 @@ func (s *formatFMP4Segment) close() error {
 					pathRec := strings.Join(paths[:len(paths)-1], "/")
 					var query string
 					var attribute string
-					if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0"{
+					if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0"{
 						attribute = "pathStream"
 						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','5')",
 							s.f.a.agent.PathStream,
@@ -105,7 +105,7 @@ func (s *formatFMP4Segment) close() error {
 					}
 					err4 := s.f.a.clientGRPC.Post(attribute, query)
 					if err4 != nil {
-						if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0"	{
+						if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0"	{
 							query = fmt.Sprintf(
 							s.f.a.stor.Sql.InsertPathStream,
 							s.f.a.agent.PathStream,
@@ -128,7 +128,7 @@ func (s *formatFMP4Segment) close() error {
 							s.f.a.idDsk,
 						)
 						}
-						errsql := errorsql.SavingRequest(s.f.a.stor.FileSQLErr, query,s.f.a.agent.PathName)
+						errsql := errorsql.SavingRequest(s.f.a.switches.FileSQLErr, query,s.f.a.agent.PathName)
 						if errsql != nil {
 							s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 						}
@@ -147,7 +147,7 @@ func (s *formatFMP4Segment) close() error {
 					paths := strings.Split(s.path, "/")
 					pathRec := strings.Join(paths[:len(paths)-1], "/")
 					var query string
-					if s.f.a.stor.UseDbPathStream && s.f.a.agent.PathStream != "0" {
+					if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0" {
 						query = fmt.Sprintf(
 							s.f.a.stor.Sql.InsertPathStream,
 							s.f.a.agent.PathStream,
@@ -180,7 +180,7 @@ func (s *formatFMP4Segment) close() error {
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
 							if err4 != nil {
 								s.f.a.agent.Log(logger.Error, "%v", err4)
-								errsql := errorsql.SavingRequest(s.f.a.stor.FileSQLErr, query,s.f.a.agent.PathName)
+								errsql := errorsql.SavingRequest(s.f.a.switches.FileSQLErr, query,s.f.a.agent.PathName)
 								if errsql != nil {
 									s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 								}
@@ -191,7 +191,7 @@ func (s *formatFMP4Segment) close() error {
 							return err
 						}
 						s.f.a.agent.Log(logger.Error, "%v", err4)
-						errsql := errorsql.SavingRequest(s.f.a.stor.FileSQLErr, query,s.f.a.agent.PathName)
+						errsql := errorsql.SavingRequest(s.f.a.switches.FileSQLErr, query,s.f.a.agent.PathName)
 						if errsql != nil {
 							s.f.a.agent.Log(logger.Error, "ERROR: error when saving an incomplete sql query: %v", errsql)
 						}

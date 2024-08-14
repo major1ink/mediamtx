@@ -6,7 +6,7 @@
 ###############################################
 # Global settings -> General
 # Service version
-mediaMTX_ver: v1.8.3-4
+mediaMTX_ver: v1.8.3-5
 # Verbosity of the program; available values are "error", "warn", "info", "debug".
 logLevel: info
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
@@ -734,32 +734,6 @@ database:
   dbPassword: ""
   # Maximum number of connections
   maxConnections: 0
-  # Enable/disable discs from the database for recording
-  dbDrives: no
-  # Enable/disable the code_mp_contract field to create a record path
-  dbDrives: no
-  # Enable/disable updating the status of a stream in the database
-  useUpdaterStatus: no
-  #L3
-  # Enable/disable the PathStream field to create a record path
-  useDbPathStream: no
-  # Works with the enabled use Db Path Stream. Indicates the time in seconds how often the status needs to be checked
-  timeStatus: 0
-  # Enable/disable the server start with proxy streams from the database.
-  useProxy: no
-  login:
-  pass:
-  #l6
-  # Enable/disable the code_mp_contract field to create a record path
-  dbUseCodeMP_Contract: no
-  # Enable/disable the contract field to create a straem path. Work with useSrise: yes
-  dbUseContract: no
-  # Enable/disable the server start with streams from the database
-  useSrise: no
-  # Specifies the path and file name to save the file with outstanding sql queries
-  fileSQLErr: ./
-  # Timeout for the sql query
-  queryTimeOut: 0
     # SQL queryes
   sql:
     # SQL query to insert video record
@@ -782,3 +756,28 @@ database:
     getDataForProxy: 
     #request to get Status_record for all streams
     getStatus_records: 
+switches: 
+  # Enable/disable discs from the database for recording
+  getDrives: no
+  # Enable/disable updating the status of a stream in the database
+  useUpdaterStatus: no
+  #L3
+  # Enable/disable the PathStream field to create a record path
+  usePathStream: no
+  # Works with the enabled use Db Path Stream. Indicates the time in seconds how often the status needs to be checked
+  timeStatus: 0
+  # Enable/disable the server start with proxy streams from the database.
+  useProxy: no
+  login:
+  pass:
+  #l6
+  # Enable/disable the code_mp_contract field to create a record path
+  useCodeMP_Contract: no
+  # Enable/disable the contract field to create a straem path. Work with useSrise: yes
+  useContract: no
+  # Enable/disable the server start with streams from the database
+  useSrise: no
+  # Specifies the path and file name to save the file with outstanding sql queries
+  fileSQLErr: 
+  # Timeout for the sql query
+  queryTimeOut: 0

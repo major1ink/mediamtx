@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/stretchr/testify/require"
 )
@@ -23,8 +24,10 @@ func TestLocalCreatePathMPEGTSSegment(t *testing.T) {
 				pathFormat: "/%v/%Y-%m-%d/%path-%s-%f",
 				stor: storage.Storage{
 					Use:                  true,
-					UseDbPathStream:      true,
 				},
+				switches: conf.Switches{
+						UsePathStream: true,
+					},
 			},
 		},
 		startNTP: time.Date(2008, 11, 7, 11, 22, 4, 123456000, time.Local),
@@ -45,8 +48,10 @@ func TestLocalCreatePathMPEGTSSegment(t *testing.T) {
 				pathFormat: "/%v/%Y-%m-%d/%path-%s-%f",
 				stor: storage.Storage{
 					Use:                  true,
-					DbUseCodeMP_Contract:      true,
 				},
+				switches: conf.Switches{
+					UseCodeMP_Contract: true,
+					},
 			},
 		},
 		startNTP: time.Date(2008, 11, 7, 11, 22, 4, 123456000, time.Local),

@@ -8,16 +8,5 @@ import (
 type Storage struct {
 	Use                  bool
 	Req                  psql.Requests
-	DbDrives             bool
-	DbUseCodeMP_Contract bool
-	DbUseContract        bool
-	UseDbPathStream      bool
-	TimeStatus           int
-	UseUpdaterStatus     bool
-	UseSrise             bool
-	UseProxy             bool
-	Login                string
-	Pass                 string
-	FileSQLErr           string
 	Sql                  conf.Sql
 }

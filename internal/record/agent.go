@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
+	RMS "github.com/bluenviron/mediamtx/internal/grps"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/storage"
 	"github.com/bluenviron/mediamtx/internal/stream"
-	RMS "github.com/bluenviron/mediamtx/internal/grps"
 )
 
 // OnSegmentCreateFunc is the prototype of the function passed as OnSegmentCreate
@@ -40,6 +40,7 @@ type Agent struct {
 
 	ClientGRPC      RMS.GrpcClient
 	Stor        storage.Storage
+	Switches conf.Switches
 	RecordAudio bool
 
 	PathStream    string

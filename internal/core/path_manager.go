@@ -97,6 +97,7 @@ type pathManager struct {
 
 	clientGRPC      RMS.GrpcClient
 	stor      storage.Storage
+	switches  conf.Switches
 	Publisher MaxPub
 	max       int
 
@@ -200,7 +201,7 @@ func (pm *pathManager) checkStatus() {
 	outer:
 		for {
 			select {
-			case <-time.After(time.Duration(pm.stor.TimeStatus) * time.Second):
+			case <-time.After(time.Duration(pm.switches.TimeStatus) * time.Second):
 				
 				if len(pm.paths) > 0 {
 					switch{
@@ -266,7 +267,7 @@ func (pm *pathManager) checkStatus() {
 func (pm *pathManager) run() {
 	defer pm.wg.Done()
 
-	if pm.stor.UseDbPathStream && (pm.stor.Use || pm.clientGRPC.Use ){
+	if pm.switches.UsePathStream && (pm.stor.Use || pm.clientGRPC.Use ){
 		go pm.checkStatus()
 	}
 outer:
@@ -499,6 +500,7 @@ func (pm *pathManager) createPath(
 		parent:            pm,
 		clientGRPC:        pm.clientGRPC,
 		stor:              pm.stor,
+		switches: 		   pm.switches,
 		publisher:         &pm.Publisher,
 		logStreams:        pm.logStreams,
 		ChConfigSet:       pm.ChConfigSet,
@@ -525,7 +527,7 @@ func (pm *pathManager) removePath(pa *path) {
 	if len(pm.pathsByConf[pa.confName]) == 0 {
 		delete(pm.pathsByConf, pa.confName)
 	}
-	if pm.stor.UseUpdaterStatus && pm.stor.Use{
+	if pm.switches.UseUpdaterStatus && pm.stor.Use{
 		query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
 		pa.Log(logger.Debug, "SQL status %s", query)
 		err := pm.stor.Req.ExecQuery(query)
@@ -549,7 +551,7 @@ func (pm *pathManager) ReloadPathConfs(pathConfs map[string]*conf.Path) {
 func (pm *pathManager) pathReady(pa *path) {
 	select {
 	case pm.chPathReady <- pa:
-		if pm.stor.UseUpdaterStatus && pm.stor.Use{
+		if pm.switches.UseUpdaterStatus && pm.stor.Use{
 			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 1, pa.Name())
 			pa.Log(logger.Debug, "SQL status %s", query)
 			err := pm.stor.Req.ExecQuery(query)
@@ -567,7 +569,7 @@ func (pm *pathManager) pathReady(pa *path) {
 func (pm *pathManager) pathNotReady(pa *path) {
 	select {
 	case pm.chPathNotReady <- pa:
-		if pm.stor.UseUpdaterStatus && pm.stor.Use{
+		if pm.switches.UseUpdaterStatus && pm.stor.Use{
 			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
 			pa.Log(logger.Debug, "SQL status %s", query)
 			err := pm.stor.Req.ExecQuery(query)
@@ -585,7 +587,7 @@ func (pm *pathManager) pathNotReady(pa *path) {
 func (pm *pathManager) closePath(pa *path) {
 	select {
 	case pm.chClosePath <- pa:
-		if pm.stor.UseUpdaterStatus && pm.stor.Use{
+		if pm.switches.UseUpdaterStatus && pm.stor.Use{
 			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
 			pa.Log(logger.Debug, "SQL status %s", query)
 			err := pm.stor.Req.ExecQuery(query)

@@ -121,6 +121,7 @@ type path struct {
 	done chan struct{}
 
 	clientGRPC      RMS.GrpcClient
+	switches conf.Switches
 	stor      storage.Storage
 	publisher *MaxPub
 
@@ -864,7 +865,7 @@ func (pa *path) startRecording() {
 	var err error
 	switch{
 	case pa.recordAgent.ClientGRPC.Use:
-		if pa.recordAgent.Stor.UseDbPathStream {
+		if pa.recordAgent.Switches.UsePathStream {
 			pa.Log(logger.Debug, "A request has been sent to receive Cod_mp and status_record")
 			r, err :=pa.recordAgent.ClientGRPC.Select(pa.recordAgent.StreamName, "CodeMP")
 			if err != nil {
@@ -880,7 +881,7 @@ func (pa *path) startRecording() {
 				}
 			}
 		}
-		if pa.recordAgent.Stor.DbUseCodeMP_Contract {
+		if pa.recordAgent.Switches.UseCodeMP_Contract {
 			pa.Log(logger.Debug, "A request has been sent to receive CodeMP_Contract")
 			r,err:= pa.recordAgent.ClientGRPC.Select(pa.recordAgent.StreamName, "CodeMP_Contract")
 			if err != nil {
@@ -891,7 +892,7 @@ func (pa *path) startRecording() {
 			}
 		}
 	case pa.recordAgent.Stor.Use:
-				if pa.recordAgent.Stor.DbUseCodeMP_Contract {
+				if pa.recordAgent.Switches.UseCodeMP_Contract {
 				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName)))
 				pa.recordAgent.CodeMp, err = pa.recordAgent.Stor.Req.SelectCodeMP_Contract(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName))
 				if err != nil {
@@ -901,7 +902,7 @@ func (pa *path) startRecording() {
 					pa.Log(logger.Debug, "The result of executing the sql query: %s", pa.recordAgent.CodeMp)
 				}
 			}
-			if pa.recordAgent.Stor.UseDbPathStream {
+			if pa.recordAgent.Switches.UsePathStream {
 				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName)))
 				pa.recordAgent.Status_record, pa.recordAgent.PathStream, err = pa.recordAgent.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName))
 				if err != nil {

@@ -68,7 +68,7 @@ func (p *formatFMP4Part) close() error {
 		var err error
 			switch{
 			case p.s.f.a.agent.ClientGRPC.Use:
-			if p.s.f.a.stor.DbDrives	{	
+			if p.s.f.a.switches.GetDrives	{	
 			p.s.f.a.agent.Log(logger.Debug, "sending a request to receive disks")
 			r,err := p.s.f.a.agent.ClientGRPC.Select(p.s.f.a.agent.StreamName,"MountPoint")
 			if err != nil {
@@ -86,11 +86,11 @@ func (p *formatFMP4Part) close() error {
 					}
 					p.s.f.a.free = getMostFreeDisk(drives)
 					p.s.f.a.idDsk = strconv.Itoa(int(r.MapDisks[p.s.f.a.free]))
-					p.dbCreatingPaths()
+					p.CreatingPaths()
 				}
 
 			}}
-			if p.s.f.a.stor.UseDbPathStream && p.s.f.a.agent.PathStream != "0" {
+			if p.s.f.a.switches.UsePathStream && p.s.f.a.agent.PathStream != "0" {
 			p.s.f.a.agent.Log(logger.Debug, "A request has been sent to receive Cod_mp and status_record")
 			r, err :=p.s.f.a.agent.ClientGRPC.Select(p.s.f.a.agent.StreamName, "CodeMP")
 			if err != nil {
@@ -107,7 +107,7 @@ func (p *formatFMP4Part) close() error {
 			}
 		}
 
-				if p.s.f.a.agent.Stor.DbUseCodeMP_Contract {
+				if p.s.f.a.agent.Switches.UseCodeMP_Contract {
 			p.s.f.a.agent.Log(logger.Debug, "A request has been sent to receive CodeMP_Contract")
 			r,err:= p.s.f.a.agent.ClientGRPC.Select(p.s.f.a.agent.StreamName, "CodeMP_Contract")
 			if err != nil {
@@ -119,7 +119,7 @@ func (p *formatFMP4Part) close() error {
 		}
 
 			case p.s.f.a.stor.Use:
-				if p.s.f.a.stor.DbDrives	{
+				if p.s.f.a.switches.GetDrives	{
 			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", p.s.f.a.stor.Sql.GetDrives))
 			data, err := p.s.f.a.stor.Req.SelectData(p.s.f.a.stor.Sql.GetDrives)
 			if err != nil {
@@ -141,13 +141,13 @@ func (p *formatFMP4Part) close() error {
 					p.s.f.a.free = getMostFreeDisk(drives)
 					p.s.f.a.idDsk = strconv.Itoa(int(idDisks[p.s.f.a.free]))
 
-					p.dbCreatingPaths()
+					p.CreatingPaths()
 				}
 
 			}
 			}
 
-			if p.s.f.a.agent.PathStream == "0" && p.s.f.a.stor.UseDbPathStream {
+			if p.s.f.a.agent.PathStream == "0" && p.s.f.a.switches.UsePathStream {
 			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetPathStream, p.s.f.a.agent.StreamName)))
 			p.s.f.a.agent.Status_record, p.s.f.a.agent.PathStream, err = p.s.f.a.agent.Stor.Req.SelectPathStream(fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetPathStream, p.s.f.a.agent.StreamName))
 			if err != nil {
@@ -167,7 +167,7 @@ func (p *formatFMP4Part) close() error {
 			}
 
 		}
-		if p.s.f.a.agent.CodeMp == "0" && p.s.f.a.stor.DbUseCodeMP_Contract {
+		if p.s.f.a.agent.CodeMp == "0" && p.s.f.a.switches.UseCodeMP_Contract {
 			p.s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName)))
 			p.s.f.a.agent.CodeMp, err = p.s.f.a.agent.Stor.Req.SelectCodeMP_Contract(fmt.Sprintf(p.s.f.a.agent.Stor.Sql.GetCodeMP, p.s.f.a.agent.StreamName))
 			if err != nil {
@@ -227,8 +227,8 @@ func (p *formatFMP4Part) duration() time.Duration {
 	return p.endDTS - p.startDTS
 }
 
-func (p *formatFMP4Part) dbCreatingPaths() {
-	if p.s.f.a.stor.DbUseCodeMP_Contract {
+func (p *formatFMP4Part) CreatingPaths() {
+	if p.s.f.a.switches.UseCodeMP_Contract {
 		if p.s.f.a.agent.CodeMp != "0" {
 			p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.agent.CodeMp)
 			return
@@ -236,7 +236,7 @@ func (p *formatFMP4Part) dbCreatingPaths() {
 		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), fmt.Sprintf("code_mp_cam/%v", p.s.f.a.agent.PathName))
 		return
 	}
-	if p.s.f.a.stor.UseDbPathStream {
+	if p.s.f.a.switches.UsePathStream {
 		if p.s.f.a.agent.PathStream != "0" {
 			p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.agent.PathStream)
 			return
@@ -251,15 +251,10 @@ func (p *formatFMP4Part) localCreatePath() {
 	if len(p.s.f.a.agent.PathFormats) == 0 {
 		p.s.path = Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat)
 	} else {
-		if p.s.f.a.stor.Use {
+		if p.s.f.a.stor.Use || p.s.f.a.agent.ClientGRPC.Use{
 			p.s.f.a.free = getMostFreeDiskGroup(p.s.f.a.agent.PathFormats)
-			for id, path := range p.s.f.a.agent.PathFormats {
-				if p.s.f.a.free == path {
-					p.s.f.a.idDsk = id
-					break
-				}
-			}
-			p.dbCreatingPaths()
+			p.s.f.a.idDsk = p.s.f.a.agent.PathFormats[p.s.f.a.free]
+			p.CreatingPaths()
 		} else {
 			p.s.f.a.free = getMostFreeDiskGroup(p.s.f.a.agent.PathFormats)
 			p.s.path = fmt.Sprintf(p.s.f.a.free + Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat))

@@ -309,11 +309,27 @@ type Conf struct {
 	Database Database `json:"database"`
 	//GRPC
 	GRPC GRPC `json:"grpc"`
+	// switches
+	Switches Switches `json:"switches"`
+}
+type Switches struct {
+	GetDrives            bool   `json:"getDrives"`
+	UseCodeMP_Contract 	 bool   `json:"useCodeMP_Contract"`
+	UseContract        	 bool   `json:"useContract"`
+	UsePathStream     	 bool   `json:"usePathStream"`
+	TimeStatus           int    `json:"timeStatus"`
+	UseUpdaterStatus     bool   `json:"useUpdaterStatus"`
+	UseSrise             bool   `json:"useSrise"`
+	UseProxy             bool   `json:"useProxy"`
+	Login                string `json:"login"`
+	Pass                 string `json:"pass"`
+	FileSQLErr           string `json:"fileSQLErr"`
+	QueryTimeOut         int    `json:"queryTimeOut"`
 }
 
 func (conf *Conf) setDefaults() {
 	// General
-	conf.MediamMTX_ver = "v1.8.3-4"
+	conf.MediamMTX_ver = "v1.8.3-5"
 	conf.LogLevel = LogLevel(logger.Info)
 	conf.LogDestinations = LogDestinations{logger.DestinationStdout}
 	conf.LogFile = "mediamtx.log"

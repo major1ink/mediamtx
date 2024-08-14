@@ -31,6 +31,7 @@ type agentInstance struct {
 
 	clientGRPC      RMS.GrpcClient
 	stor        storage.Storage
+	switches     conf.Switches
 	recordAudio bool
 	free        string
 	endTime     string
