@@ -75,6 +75,7 @@ func (w *Agent) Initialize() {
 	w.currentInstance = &agentInstance{
 		agent:       w,
 		stor:        w.Stor,
+		switches:    w.Switches,
 		clientGRPC:  w.ClientGRPC,
 		recordAudio: w.RecordAudio,
 	}
@@ -116,6 +117,7 @@ func (w *Agent) run() {
 		w.currentInstance = &agentInstance{
 			agent:       w,
 			stor:        w.Stor,
+			switches:    w.Switches,
 			recordAudio: w.RecordAudio,
 		}
 		w.currentInstance.initialize()

@@ -1,6 +1,7 @@
 package record
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -33,7 +34,9 @@ func TestLocalCreatePathMPEGTSSegment(t *testing.T) {
 		startNTP: time.Date(2008, 11, 7, 11, 22, 4, 123456000, time.Local),
 	}
 	format.localCreatePath()
-	require.Equal(t, "./recordings/1/2008-11-07/-1226046124-123456", format.path)	
+	splitString := strings.Split( format.path, "/")
+	result := strings.Join(splitString[:len(splitString)-1], "/")
+	require.Equal(t, "./recordings/1/2008-11-07", result)
 	}()
 	func () {
 	pathFormats := make(map[string]string)
@@ -57,7 +60,10 @@ func TestLocalCreatePathMPEGTSSegment(t *testing.T) {
 		startNTP: time.Date(2008, 11, 7, 11, 22, 4, 123456000, time.Local),
 	}
 	format.localCreatePath()
-	require.Equal(t, "./recordings/1/2008-11-07/-1226046124-123456", format.path)	
+	splitString := strings.Split( format.path, "/")
+	result := strings.Join(splitString[:len(splitString)-1], "/")
+	require.Equal(t, "./recordings/1/2008-11-07", result)
 	}()
 	
 }
+

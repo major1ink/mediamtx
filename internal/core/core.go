@@ -656,6 +656,7 @@ func (p *Core) createResources(initial bool) error {
 			parent:            p,
 			ChConfigSet:       p.chConfigSet,
 			stor:              stor,
+			switches: p.conf.Switches,
 			clientGRPC:        p.clientGRPC,
 			Publisher:         MaxPub{Max: len(p.conf.Paths) - 1},
 			max:               p.conf.PathDefaults.MaxPublishers,

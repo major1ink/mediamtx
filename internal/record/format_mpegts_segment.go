@@ -64,7 +64,7 @@ func (s *formatMPEGTSSegment) close() error {
 							// s.f.a.idDsk,
 						)
 					} else {
-						if strings.Contains(s.f.a.stor.Sql.InsertPath, "code_mp_cam"){
+						if s.f.a.clientGRPC.UseCodeMPAttribute{
 							attribute = "code_mp_cam"
 						} else {
 							attribute = "stream"
@@ -153,7 +153,7 @@ func (s *formatMPEGTSSegment) close() error {
 
 					s.f.a.agent.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", query))
 					err4 := s.f.a.stor.Req.ExecQuery(query)
-
+						
 					if err4 != nil {
 						if err4.Error() == "context canceled" {
 							err4 = s.f.a.stor.Req.ExecQueryNoCtx(query)
@@ -225,7 +225,6 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 				s.localCreatePath()
 			}
 			if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream == "0" {
-				fmt.Println(s.f.a.agent.PathStream)
 			s.f.a.agent.Log(logger.Debug, "A request has been sent to receive Cod_mp and status_record")
 			r, err :=s.f.a.agent.ClientGRPC.Select(s.f.a.agent.StreamName, "CodeMP")
 			if err != nil {
@@ -349,7 +348,7 @@ func (s *formatMPEGTSSegment) CreatingPaths() {
 			s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.agent.CodeMp)
 			return
 		}
-		s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), fmt.Sprintf("code_mp_cam/%v", s.f.a.agent.PathName))
+		s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), "code_mp_cam")
 		return
 	}
 	if s.f.a.switches.UsePathStream {
@@ -357,7 +356,7 @@ func (s *formatMPEGTSSegment) CreatingPaths() {
 			s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), s.f.a.agent.PathStream)
 			return
 		}
-		s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), fmt.Sprintf("stream/%v", s.f.a.agent.PathName))
+		s.path = fmt.Sprintf(s.f.a.free+Path{Start: s.startNTP}.Encode(s.f.a.pathFormat), "stream")
 		return
 	}
 		s.path = fmt.Sprintf(s.f.a.free + Path{Start: s.startNTP}.Encode(s.f.a.pathFormat))

@@ -233,7 +233,7 @@ func (p *formatFMP4Part) CreatingPaths() {
 			p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.agent.CodeMp)
 			return
 		}
-		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), fmt.Sprintf("code_mp_cam/%v", p.s.f.a.agent.PathName))
+		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), "code_mp_cam")
 		return
 	}
 	if p.s.f.a.switches.UsePathStream {
@@ -241,7 +241,7 @@ func (p *formatFMP4Part) CreatingPaths() {
 			p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), p.s.f.a.agent.PathStream)
 			return
 		}
-		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), fmt.Sprintf("stream/%v", p.s.f.a.agent.PathName))
+		p.s.path = fmt.Sprintf(p.s.f.a.free+Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat), "stream")
 		return
 	}
 		p.s.path = fmt.Sprintf(p.s.f.a.free + Path{Start: p.s.startNTP}.Encode(p.s.f.a.pathFormat))

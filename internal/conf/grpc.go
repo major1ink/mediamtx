@@ -5,6 +5,7 @@ type GRPC struct {
 	GrpcAddress string `json:"grpcAddress"`
 	GrpcPort int `json:"grpcPort"`
 	ServerName string `json:"serverName"`
+	UseCodeMPAttribute bool `json:"useCodeMPAttribute"`
 }
 
 func (grpc *GRPC) setDefaults() {

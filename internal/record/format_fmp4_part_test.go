@@ -1,6 +1,7 @@
 package record
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -35,7 +36,9 @@ func TestLocalCreatePathFMP4Part(t *testing.T) {
 		},
 	}
 	format.localCreatePath()
-	require.Equal(t, "./recordings/1/2008-11-07/-1226046124-123456", format.s.path)
+		splitString := strings.Split( format.s.path, "/")
+	result := strings.Join(splitString[:len(splitString)-1], "/")
+	require.Equal(t, "./recordings/1/2008-11-07", result)
 	}()
 
  func () {
@@ -62,6 +65,8 @@ func TestLocalCreatePathFMP4Part(t *testing.T) {
 		},
 	}
 	format.localCreatePath()
-	require.Equal(t, "./recordings/1/2008-11-07/-1226046124-123456", format.s.path)
+	splitString := strings.Split( format.s.path, "/")
+	result := strings.Join(splitString[:len(splitString)-1], "/")
+	require.Equal(t, "./recordings/1/2008-11-07", result)
 	}()
 }

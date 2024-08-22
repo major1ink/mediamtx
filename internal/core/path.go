@@ -179,7 +179,7 @@ func (pa *path) wait() {
 
 // Log implements logger.Writer.
 func (pa *path) Log(level logger.Level, format string, args ...interface{}) {
-	if pa.logStreams {
+	if pa.logStreams && pa.loggerPath != nil {
 		pa.loggerPath.Log(level, "[path "+pa.name+"] "+format, args...)
 	} else {
 		pa.parent.Log(level, "[path "+pa.name+"] "+format, args...)
@@ -853,6 +853,7 @@ func (pa *path) startRecording() {
 		},
 		Parent:      pa,
 		Stor:        pa.stor,
+		Switches:    pa.switches,
 		ClientGRPC:  pa.clientGRPC,
 		RecordAudio: pa.conf.RecordAudio,
 		ChConfigSet: pa.ChConfigSet,
@@ -888,9 +889,11 @@ func (pa *path) startRecording() {
 				pa.Log(logger.Error, "%s", err)
 				pa.recordAgent.CodeMp="0"
 			} else {
-				pa.Log(logger.Debug, "response received from GRPS: %s", r)
+				pa.Log(logger.Debug, "response received from GRPS: %s", r.CodeMPContract)
+				pa.recordAgent.CodeMp = r.CodeMPContract
 			}
 		}
+		
 	case pa.recordAgent.Stor.Use:
 				if pa.recordAgent.Switches.UseCodeMP_Contract {
 				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName)))

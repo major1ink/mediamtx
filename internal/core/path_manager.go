@@ -506,6 +506,7 @@ func (pm *pathManager) createPath(
 		ChConfigSet:       pm.ChConfigSet,
 	}
 	if pm.logStreams {
+		
 		logg, err := logger.NewLoggerStream(logger.Level(pm.logLevel), pm.logDestinations, pm.logFile, name, pm.logDirStreams)
 		if err != nil {
 			pm.Log(logger.Error, "%s", err)

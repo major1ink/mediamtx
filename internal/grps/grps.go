@@ -13,6 +13,7 @@ type GrpcClient struct {
 	Use bool
 	Server string
 	Client pb.RMSClient
+	UseCodeMPAttribute bool
 	Conn *grpc.ClientConn
 }
 func CreateGrpcClient(ctx context.Context, cfg conf.GRPC) (GrpcClient, error) {
@@ -23,6 +24,7 @@ func CreateGrpcClient(ctx context.Context, cfg conf.GRPC) (GrpcClient, error) {
 	client := GrpcClient{
 		ctx:    ctx,
 		Use:    cfg.Use,
+		UseCodeMPAttribute: cfg.UseCodeMPAttribute,
 		Server: cfg.ServerName,
 		Client: pb.NewRMSClient(conn),
 		Conn:   conn,
