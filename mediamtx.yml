@@ -466,13 +466,12 @@ pathDefaults:
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
   #/ttttt/%v/%Y-%m-%d/%path-%s-%f
-  recordPath: /%v/%Y-%m-%d/%path-%s-%f
+  recordPath: /cctv/%v/%path/%Y-%m-%d/%path-%s-%f
   # if the db Drive s field is "no", then local paths for saving video files are specified.
   recordPaths: 
-    /mnt/rec1_2/recordings: "2"
-    /mnt/rec2_2/recordings: "2"
-    /mnt/rec3_2/recordings: "2"
-    /mnt/rec4_2/recordings: "2"
+    /media/anton/Tom2/video: "3" 
+    /media/anton/Tom/video: "3"
+    /home/anton/go/video: "3"
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -727,13 +726,13 @@ grpc:
 # Database settings
 database:
   # Use database or not (use PostgreSQL)
-  use: no
+  use: yes
   # Database address
   dbAddress: 192.168.250.40
   # Database port
   dbPort: 5432
   # Database name
-  dbName: l3_test
+  dbName: l6
   # Database user
   dbUser: major
   # Database password

@@ -1,0 +1,2 @@
+INSERT INTO "VideoRecord" ("stream","pathRecord", "fileName","recordTime","file_size","end_record_time", "id_storage") VALUES
+ ('731668811', '/media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724330010-548008.ts','2024-08-22 15:33:30','477896','2024-08-22 15:33:36', '3'),

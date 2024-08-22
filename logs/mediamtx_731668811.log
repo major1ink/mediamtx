@@ -1,0 +1,1649 @@
+2024/08/22 15:21:32 DEB [path 731668811] created
+2024/08/22 15:21:32 INF [path 731668811] [RTSP source] started
+2024/08/22 15:21:32 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=62890-62891;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 4eb51d7471e942df9d5ffe74f0d6742e;timeout=60
+Transport: RTP/AVP;unicast;client_port=62890-62891;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:21:33 DEB [path 731668811] SQL query sent:SELECT "code_mp_contract" FROM "public"."mount_place_cam" WHERE "code_mp_cam" = '731668811'
+2024/08/22 15:21:33 DEB [path 731668811] The result of executing the sql query: 562442728
+2024/08/22 15:21:33 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:21:33 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 4eb51d7471e942df9d5ffe74f0d6742e
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:33 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=57058;rtptime=248931286
+Server: gortsplib
+Session: 4eb51d7471e942df9d5ffe74f0d6742e;timeout=60
+
+
+2024/08/22 15:21:36 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 4eb51d7471e942df9d5ffe74f0d6742e
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: ecd111bd6b3b4476aec1f9564717da8b
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: ecd111bd6b3b4476aec1f9564717da8b
+User-Agent: gortsplib
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=57266;rtptime=249199961
+Server: gortsplib
+Session: ecd111bd6b3b4476aec1f9564717da8b
+
+
+2024/08/22 15:21:36 DEB [path 731668811] [record] SQL query sent:SELECT sd."id_storage", sd."mount_point" FROM "storage_disks" sd,"storage_servers" ss WHERE sd."id_storage"=ss."id" AND ss."state"='3' AND sd."state"='3' AND sd."status"='3'   ORDER BY sd."mount_point"123
+2024/08/22 15:21:36 ERR [path 731668811] [record] ERROR: syntax error at or near "123" (SQLSTATE 42601)
+2024/08/22 15:21:36 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329296-236757.ts
+2024/08/22 15:21:51 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329296-236757.ts
+2024/08/22 15:21:51 DEB [path 731668811] [record] SQL query sent:INSERT INTO "VideoRecord" ("stream","pathRecord", "fileName","recordTime","file_size","end_record_time", "id_storage") VALUES ('731668811', '/media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/','731668811-1724329296-236757.ts','2024-08-22 15:21:36','1162216','2024-08-22 15:21:51', '3')
+2024/08/22 15:21:51 ERR [path 731668811] [record] ERROR: relation "VideoRecord" does not exist (SQLSTATE 42P01)
+2024/08/22 15:21:51 DEB [path 731668811] [record] SQL query sent:SELECT sd."id_storage", sd."mount_point" FROM "storage_disks" sd,"storage_servers" ss WHERE sd."id_storage"=ss."id" AND ss."state"='3' AND sd."state"='3' AND sd."status"='3'   ORDER BY sd."mount_point"123
+2024/08/22 15:21:51 ERR [path 731668811] [record] ERROR: syntax error at or near "123" (SQLSTATE 42601)
+2024/08/22 15:21:51 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329311-317307.ts
+2024/08/22 15:22:06 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329311-317307.ts
+2024/08/22 15:22:06 DEB [path 731668811] [record] SQL query sent:INSERT INTO "VideoRecord" ("stream","pathRecord", "fileName","recordTime","file_size","end_record_time", "id_storage") VALUES ('731668811', '/media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/','731668811-1724329311-317307.ts','2024-08-22 15:21:51','1155260','2024-08-22 15:22:06', '3')
+2024/08/22 15:22:06 ERR [path 731668811] [record] ERROR: relation "VideoRecord" does not exist (SQLSTATE 42P01)
+2024/08/22 15:22:06 DEB [path 731668811] [record] SQL query sent:SELECT sd."id_storage", sd."mount_point" FROM "storage_disks" sd,"storage_servers" ss WHERE sd."id_storage"=ss."id" AND ss."state"='3' AND sd."state"='3' AND sd."status"='3'   ORDER BY sd."mount_point"123
+2024/08/22 15:22:06 ERR [path 731668811] [record] ERROR: syntax error at or near "123" (SQLSTATE 42601)
+2024/08/22 15:22:06 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329326-332723.ts
+2024/08/22 15:22:16 DEB [path 731668811] closed
+2024/08/22 15:22:21 DEB [path 731668811] created
+2024/08/22 15:22:21 INF [path 731668811] [RTSP source] started
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=33482-33483;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: e044f813ebad4c0f9f1c4b440d7788ca;timeout=60
+Transport: RTP/AVP;unicast;client_port=33482-33483;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:22:21 DEB [path 731668811] SQL query sent:SELECT "code_mp_contract" FROM "public"."mount_place_cam" WHERE "code_mp_cam" = '731668811'
+2024/08/22 15:22:21 DEB [path 731668811] The result of executing the sql query: 562442728
+2024/08/22 15:22:21 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:22:21 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: e044f813ebad4c0f9f1c4b440d7788ca
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:21 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=60360;rtptime=253287346
+Server: gortsplib
+Session: e044f813ebad4c0f9f1c4b440d7788ca;timeout=60
+
+
+2024/08/22 15:22:24 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: e044f813ebad4c0f9f1c4b440d7788ca
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: a86700adf7ad495a8f58ba039e5f368d
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: a86700adf7ad495a8f58ba039e5f368d
+User-Agent: gortsplib
+
+
+2024/08/22 15:22:24 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=60561;rtptime=253559826
+Server: gortsplib
+Session: a86700adf7ad495a8f58ba039e5f368d
+
+
+2024/08/22 15:22:25 DEB [path 731668811] [record] SQL query sent:SELECT sd."id_storage", sd."mount_point" FROM "storage_disks" sd,"storage_servers" ss WHERE sd."id_storage"=ss."id" AND ss."state"='3' AND sd."state"='3' AND sd."status"='3'   ORDER BY sd."mount_point"123
+2024/08/22 15:22:25 ERR [path 731668811] [record] ERROR: syntax error at or near "123" (SQLSTATE 42601)
+2024/08/22 15:22:25 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329345-398467.ts
+2024/08/22 15:22:40 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329345-398467.ts
+2024/08/22 15:22:40 DEB [path 731668811] [record] SQL query sent:INSERT INTO "VideoRecord" ("stream","pathRecord", "fileName","recordTime","file_size","end_record_time", "id_storage") VALUES ('731668811', '/media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/','731668811-1724329345-398467.ts','2024-08-22 15:22:25','1162592','2024-08-22 15:22:40', '3')
+2024/08/22 15:22:40 ERR [path 731668811] [record] ERROR: relation "VideoRecord" does not exist (SQLSTATE 42P01)
+2024/08/22 15:22:40 DEB [path 731668811] [record] SQL query sent:SELECT sd."id_storage", sd."mount_point" FROM "storage_disks" sd,"storage_servers" ss WHERE sd."id_storage"=ss."id" AND ss."state"='3' AND sd."state"='3' AND sd."status"='3'   ORDER BY sd."mount_point"123
+2024/08/22 15:22:40 ERR [path 731668811] [record] ERROR: syntax error at or near "123" (SQLSTATE 42601)
+2024/08/22 15:22:40 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329360-498164.ts
+2024/08/22 15:22:55 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329360-498164.ts
+2024/08/22 15:22:55 DEB [path 731668811] [record] SQL query sent:INSERT INTO "VideoRecord" ("stream","pathRecord", "fileName","recordTime","file_size","end_record_time", "id_storage") VALUES ('731668811', '/media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/','731668811-1724329360-498164.ts','2024-08-22 15:22:40','1166164','2024-08-22 15:22:55', '3')
+2024/08/22 15:22:55 ERR [path 731668811] [record] ERROR: relation "VideoRecord" does not exist (SQLSTATE 42P01)
+2024/08/22 15:22:55 DEB [path 731668811] [record] SQL query sent:SELECT sd."id_storage", sd."mount_point" FROM "storage_disks" sd,"storage_servers" ss WHERE sd."id_storage"=ss."id" AND ss."state"='3' AND sd."state"='3' AND sd."status"='3'   ORDER BY sd."mount_point"123
+2024/08/22 15:22:55 ERR [path 731668811] [record] ERROR: syntax error at or near "123" (SQLSTATE 42601)
+2024/08/22 15:22:55 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/562442728/731668811/2024-08-22/731668811-1724329375-508235.ts
+2024/08/22 15:23:06 DEB [path 731668811] closed
+2024/08/22 15:25:22 DEB [path 731668811] created
+2024/08/22 15:25:22 INF [path 731668811] [RTSP source] started
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=49246-49247;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: a36bf1201dd341fcbc5d43e126bc348f;timeout=60
+Transport: RTP/AVP;unicast;client_port=49246-49247;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:25:22 DEB [path 731668811] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:25:22 ERR [path 731668811] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:25:22 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:25:22 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: a36bf1201dd341fcbc5d43e126bc348f
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:22 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=7047;rtptime=269475245
+Server: gortsplib
+Session: a36bf1201dd341fcbc5d43e126bc348f;timeout=60
+
+
+2024/08/22 15:25:25 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: a36bf1201dd341fcbc5d43e126bc348f
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 5e3ae4f1669041e1b5b139317de93c89
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 5e3ae4f1669041e1b5b139317de93c89
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=7244;rtptime=269747509
+Server: gortsplib
+Session: 5e3ae4f1669041e1b5b139317de93c89
+
+
+2024/08/22 15:25:25 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:25:25 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:25:25 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:25:25 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:25:25 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329525-997196.ts
+2024/08/22 15:25:41 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329525-997196.ts
+2024/08/22 15:25:41 DEB [path 731668811] [record] Sending an insert request to RMS:Server l6, atribute code_mp_cam, query (731668811,'/media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724329525-997196.ts','2024-08-22 15:25:25','1154508','2024-08-22 15:25:41','5')
+2024/08/22 15:25:41 ERR [path 731668811] [record] ERROR: error when sending an insert request to RMS: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:25:41 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:25:41 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:25:41 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:25:41 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:25:41 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329541-073187.ts
+2024/08/22 15:25:50 DEB [path 731668811] closed
+2024/08/22 15:25:53 DEB [path 731668811] created
+2024/08/22 15:25:53 INF [path 731668811] [RTSP source] started
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=29718-29719;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 5f4700f573734bc79e26c685846fcd47;timeout=60
+Transport: RTP/AVP;unicast;client_port=29718-29719;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:25:53 DEB [path 731668811] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:25:53 ERR [path 731668811] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:25:53 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:25:53 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 5f4700f573734bc79e26c685846fcd47
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:53 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=9163;rtptime=272338146
+Server: gortsplib
+Session: 5f4700f573734bc79e26c685846fcd47;timeout=60
+
+
+2024/08/22 15:25:56 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 5f4700f573734bc79e26c685846fcd47
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: d7ba8b4315c341e9a722e08a0a285801
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: d7ba8b4315c341e9a722e08a0a285801
+User-Agent: gortsplib
+
+
+2024/08/22 15:25:56 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=9373;rtptime=272607092
+Server: gortsplib
+Session: d7ba8b4315c341e9a722e08a0a285801
+
+
+2024/08/22 15:25:57 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:25:57 ERR [path 731668811] [record] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:25:57 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:25:57 ERR [path 731668811] [record] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:25:57 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329557-058666.ts
+2024/08/22 15:26:12 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329557-058666.ts
+2024/08/22 15:26:12 DEB [path 731668811] [record] Sending an insert request to RMS:Server l6, atribute code_mp_cam, query (731668811,'/media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724329557-058666.ts','2024-08-22 15:25:57','1150184','2024-08-22 15:26:12','5')
+2024/08/22 15:26:12 ERR [path 731668811] [record] ERROR: error when sending an insert request to RMS: rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:26:12 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:26:12 ERR [path 731668811] [record] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:26:12 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:26:12 ERR [path 731668811] [record] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:26:12 DEB [path 731668811] [record] creating segment /media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329572-164936.ts
+2024/08/22 15:26:25 INF [path 731668811] [record] recording stopped
+2024/08/22 15:26:25 DEB [path 731668811] [record] closing segment /media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329572-164936.ts
+2024/08/22 15:26:25 DEB [path 731668811] [record] Sending an insert request to RMS:Server l6, atribute code_mp_cam, query (731668811,'/media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724329572-164936.ts','2024-08-22 15:26:12','1088708','2024-08-22 15:26:25','5')
+2024/08/22 15:26:25 ERR [path 731668811] [record] ERROR: error when sending an insert request to RMS: rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:26:25 INF [path 731668811] [RTSP source] stopped: path is closing
+2024/08/22 15:26:25 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: d7ba8b4315c341e9a722e08a0a285801
+User-Agent: gortsplib
+
+
+2024/08/22 15:26:25 DEB [path 731668811] destroyed: terminated
+2024/08/22 15:27:28 DEB [path 731668811] created
+2024/08/22 15:27:28 INF [path 731668811] [RTSP source] started
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=63962-63963;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 00d6a766912c465ab5d3f6b29faa5d73;timeout=60
+Transport: RTP/AVP;unicast;client_port=63962-63963;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:27:28 DEB [path 731668811] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:27:28 ERR [path 731668811] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:27:28 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:27:28 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 00d6a766912c465ab5d3f6b29faa5d73
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:28 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=15635;rtptime=280862311
+Server: gortsplib
+Session: 00d6a766912c465ab5d3f6b29faa5d73;timeout=60
+
+
+2024/08/22 15:27:31 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 00d6a766912c465ab5d3f6b29faa5d73
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 4dea3c735016477992f306d2097a694c
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 4dea3c735016477992f306d2097a694c
+User-Agent: gortsplib
+
+
+2024/08/22 15:27:31 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=15820;rtptime=281127473
+Server: gortsplib
+Session: 4dea3c735016477992f306d2097a694c
+
+
+2024/08/22 15:27:32 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:27:32 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:27:32 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:27:32 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:27:32 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329652-430159.ts
+2024/08/22 15:27:47 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329652-430159.ts
+2024/08/22 15:27:47 DEB [path 731668811] [record] Sending an insert request to RMS:Server l6, atribute stream, query (731668811,'/media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724329652-430159.ts','2024-08-22 15:27:32','1174624','2024-08-22 15:27:47','5')
+2024/08/22 15:27:47 ERR [path 731668811] [record] ERROR: error when sending an insert request to RMS: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:27:48 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:27:48 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:27:48 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:27:48 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:27:48 DEB [path 731668811] [record] creating segment /media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329667-413801.ts
+2024/08/22 15:27:56 DEB [path 731668811] closed
+2024/08/22 15:30:51 DEB [path 731668811] created
+2024/08/22 15:30:51 INF [path 731668811] [RTSP source] started
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=43448-43449;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: a65bcd0c34d94b30835bc0b0ae668d9f;timeout=60
+Transport: RTP/AVP;unicast;client_port=43448-43449;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:30:51 DEB [path 731668811] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:30:51 ERR [path 731668811] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:30:51 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:30:51 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: a65bcd0c34d94b30835bc0b0ae668d9f
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:51 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=29478;rtptime=299012729
+Server: gortsplib
+Session: a65bcd0c34d94b30835bc0b0ae668d9f;timeout=60
+
+
+2024/08/22 15:30:54 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: a65bcd0c34d94b30835bc0b0ae668d9f
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: cf7c885974c24446a330e08c385ff26e
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: cf7c885974c24446a330e08c385ff26e
+User-Agent: gortsplib
+
+
+2024/08/22 15:30:54 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=29671;rtptime=299284901
+Server: gortsplib
+Session: cf7c885974c24446a330e08c385ff26e
+
+
+2024/08/22 15:30:55 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:30:55 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:30:55 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:30:55 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:30:55 DEB [path 731668811] [record] creating segment /media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329855-017136.ts
+2024/08/22 15:31:05 DEB [path 731668811] closed
+2024/08/22 15:31:16 DEB [path 731668811] created
+2024/08/22 15:31:16 INF [path 731668811] [RTSP source] started
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=49554-49555;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 7b374b7b9c7e4b63ad1cdc598726f2cf;timeout=60
+Transport: RTP/AVP;unicast;client_port=49554-49555;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:31:16 DEB [path 731668811] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:31:16 ERR [path 731668811] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:31:16 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:31:16 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 7b374b7b9c7e4b63ad1cdc598726f2cf
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:16 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=31159;rtptime=301243655
+Server: gortsplib
+Session: 7b374b7b9c7e4b63ad1cdc598726f2cf;timeout=60
+
+
+2024/08/22 15:31:19 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 7b374b7b9c7e4b63ad1cdc598726f2cf
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 49358b9b7e414c65a4da327cd2c4452b
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 49358b9b7e414c65a4da327cd2c4452b
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:19 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=31378;rtptime=301515980
+Server: gortsplib
+Session: 49358b9b7e414c65a4da327cd2c4452b
+
+
+2024/08/22 15:31:20 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:31:20 ERR [path 731668811] [record] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:31:20 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:31:20 ERR [path 731668811] [record] rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:31:20 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329880-128768.ts
+2024/08/22 15:31:24 INF [path 731668811] [record] recording stopped
+2024/08/22 15:31:24 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724329880-128768.ts
+2024/08/22 15:31:24 DEB [path 731668811] [record] Sending an insert request to RMS:Server l6, atribute code_mp_cam, query (731668811,'/media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724329880-128768.ts','2024-08-22 15:31:20','382016','2024-08-22 15:31:24','5')
+2024/08/22 15:31:24 ERR [path 731668811] [record] ERROR: error when sending an insert request to RMS: rpc error: code = Canceled desc = grpc: the client connection is closing
+2024/08/22 15:31:24 INF [path 731668811] [RTSP source] stopped: path is closing
+2024/08/22 15:31:24 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 49358b9b7e414c65a4da327cd2c4452b
+User-Agent: gortsplib
+
+
+2024/08/22 15:31:24 DEB [path 731668811] destroyed: terminated
+2024/08/22 15:33:26 DEB [path 731668811] created
+2024/08/22 15:33:26 INF [path 731668811] [RTSP source] started
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=41184-41185;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: b28649d2a5784cdd97c22667acc6f43a;timeout=60
+Transport: RTP/AVP;unicast;client_port=41184-41185;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:33:26 DEB [path 731668811] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:33:26 ERR [path 731668811] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:26 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:33:26 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: b28649d2a5784cdd97c22667acc6f43a
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:26 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=40003;rtptime=312953705
+Server: gortsplib
+Session: b28649d2a5784cdd97c22667acc6f43a;timeout=60
+
+
+2024/08/22 15:33:29 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: b28649d2a5784cdd97c22667acc6f43a
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 9ab4bad0544345d2b0e6a8b28c77299c
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 9ab4bad0544345d2b0e6a8b28c77299c
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:29 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=40193;rtptime=313225966
+Server: gortsplib
+Session: 9ab4bad0544345d2b0e6a8b28c77299c
+
+
+2024/08/22 15:33:31 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:33:31 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:31 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:33:31 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:31 DEB [path 731668811] [record] creating segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724330010-548008.ts
+2024/08/22 15:33:36 INF [path 731668811] [record] recording stopped
+2024/08/22 15:33:36 DEB [path 731668811] [record] closing segment /media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724330010-548008.ts
+2024/08/22 15:33:36 DEB [path 731668811] [record] Sending an insert request to RMS:Server l6, atribute stream, query (731668811,'/media/anton/Tom2/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724330010-548008.ts','2024-08-22 15:33:30','477896','2024-08-22 15:33:36','5')
+2024/08/22 15:33:36 ERR [path 731668811] [record] ERROR: error when sending an insert request to RMS: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:36 INF [path 731668811] [RTSP source] stopped: path is closing
+2024/08/22 15:33:36 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 9ab4bad0544345d2b0e6a8b28c77299c
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:36 DEB [path 731668811] destroyed: terminated
+2024/08/22 15:33:40 DEB [path 731668811] created
+2024/08/22 15:33:40 INF [path 731668811] [RTSP source] started
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] connecting
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=44906-44907;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 0ba1a58d7e0a4f8bbdb4a051fe95b795;timeout=60
+Transport: RTP/AVP;unicast;client_port=44906-44907;server_port=38102-38103;ssrc=08A6633D
+
+
+2024/08/22 15:33:40 DEB [path 731668811] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:33:40 ERR [path 731668811] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:40 INF [path 731668811] [record] recording 1 track (H264)
+2024/08/22 15:33:40 INF [path 731668811] [RTSP source] ready: 1 track (H264)
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 0ba1a58d7e0a4f8bbdb4a051fe95b795
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:40 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=40886;rtptime=314187127
+Server: gortsplib
+Session: 0ba1a58d7e0a4f8bbdb4a051fe95b795;timeout=60
+
+
+2024/08/22 15:33:43 WAR [path 731668811] [RTSP source] no UDP packets received, switching to TCP
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 0ba1a58d7e0a4f8bbdb4a051fe95b795
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [c->s] OPTIONS rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+CSeq: 2
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 401 Unauthorized
+CSeq: 2
+Server: gortsplib
+WWW-Authenticate: Basic realm="IPCAM"
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [c->s] DESCRIBE rtsp://broadcast.s-m-d.ru:38658/41574336307958053922 RTSP/1.0
+Accept: application/sdp
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 3
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Content-Base: rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/
+Content-Length: 316
+Content-Type: application/sdp
+Server: gortsplib
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 0.0.0.0
+t=0 0
+m=video 0 RTP/AVP 105
+a=control:rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0
+a=rtpmap:105 H264/90000
+a=fmtp:105 packetization-mode=1; profile-level-id=4D401F; sprop-parameter-sets=Z01AH5WgFAFumyAAAAMAIAAAAwPQgA==,aO48gA==
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [c->s] SETUP rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0 RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=play
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 987729d5feb244f8942146722e3f8ef6
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=08A6633D
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [c->s] PLAY rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 5
+Range: npt=0-
+Session: 987729d5feb244f8942146722e3f8ef6
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:43 DEB [path 731668811] [RTSP source] [s->c] RTSP/1.0 200 OK
+CSeq: 5
+RTP-Info: url=rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/trackID=0;seq=41093;rtptime=314451702
+Server: gortsplib
+Session: 987729d5feb244f8942146722e3f8ef6
+
+
+2024/08/22 15:33:44 DEB [path 731668811] [record] sending a request to receive disks
+2024/08/22 15:33:44 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:44 DEB [path 731668811] [record] A request has been sent to receive CodeMP_Contract
+2024/08/22 15:33:44 ERR [path 731668811] [record] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:44 DEB [path 731668811] [record] creating segment /media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724330023-593550.ts
+2024/08/22 15:33:49 INF [path 731668811] [record] recording stopped
+2024/08/22 15:33:49 DEB [path 731668811] [record] closing segment /media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/731668811-1724330023-593550.ts
+2024/08/22 15:33:49 DEB [path 731668811] [record] Sending an insert request to RMS:Server l6, atribute code_mp_cam, query (731668811,'/media/anton/Tom/video/cctv/code_mp_cam/731668811/2024-08-22/','731668811-1724330023-593550.ts','2024-08-22 15:33:43','517000','2024-08-22 15:33:49','5')
+2024/08/22 15:33:49 ERR [path 731668811] [record] ERROR: error when sending an insert request to RMS: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8080: connect: connection refused"
+2024/08/22 15:33:49 INF [path 731668811] [RTSP source] stopped: path is closing
+2024/08/22 15:33:49 DEB [path 731668811] [RTSP source] [c->s] TEARDOWN rtsp://broadcast.s-m-d.ru:38658/41574336307958053922/ RTSP/1.0
+Authorization: Basic emdla3Y4b2w5ZFVKOU5pTm05RHVoSFpza3VMcmJjS1plOENhQVNCYWVMTjVkb1FwejpMWFN3ekpzb3Bjc2x4empWOXZXSkRhcGpjSGdSRXVyaEpyQjZVS1haamtTZXJCcTFt
+CSeq: 6
+Session: 987729d5feb244f8942146722e3f8ef6
+User-Agent: gortsplib
+
+
+2024/08/22 15:33:49 DEB [path 731668811] destroyed: terminated

@@ -1023,7 +1023,10 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		closeMetrics ||
 		closeAuthManager ||
 		closeLogger ||
-		newConf.Database != p.conf.Database
+		newConf.Database != p.conf.Database ||
+		newConf.Switches != p.conf.Switches ||
+		newConf.GRPC != p.conf.GRPC
+
 	if !closePathManager && !reflect.DeepEqual(newConf.Paths, p.conf.Paths) {
 		p.pathManager.ReloadPathConfs(newConf.Paths)
 	}
@@ -1183,7 +1186,8 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.GRPC.Use != p.conf.GRPC.Use ||
 		newConf.GRPC.GrpcAddress != p.conf.GRPC.GrpcAddress ||
 		newConf.GRPC.GrpcPort != p.conf.GRPC.GrpcPort ||
-		newConf.GRPC.ServerName != p.conf.GRPC.ServerName  
+		newConf.GRPC.ServerName != p.conf.GRPC.ServerName ||
+		newConf.GRPC.UseCodeMPAttribute != p.conf.GRPC.UseCodeMPAttribute 
 
 	closeDB := newConf == nil ||
 		newConf.Database.Use != p.conf.Database.Use ||

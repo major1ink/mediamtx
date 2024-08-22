@@ -1,0 +1,486 @@
+2024/08/22 15:20:44 INF MediaMTX v1.8.3-5
+2024/08/22 15:20:44 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/08/22 15:20:44 INF Connected to the database
+2024/08/22 15:20:44 INF [metrics] listener opened on 192.168.250.43:9998
+2024/08/22 15:20:44 DEB path manager created
+2024/08/22 15:20:44 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:20:44 INF [RTMP] listener opened on :1935
+2024/08/22 15:20:44 INF [HLS] listener opened on :8888
+2024/08/22 15:20:44 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:20:44 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:20:44 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:21:19 INF shutting down gracefully
+2024/08/22 15:21:19 INF [API] listener is closing
+2024/08/22 15:21:19 INF [SRT] listener is closing
+2024/08/22 15:21:19 INF [WebRTC] listener is closing
+2024/08/22 15:21:19 INF [HLS] listener is closing
+2024/08/22 15:21:19 INF [RTMP] listener is closing
+2024/08/22 15:21:19 INF [RTSP] listener is closing
+2024/08/22 15:21:19 DEB path manager is shutting down
+2024/08/22 15:21:19 INF [metrics] listener is closing
+2024/08/22 15:21:19 INF waiting for running hooks
+2024/08/22 15:21:19 INF Closing database
+2024/08/22 15:21:21 INF MediaMTX v1.8.3-5
+2024/08/22 15:21:21 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/08/22 15:21:21 INF Connected to the database
+2024/08/22 15:21:21 INF [metrics] listener opened on 192.168.250.43:9998
+2024/08/22 15:21:21 DEB path manager created
+2024/08/22 15:21:21 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:21:21 INF [RTMP] listener opened on :1935
+2024/08/22 15:21:21 INF [HLS] listener opened on :8888
+2024/08/22 15:21:21 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:21:21 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:21:21 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:21:32 DEB [API] [conn 192.168.250.43:45874] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: ac347c55-8b0e-4e1d-bb2a-b1f8f427ae81
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:21:32 DEB [API] [conn 192.168.250.43:45874] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:21:32 INF reloading configuration (API request)
+2024/08/22 15:22:16 INF reloading configuration (file changed)
+2024/08/22 15:22:16 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:22:21 DEB [API] [conn 192.168.250.43:45874] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: 95678e33-f0af-43d1-8238-fb5acb5f458f
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:22:21 DEB [API] [conn 192.168.250.43:45874] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:22:21 INF reloading configuration (API request)
+2024/08/22 15:23:06 INF reloading configuration (file changed)
+2024/08/22 15:23:06 INF GRPC client closed
+2024/08/22 15:23:15 INF reloading configuration (file changed)
+2024/08/22 15:23:15 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:23:23 INF shutting down gracefully
+2024/08/22 15:23:23 INF [API] listener is closing
+2024/08/22 15:23:23 INF [SRT] listener is closing
+2024/08/22 15:23:23 INF [WebRTC] listener is closing
+2024/08/22 15:23:23 INF [HLS] listener is closing
+2024/08/22 15:23:23 INF [RTMP] listener is closing
+2024/08/22 15:23:23 INF [RTSP] listener is closing
+2024/08/22 15:23:23 DEB path manager is shutting down
+2024/08/22 15:23:23 INF [metrics] listener is closing
+2024/08/22 15:23:23 INF waiting for running hooks
+2024/08/22 15:23:23 INF Closing database
+2024/08/22 15:23:23 INF GRPC client closed
+2024/08/22 15:24:34 INF MediaMTX v1.8.3-5
+2024/08/22 15:24:34 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/08/22 15:24:34 INF Connected to the database
+2024/08/22 15:24:34 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:24:34 INF [metrics] listener opened on 192.168.250.43:9998
+2024/08/22 15:24:34 DEB path manager created
+2024/08/22 15:24:34 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:24:34 INF [RTMP] listener opened on :1935
+2024/08/22 15:24:34 INF [HLS] listener opened on :8888
+2024/08/22 15:24:34 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:24:34 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:24:34 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:24:40 INF shutting down gracefully
+2024/08/22 15:24:40 INF [API] listener is closing
+2024/08/22 15:24:40 INF [SRT] listener is closing
+2024/08/22 15:24:40 INF [WebRTC] listener is closing
+2024/08/22 15:24:40 INF [HLS] listener is closing
+2024/08/22 15:24:40 INF [RTMP] listener is closing
+2024/08/22 15:24:40 INF [RTSP] listener is closing
+2024/08/22 15:24:40 DEB path manager is shutting down
+2024/08/22 15:24:40 INF [metrics] listener is closing
+2024/08/22 15:24:40 INF waiting for running hooks
+2024/08/22 15:24:40 INF Closing database
+2024/08/22 15:24:40 INF GRPC client closed
+2024/08/22 15:25:21 INF MediaMTX v1.8.3-5
+2024/08/22 15:25:21 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/08/22 15:25:21 INF Connected to the database
+2024/08/22 15:25:21 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:25:21 INF [metrics] listener opened on 192.168.250.43:9998
+2024/08/22 15:25:21 DEB path manager created
+2024/08/22 15:25:21 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:25:21 INF [RTMP] listener opened on :1935
+2024/08/22 15:25:21 INF [HLS] listener opened on :8888
+2024/08/22 15:25:21 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:25:21 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:25:21 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:25:22 DEB [API] [conn 192.168.250.43:51766] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: ca9e2c4a-8eb5-4896-9fb2-54f5b931ee82
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:25:22 DEB [API] [conn 192.168.250.43:51766] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:25:22 INF reloading configuration (API request)
+2024/08/22 15:25:50 INF reloading configuration (file changed)
+2024/08/22 15:25:50 INF GRPC client closed
+2024/08/22 15:25:50 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:25:53 DEB [API] [conn 192.168.250.43:51766] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: 218afba8-85bc-4c30-a48a-edbc3c5c12df
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:25:53 DEB [API] [conn 192.168.250.43:51766] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:25:53 INF reloading configuration (API request)
+2024/08/22 15:26:25 INF shutting down gracefully
+2024/08/22 15:26:25 INF [API] listener is closing
+2024/08/22 15:26:25 INF [SRT] listener is closing
+2024/08/22 15:26:25 INF [WebRTC] listener is closing
+2024/08/22 15:26:25 INF [HLS] listener is closing
+2024/08/22 15:26:25 INF [RTMP] listener is closing
+2024/08/22 15:26:25 INF [RTSP] listener is closing
+2024/08/22 15:26:25 DEB path manager is shutting down
+2024/08/22 15:26:25 INF [metrics] listener is closing
+2024/08/22 15:26:25 INF waiting for running hooks
+2024/08/22 15:26:25 INF Closing database
+2024/08/22 15:26:25 INF GRPC client closed
+2024/08/22 15:27:26 INF MediaMTX v1.8.3-5
+2024/08/22 15:27:26 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/08/22 15:27:26 INF Connected to the database
+2024/08/22 15:27:26 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:27:26 INF [metrics] listener opened on 192.168.250.43:9998
+2024/08/22 15:27:26 DEB path manager created
+2024/08/22 15:27:26 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:27:26 INF [RTMP] listener opened on :1935
+2024/08/22 15:27:26 INF [HLS] listener opened on :8888
+2024/08/22 15:27:26 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:27:26 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:27:26 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:27:28 DEB [API] [conn 192.168.250.43:54690] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: b46a8a65-97a5-43ac-b818-61e0cc1c3aac
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:27:28 INF reloading configuration (API request)
+2024/08/22 15:27:28 DEB [API] [conn 192.168.250.43:54690] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:27:56 INF reloading configuration (file changed)
+2024/08/22 15:27:56 INF GRPC client closed
+2024/08/22 15:27:56 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:28:23 INF shutting down gracefully
+2024/08/22 15:28:23 INF [API] listener is closing
+2024/08/22 15:28:23 INF [SRT] listener is closing
+2024/08/22 15:28:23 INF [WebRTC] listener is closing
+2024/08/22 15:28:23 INF [HLS] listener is closing
+2024/08/22 15:28:23 INF [RTMP] listener is closing
+2024/08/22 15:28:23 INF [RTSP] listener is closing
+2024/08/22 15:28:23 DEB path manager is shutting down
+2024/08/22 15:28:23 INF [metrics] listener is closing
+2024/08/22 15:28:23 INF waiting for running hooks
+2024/08/22 15:28:23 INF Closing database
+2024/08/22 15:28:23 INF GRPC client closed
+2024/08/22 15:30:48 INF MediaMTX v1.8.3-5
+2024/08/22 15:30:48 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/08/22 15:30:48 INF Connected to the database
+2024/08/22 15:30:48 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:30:48 INF [metrics] listener opened on 192.168.250.43:9998
+2024/08/22 15:30:48 DEB path manager created
+2024/08/22 15:30:48 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:30:48 INF [RTMP] listener opened on :1935
+2024/08/22 15:30:48 INF [HLS] listener opened on :8888
+2024/08/22 15:30:48 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:30:48 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:30:48 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:30:51 DEB [API] [conn 192.168.250.43:57956] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: 35c0c627-dce2-4dd1-8688-db4bfc1e02f2
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:30:51 DEB [API] [conn 192.168.250.43:57956] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:30:51 INF reloading configuration (API request)
+2024/08/22 15:31:05 INF reloading configuration (file changed)
+2024/08/22 15:31:05 INF GRPC client closed
+2024/08/22 15:31:05 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:31:09 INF reloading configuration (file changed)
+2024/08/22 15:31:16 DEB [API] [conn 192.168.250.43:57956] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: 8a599703-3e7f-4169-8244-1b16a75ba8e0
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:31:16 DEB [API] [conn 192.168.250.43:57956] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:31:16 INF reloading configuration (API request)
+2024/08/22 15:31:24 INF shutting down gracefully
+2024/08/22 15:31:24 INF [API] listener is closing
+2024/08/22 15:31:24 INF [SRT] listener is closing
+2024/08/22 15:31:24 INF [WebRTC] listener is closing
+2024/08/22 15:31:24 INF [HLS] listener is closing
+2024/08/22 15:31:24 INF [RTMP] listener is closing
+2024/08/22 15:31:24 INF [RTSP] listener is closing
+2024/08/22 15:31:24 DEB path manager is shutting down
+2024/08/22 15:31:24 INF [metrics] listener is closing
+2024/08/22 15:31:24 INF waiting for running hooks
+2024/08/22 15:31:24 INF Closing database
+2024/08/22 15:31:24 INF GRPC client closed
+2024/08/22 15:33:04 INF MediaMTX v1.8.3-5
+2024/08/22 15:33:04 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/08/22 15:33:04 INF Connected to the database
+2024/08/22 15:33:04 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:33:04 INF [metrics] listener opened on 192.168.250.43:9998
+2024/08/22 15:33:04 DEB path manager created
+2024/08/22 15:33:04 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:33:04 INF [RTMP] listener opened on :1935
+2024/08/22 15:33:04 INF [HLS] listener opened on :8888
+2024/08/22 15:33:04 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:33:04 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:33:04 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:33:26 DEB [API] [conn 192.168.250.43:56256] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: e7478786-7dbf-4932-99f4-afd3bc6e12e0
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:33:26 DEB [API] [conn 192.168.250.43:56256] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:33:26 INF reloading configuration (API request)
+2024/08/22 15:33:36 INF reloading configuration (file changed)
+2024/08/22 15:33:36 INF [API] listener is closing
+2024/08/22 15:33:36 INF [SRT] listener is closing
+2024/08/22 15:33:36 INF [WebRTC] listener is closing
+2024/08/22 15:33:36 INF [HLS] listener is closing
+2024/08/22 15:33:36 INF [RTMP] listener is closing
+2024/08/22 15:33:36 INF [RTSP] listener is closing
+2024/08/22 15:33:36 DEB path manager is shutting down
+2024/08/22 15:33:36 INF GRPC client closed
+2024/08/22 15:33:36 INF Connected to the RMS on 192.168.250.40:8080
+2024/08/22 15:33:36 DEB path manager created
+2024/08/22 15:33:36 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/08/22 15:33:36 INF [RTMP] listener opened on :1935
+2024/08/22 15:33:36 INF [HLS] listener opened on :8888
+2024/08/22 15:33:36 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/08/22 15:33:36 INF [SRT] listener opened on :8890 (UDP)
+2024/08/22 15:33:36 INF [API] listener opened on 192.168.250.43:9997
+2024/08/22 15:33:40 DEB [API] [conn 192.168.250.43:43602] [c->s] POST /v3/config/paths/add/731668811 HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 560
+Content-Type: application/json
+Postman-Token: 861309b3-d2ca-4047-9469-0c1c14de0fa3
+User-Agent: PostmanRuntime/7.37.3
+
+{
+    "source": "rtsp://zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz:LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m@broadcast.s-m-d.ru:38658/41574336307958053922",
+    "record": true,
+    "recordFormat": "mpegts",
+    "recordPartDuration": "15s",
+    "recordSegmentDuration": "15s",
+    "recordDeleteAfter": "0s",
+    "sourceOnDemandCloseAfter": "10s",
+    "sourceOnDemandStartTimeout": "10s",
+    "runOnDemandCloseAfter": "10s",
+    "runOnDemandStartTimeout": "10s",
+    "runOnReadyRestart": true,
+    "runOnReady": "",
+    "runOnReadRestart": false
+}
+2024/08/22 15:33:40 DEB [API] [conn 192.168.250.43:43602] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Server: mediamtx
+
+
+2024/08/22 15:33:40 INF reloading configuration (API request)
+2024/08/22 15:33:49 INF shutting down gracefully
+2024/08/22 15:33:49 INF [API] listener is closing
+2024/08/22 15:33:49 INF [SRT] listener is closing
+2024/08/22 15:33:49 INF [WebRTC] listener is closing
+2024/08/22 15:33:49 INF [HLS] listener is closing
+2024/08/22 15:33:49 INF [RTMP] listener is closing
+2024/08/22 15:33:49 INF [RTSP] listener is closing
+2024/08/22 15:33:49 DEB path manager is shutting down
+2024/08/22 15:33:49 INF [metrics] listener is closing
+2024/08/22 15:33:49 INF waiting for running hooks
+2024/08/22 15:33:49 INF Closing database
+2024/08/22 15:33:49 INF GRPC client closed

@@ -198,6 +198,8 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 	}
 	if s.fi == nil {
 		var err error
+		fmt.Println(s.f.a.agent.Switches)
+		fmt.Println(s.f.a.clientGRPC)
 		switch{
 			case s.f.a.agent.ClientGRPC.Use:
 			if s.f.a.switches.GetDrives	{	
