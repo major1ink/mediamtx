@@ -719,8 +719,8 @@ grpc:
   use : yes
   grpcAddress: 192.168.250.40
   grpcPort: 8080
-  serverName: l6
-  useCodeMPAttribute: yes
+  serverName: l3
+  useCodeMPAttribute: no
 
 ###############################################
 # Database settings
@@ -769,7 +769,7 @@ switches:
   useUpdaterStatus: no
   #L3
   # Enable/disable the PathStream field to create a record path
-  usePathStream: no
+  usePathStream: yes
   # Works with the enabled use Db Path Stream. Indicates the time in seconds how often the status needs to be checked
   timeStatus: 10
   # Enable/disable the server start with proxy streams from the database.
@@ -778,7 +778,7 @@ switches:
   pass:
   #l6
   # Enable/disable the code_mp_contract field to create a record path
-  useCodeMP_Contract: yes
+  useCodeMP_Contract: no
   # Enable/disable the contract field to create a straem path. Work with useSrise: yes
   useContract: no
   # Enable/disable the server start with streams from the database
