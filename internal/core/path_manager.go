@@ -13,7 +13,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
-	RMS "github.com/bluenviron/mediamtx/internal/grps"
+	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/logger"
 
 	"github.com/bluenviron/mediamtx/internal/stream"

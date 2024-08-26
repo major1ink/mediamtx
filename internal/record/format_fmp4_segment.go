@@ -69,7 +69,7 @@ func (s *formatFMP4Segment) close() error {
 			s.f.a.agent.OnSegmentComplete(s.path, duration)
 
 
-			if s.f.a.clientGRPC.Use {
+			if s.f.a.agent.ClientGRPC.Use {
 				stat, err3 := os.Stat(s.path)
 				if err3 == nil {
 					paths := strings.Split(s.path, "/")
@@ -78,14 +78,14 @@ func (s *formatFMP4Segment) close() error {
 					var attribute string
 					if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0"{
 						attribute = "pathStream"
-						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','5')",
+						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','%s')",
 							s.f.a.agent.PathStream,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
 							fmt.Sprint(stat.Size()),
 							s.f.a.endTime,
-							// s.f.a.idDsk,
+							s.f.a.idDsk,
 						)
 					} else {
 						if strings.Contains(s.f.a.stor.Sql.InsertPath, "code_mp_cam"){
@@ -93,17 +93,17 @@ func (s *formatFMP4Segment) close() error {
 						} else {
 							attribute = "stream"
 						}
-						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','5')",
+						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','%s')",
 							s.f.a.agent.PathName,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
 							fmt.Sprint(stat.Size()),
 							s.f.a.endTime,
-							// s.f.a.idDsk,
+							s.f.a.idDsk,
 						)
 					}
-					err4 := s.f.a.clientGRPC.Post(attribute, query)
+					err4 := s.f.a.agent.ClientGRPC.Post(attribute, query)
 					if err4 != nil {
 						if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0"	{
 							query = fmt.Sprintf(
@@ -141,7 +141,7 @@ func (s *formatFMP4Segment) close() error {
 				
 			}
 
-			if s.f.a.stor.Use  && !s.f.a.clientGRPC.Use {
+			if s.f.a.stor.Use  && !s.f.a.agent.ClientGRPC.Use {
 				stat, err3 := os.Stat(s.path)
 				if err3 == nil {
 					paths := strings.Split(s.path, "/")

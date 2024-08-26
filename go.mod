@@ -35,9 +35,16 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/golang/protobuf v1.5.4 // indirect
+require (
+	github.com/alecthomas/colour v0.1.0 // indirect
+	github.com/alecthomas/repr v0.4.0 // indirect
+	github.com/golang/mock v1.6.0
+	github.com/golang/protobuf v1.5.4
+	github.com/sergi/go-diff v1.2.0 // indirect
+)
 
 require (
+	github.com/alecthomas/assert v1.0.0
 	github.com/asticode/go-astikit v0.42.0 // indirect
 	github.com/asticode/go-astits v1.13.0 // indirect
 	github.com/benburkert/openpgp v0.0.0-20160410205803-c2471f86866c // indirect
@@ -84,7 +91,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
 	google.golang.org/grpc v1.65.0
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

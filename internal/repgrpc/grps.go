@@ -1,4 +1,4 @@
-package RMS
+package repgrpc
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 )
 type GrpcClient struct {
-	ctx context.Context
+	Ctx context.Context
 	Use bool
 	Server string
 	Client pb.RMSClient
@@ -22,7 +22,7 @@ func CreateGrpcClient(ctx context.Context, cfg conf.GRPC) (GrpcClient, error) {
 		return GrpcClient{}, err
 	}
 	client := GrpcClient{
-		ctx:    ctx,
+		Ctx:    ctx,
 		Use:    cfg.Use,
 		UseCodeMPAttribute: cfg.UseCodeMPAttribute,
 		Server: cfg.ServerName,
@@ -32,7 +32,7 @@ func CreateGrpcClient(ctx context.Context, cfg conf.GRPC) (GrpcClient, error) {
 	return client, nil
 }
 func (c *GrpcClient) Post (attribute,query string) ( error){
-	_,err := c.Client.Post(c.ctx, &pb.Insert{	Server: c.Server,	Attribute: attribute,	Query: query,})
+	_,err := c.Client.Post(c.Ctx, &pb.Insert{	Server: c.Server,	Attribute: attribute,	Query: query,})
 	if err != nil {
 		if err.Error() == "rpc error: code = Canceled desc = context canceled" {
 		ctx := context.Background()
@@ -80,7 +80,7 @@ func (c *GrpcClient) Select (streamName, argument string) (*pb.AnswerSelect, err
 			StatusRecord: true,
 		}
 	}
-	r,err := c.Client.Get(c.ctx, &structSelect)
+	r,err := c.Client.Get(c.Ctx, &structSelect)
 	if err != nil {
 		return nil, err
 	}

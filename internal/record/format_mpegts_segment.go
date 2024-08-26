@@ -45,7 +45,7 @@ func (s *formatMPEGTSSegment) close() error {
 			duration := s.lastDTS - s.startDTS
 			s.f.a.agent.OnSegmentComplete(s.path, duration)
 
-			if s.f.a.clientGRPC.Use {
+			if s.f.a.agent.ClientGRPC.Use {
 				stat, err3 := os.Stat(s.path)
 				if err3 == nil {
 					paths := strings.Split(s.path, "/")
@@ -54,33 +54,33 @@ func (s *formatMPEGTSSegment) close() error {
 					var attribute string
 					if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0"{
 						attribute = "pathStream"
-						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','5')",
+						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','%s')",
 							s.f.a.agent.PathStream,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
 							fmt.Sprint(stat.Size()),
 							s.f.a.endTime,
-							// s.f.a.idDsk,
+							s.f.a.idDsk,
 						)
 					} else {
-						if s.f.a.clientGRPC.UseCodeMPAttribute{
+						if s.f.a.agent.ClientGRPC.UseCodeMPAttribute{
 							attribute = "code_mp_cam"
 						} else {
 							attribute = "stream"
 						}
-						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','5')",
+						query = fmt.Sprintf("(%s,'%s','%s','%s','%s','%s','%s')",
 							s.f.a.agent.PathName,
 							pathRec+"/",
 							paths[len(paths)-1],
 							s.f.a.timeStart,
 							fmt.Sprint(stat.Size()),
 							s.f.a.endTime,
-							// s.f.a.idDsk,
+							s.f.a.idDsk,
 						)
 					}
-					s.f.a.agent.Log(logger.Debug, "Sending an insert request to RMS:Server %s, atribute %s, query %s",s.f.a.clientGRPC.Server, attribute, query)
-					err4 := s.f.a.clientGRPC.Post(attribute, query)
+					s.f.a.agent.Log(logger.Debug, "Sending an insert request to RMS:Server %s, atribute %s, query %s",s.f.a.agent.ClientGRPC.Server, attribute, query)
+					err4 := s.f.a.agent.ClientGRPC.Post(attribute, query)
 					if err4 != nil {
 						if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0"	{
 							query = fmt.Sprintf(
@@ -119,7 +119,7 @@ func (s *formatMPEGTSSegment) close() error {
 				
 			}
 
-			if s.f.a.stor.Use  && !s.f.a.clientGRPC.Use {
+			if s.f.a.stor.Use  && !s.f.a.agent.ClientGRPC.Use {
 				stat, err3 := os.Stat(s.path)
 
 				if err3 == nil {

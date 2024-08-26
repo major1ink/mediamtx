@@ -166,6 +166,12 @@ func TestAgent(t *testing.T) {
 				Stream:          stream,
 				Pathrecord:      true,
 				RecordAudio:     true,
+				// ClientGRPC: RMS.GrpcClient{
+				// 	Ctx:   context.Background(),
+				// 	Use: true,
+				// 	Server: "test",
+					
+				// },
 				OnSegmentCreate: func(segPath string) {
 					switch n {
 					case 0:
@@ -196,7 +202,24 @@ func TestAgent(t *testing.T) {
 				restartPause: 1 * time.Millisecond,
 			}
 			w.Initialize()
-
+		// 	ctrl := gomock.NewController(t)
+		// 	defer ctrl.Finish()
+		// 	mock := RMS.NewMockGrpcClient(ctrl)
+		// 	w.ClientGRPC.Client = mock
+		// 	testSelect := struct {
+		// 	// attribute   string
+		// 	// query string
+		// 	expected   *emptypb.Empty
+		// 	err        error
+		// }{
+		// 	// attribute:   "PathStream",
+		// 	// query: "(\"1\", \"2\", \"3\")",
+		// 	expected:   &emptypb.Empty{},
+		// 	err:        nil,
+		// }
+		// mock.EXPECT().Post(w.ClientGRPC.Ctx, gomock.Any()).Return(testSelect.expected, testSelect.err)
+		
+		
 			writeToStream(stream,
 				50*time.Second,
 				time.Date(2008, 0o5, 20, 22, 15, 25, 0, time.UTC))

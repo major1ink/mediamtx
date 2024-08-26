@@ -27,7 +27,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/confwatcher"
 	"github.com/bluenviron/mediamtx/internal/database"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
-	RMS "github.com/bluenviron/mediamtx/internal/grps"
+	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/metrics"
 	"github.com/bluenviron/mediamtx/internal/playback"
@@ -47,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.3-5"
+var version = "v1.8.3-7"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
