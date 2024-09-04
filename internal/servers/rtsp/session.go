@@ -45,6 +45,10 @@ type session struct {
 	query           string
 	decodeErrLogger logger.Writer
 	writeErrLogger  logger.Writer
+	chrtspreloded chan struct{
+		 Name string
+		Wg *sync.WaitGroup
+	}
 }
 
 func (s *session) initialize() {
@@ -99,6 +103,12 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 			StatusCode: base.StatusBadRequest,
 		}, fmt.Errorf("invalid path")
 	}
+	// newConf:=s.conf.Clone()
+	// newConf.OptionalPaths[] = nil
+	wg:=sync.WaitGroup{}
+	wg.Add(1)
+	s.chrtspreloded <- struct{Name string; Wg *sync.WaitGroup}{ctx.Path[1:], &wg}
+	wg.Wait()
 	ctx.Path = ctx.Path[1:]
 
 	if c.authNonce == "" {

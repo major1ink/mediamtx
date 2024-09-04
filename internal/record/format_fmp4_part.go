@@ -102,7 +102,12 @@ func (p *formatFMP4Part) close() error {
 				p.s.f.a.agent.PathStream = r.CodeMP
 				p.s.f.a.agent.Status_record = int8(r.StatusRecord)
 				if p.s.f.a.agent.Status_record == 0 {
-					p.s.f.a.agent.CodeMp="0"
+					p.s.f.a.agent.ChConfigSet <- []struct {
+						Name   string
+						Record bool
+					}{{Name: p.s.f.a.agent.PathName, Record: false}}
+					err := fmt.Errorf("status_record = 0")
+					return err
 				}
 			}
 		}

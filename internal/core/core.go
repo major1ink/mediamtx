@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -27,12 +28,12 @@ import (
 	"github.com/bluenviron/mediamtx/internal/confwatcher"
 	"github.com/bluenviron/mediamtx/internal/database"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
-	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/metrics"
 	"github.com/bluenviron/mediamtx/internal/playback"
 	"github.com/bluenviron/mediamtx/internal/pprof"
 	"github.com/bluenviron/mediamtx/internal/record"
+	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/rlimit"
 	"github.com/bluenviron/mediamtx/internal/servers/hls"
 	"github.com/bluenviron/mediamtx/internal/servers/rtmp"
@@ -47,7 +48,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.3-7"
+var version = "v1.8.3-8"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -126,6 +127,10 @@ type Core struct {
 		Name   string
 		Record bool
 	}
+	chrtspreloded chan struct{
+		 Name string
+		Wg *sync.WaitGroup
+	}
 
 	// out
 	done chan struct{}
@@ -165,6 +170,10 @@ func New(args []string) (*Core, bool) {
 		ctx:            ctx,
 		ctxCancel:      ctxCancel,
 		chAPIConfigSet: make(chan *conf.Conf),
+		chrtspreloded:  make(chan struct{
+		 Name string
+		Wg *sync.WaitGroup
+	}),
 		chConfigSet: make(chan []struct {
 			Name   string
 			Record bool
@@ -180,6 +189,7 @@ func New(args []string) (*Core, bool) {
 		fmt.Println("config version mismatch")
 		os.Exit(1)
 	}
+
 
 	err = p.createResources(true)
 	if err != nil {
@@ -252,9 +262,41 @@ outer:
 				p.Log(logger.Error, "%s", err)
 				break outer
 			}
+		case  rtspreloded:= <-p.chrtspreloded:
+			newConf:=p.conf.Clone()
+			newConf.OptionalPaths[rtspreloded.Name] = nil
+			err:= newConf.Validate()
+			if err != nil {
+				fmt.Println(1)
+				fmt.Println(err)
+				p.Log(logger.Error, "%s", err)
+			}
+
+			err = p.reloadConf(newConf, false)
+			if err != nil {
+				fmt.Println(2)
+				fmt.Println(err)
+				p.Log(logger.Error, "%s", err)
+				break outer
+			}
+		
+			rtspreloded.Wg.Done()
+
 		case pathConf := <-p.chConfigSet:
 			newConf := p.conf.Clone()
+			
 			for i := range pathConf {
+				_, ok := p.conf.OptionalPaths[pathConf[i].Name]
+	if !ok {
+		var s1 conf.OptionalPath
+				qwerty := []byte(`{
+					"name": "` + pathConf[i].Name + `",
+					"record": true}`)
+				json.NewDecoder(bytes.NewReader(qwerty)).Decode(&s1)
+				newConf.AddPath(pathConf[i].Name,&s1)
+	}
+				
+
 				p.Log(logger.Info, "reloading configuration (path %s)", pathConf[i].Name)
 				var s conf.OptionalPath
 				postJson := []byte(fmt.Sprintf(`
@@ -266,6 +308,7 @@ outer:
 					p.Log(logger.Error, "%s", err)
 					return
 				}
+
 
 				err = newConf.PatchPath(pathConf[i].Name, &s)
 				if err != nil {
@@ -699,6 +742,7 @@ func (p *Core) createResources(initial bool) error {
 			ExternalCmdPool:     p.externalCmdPool,
 			PathManager:         p.pathManager,
 			Parent:              p,
+			Chrtspreloded :      p.chrtspreloded,
 		}
 		err = i.Initialize()
 		if err != nil {
@@ -739,6 +783,7 @@ func (p *Core) createResources(initial bool) error {
 			ExternalCmdPool:     p.externalCmdPool,
 			PathManager:         p.pathManager,
 			Parent:              p,
+			Chrtspreloded :      p.chrtspreloded,
 		}
 		err = i.Initialize()
 		if err != nil {

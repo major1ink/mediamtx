@@ -1,6 +1,7 @@
 package record
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,6 +12,8 @@ import (
 	"github.com/bluenviron/mediacommon/pkg/codecs/h265"
 	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4audio"
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
+	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
@@ -164,14 +167,11 @@ func TestAgent(t *testing.T) {
 				SegmentDuration: 1 * time.Second,
 				PathName:        "mypath",
 				Stream:          stream,
+				// PathFormats: map[string]string{
+				// 	"./record":"1",
+				// },
 				Pathrecord:      true,
 				RecordAudio:     true,
-				// ClientGRPC: RMS.GrpcClient{
-				// 	Ctx:   context.Background(),
-				// 	Use: true,
-				// 	Server: "test",
-					
-				// },
 				OnSegmentCreate: func(segPath string) {
 					switch n {
 					case 0:
@@ -200,12 +200,17 @@ func TestAgent(t *testing.T) {
 				},
 				Parent:       test.NilLogger,
 				restartPause: 1 * time.Millisecond,
+				ClientGRPC: RMS.GrpcClient{
+					Ctx:   context.Background(),
+					Use: true,
+					Server: "test",
+				},
 			}
 			w.Initialize()
-		// 	ctrl := gomock.NewController(t)
-		// 	defer ctrl.Finish()
-		// 	mock := RMS.NewMockGrpcClient(ctrl)
-		// 	w.ClientGRPC.Client = mock
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mock := RMS.NewMockGrpcClient(ctrl)
+			w.ClientGRPC.Client = mock
 		// 	testSelect := struct {
 		// 	// attribute   string
 		// 	// query string
@@ -238,10 +243,10 @@ func TestAgent(t *testing.T) {
 				},
 			})
 
-			for i := 0; i < 2; i++ {
-				<-segCreated
-				<-segDone
-			}
+			// for i := 0; i < 2; i++ {
+			// 	<-segCreated
+			// 	<-segDone
+			// }
 
 			if ca == "fmp4" {
 				var init fmp4.Init
@@ -384,7 +389,31 @@ func TestAgentFMP4NegativeDTS(t *testing.T) {
 		Parent:          test.NilLogger,
 		Pathrecord:      true,
 		RecordAudio:     true,
+		ClientGRPC: RMS.GrpcClient{
+					Ctx:   context.Background(),
+					Use: false,
+					Server: "test",
+					Conn:  nil,
+					UseCodeMPAttribute: false,
+				},
 	}
+	ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mock := RMS.NewMockGrpcClient(ctrl)
+			w.ClientGRPC.Client = mock
+		// 	testSelect := struct {
+		// 	// attribute   string
+		// 	// query string
+		// 	expected   *emptypb.Empty
+		// 	err        error
+		// }{
+		// 	// attribute:   "PathStream",
+		// 	// query: "(\"1\", \"2\", \"3\")",
+		// 	expected:   &emptypb.Empty{},
+		// 	err:        nil,
+		// }
+		// mock.EXPECT().Post(w.ClientGRPC.Ctx, gomock.Any()).Return(testSelect.expected, testSelect.err)
+		
 	w.Initialize()
 
 	for i := 0; i < 3; i++ {

@@ -871,14 +871,14 @@ func (pa *path) startRecording() {
 			r, err :=pa.recordAgent.ClientGRPC.Select(pa.recordAgent.StreamName, "CodeMP")
 			if err != nil {
 				pa.Log(logger.Error, "%s", err)
-				pa.recordAgent.Status_record=0
+				pa.recordAgent.Status_record=1
 				pa.recordAgent.PathStream="0"
 			} else {
 				pa.Log(logger.Debug, "response received from GRPS: %s", r)
 				pa.recordAgent.PathStream = r.CodeMP
 				pa.recordAgent.Status_record = int8(r.StatusRecord)
 				if pa.recordAgent.Status_record == 0 {
-					pa.recordAgent.CodeMp="0"
+					pa.recordAgent.Pathrecord = false
 				}
 			}
 		}
@@ -910,7 +910,7 @@ func (pa *path) startRecording() {
 				pa.recordAgent.Status_record, pa.recordAgent.PathStream, err = pa.recordAgent.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName))
 				if err != nil {
 					pa.Log(logger.Error, "%s", err)
-					pa.recordAgent.Status_record=0
+					pa.recordAgent.Status_record=1
 					pa.recordAgent.PathStream="0"
 				} else {
 					pa.Log(logger.Debug, "The result of executing the sql query: %b, %s", pa.recordAgent.Status_record, pa.recordAgent.PathStream)

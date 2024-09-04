@@ -51,12 +51,11 @@ func FindPathConf(pathConfs map[string]*Path, name string) (string, *Path, []str
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("invalid path name: %w (%s)", err, name)
 	}
-
 	// normal path
+
 	if pathConf, ok := pathConfs[name]; ok {
 		return name, pathConf, nil, nil
 	}
-
 	// regular expression-based path
 	for pathConfName, pathConf := range pathConfs {
 		if pathConf.Regexp != nil && pathConfName != "all" && pathConfName != "all_others" {

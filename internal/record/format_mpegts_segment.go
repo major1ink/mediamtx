@@ -39,7 +39,6 @@ func (s *formatMPEGTSSegment) close() error {
 		if err == nil {
 			err = err2
 		}
-
 		if err2 == nil {
 
 			duration := s.lastDTS - s.startDTS
@@ -81,6 +80,7 @@ func (s *formatMPEGTSSegment) close() error {
 					}
 					s.f.a.agent.Log(logger.Debug, "Sending an insert request to RMS:Server %s, atribute %s, query %s",s.f.a.agent.ClientGRPC.Server, attribute, query)
 					err4 := s.f.a.agent.ClientGRPC.Post(attribute, query)
+					
 					if err4 != nil {
 						if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream != "0"	{
 							query = fmt.Sprintf(
@@ -180,7 +180,6 @@ func (s *formatMPEGTSSegment) close() error {
 				}
 				err = err3
 			}
-
 		}
 	}
 	return err
@@ -200,6 +199,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 		var err error
 		switch{
 			case s.f.a.agent.ClientGRPC.Use:
+				
 			if s.f.a.switches.GetDrives	{	
 			s.f.a.agent.Log(logger.Debug, "sending a request to receive disks")
 			r,err := s.f.a.agent.ClientGRPC.Select(s.f.a.agent.StreamName,"MountPoint")
@@ -223,20 +223,26 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 
 			}} else {
 				s.localCreatePath()
+				
 			}
 			if s.f.a.switches.UsePathStream && s.f.a.agent.PathStream == "0" {
 			s.f.a.agent.Log(logger.Debug, "A request has been sent to receive Cod_mp and status_record")
 			r, err :=s.f.a.agent.ClientGRPC.Select(s.f.a.agent.StreamName, "CodeMP")
 			if err != nil {
 				s.f.a.agent.Log(logger.Error, "%s", err)
-				s.f.a.agent.Status_record=0
+				s.f.a.agent.Status_record=1
 				s.f.a.agent.PathStream="0"
 			} else {
 				s.f.a.agent.Log(logger.Debug, "response received from GRPS: %s", r)
 				s.f.a.agent.PathStream = r.CodeMP
 				s.f.a.agent.Status_record = int8(r.StatusRecord)
 				if s.f.a.agent.Status_record == 0 {
-					s.f.a.agent.CodeMp="0"
+					s.f.a.agent.ChConfigSet <- []struct {
+						Name   string
+						Record bool
+					}{{Name: s.f.a.agent.PathName, Record: false}}
+					err := fmt.Errorf("status_record = 0")
+					return 0, err
 				}
 			}
 		}
@@ -288,7 +294,7 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 			s.f.a.agent.Status_record, s.f.a.agent.PathStream, err = s.f.a.agent.Stor.Req.SelectPathStream(fmt.Sprintf(s.f.a.agent.Stor.Sql.GetPathStream, s.f.a.agent.StreamName))
 			if err != nil {
 				s.f.a.agent.PathStream = "0"
-				s.f.a.agent.Status_record = 0
+				s.f.a.agent.Status_record = 1
 				s.f.a.agent.Log(logger.Error, "%s", err)
 			} else {
 				s.f.a.agent.Log(logger.Debug, "The result of executing the sql query: %b, %s", s.f.a.agent.Status_record, s.f.a.agent.PathStream)
@@ -333,12 +339,10 @@ func (s *formatMPEGTSSegment) Write(p []byte) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-
 		s.f.a.agent.OnSegmentCreate(s.path)
 
 		s.fi = fi
 	}
-
 	return s.fi.Write(p)
 }
 

@@ -55,14 +55,13 @@ func (s *formatFMP4Segment) close() error {
 	if s.curPart != nil {
 		err = s.curPart.close()
 	}
-
 	if s.fi != nil {
 		s.f.a.agent.Log(logger.Debug, "closing segment %s", s.path)
 		err2 := s.fi.Close()
 		if err == nil {
 			err = err2
 		}
-
+		
 		if err2 == nil {
 
 			duration := s.lastDTS - s.startDTS

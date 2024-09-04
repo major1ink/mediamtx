@@ -57,13 +57,16 @@ func TestSelect(t *testing.T) {
 	}
 
 	for _, tc := range testSelect {
-		t.Run(tc.argument, func(t *testing.T) {
+		t.Run(
+			tc.argument,
+			func(t *testing.T) {
 			mockClient.EXPECT().Get(c.Ctx, gomock.Any()).Return(tc.expected, tc.err)
 
 			result, err := c.Select(tc.streamName, tc.argument)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.expected, result)
-		})
+		},
+		)
 	}
 	testInsert := []struct {
 		attribute   string
@@ -92,12 +95,15 @@ func TestSelect(t *testing.T) {
 }
 
 for _, tc := range testInsert {
-	t.Run(tc.attribute, func(t *testing.T) {
+	t.Run(
+		tc.attribute,
+		func(t *testing.T) {
 			mockClient.EXPECT().Post(c.Ctx, gomock.Any()).Return(tc.expected, tc.err)
 
-			 err := c.Post(tc.attribute, tc.query)
+			err := c.Post(tc.attribute, tc.query)
 			assert.Equal(t, tc.err, err)
-	})
+	},
+	)
 }
 }
 

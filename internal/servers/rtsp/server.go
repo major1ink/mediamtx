@@ -89,6 +89,10 @@ type Server struct {
 	mutex     sync.RWMutex
 	conns     map[*gortsplib.ServerConn]*conn
 	sessions  map[*gortsplib.ServerSession]*session
+	Chrtspreloded chan  struct{
+		 Name string
+		Wg *sync.WaitGroup
+	}
 }
 
 // Initialize initializes the server.
@@ -236,6 +240,7 @@ func (s *Server) OnSessionOpen(ctx *gortsplib.ServerHandlerOnSessionOpenCtx) {
 		externalCmdPool: s.ExternalCmdPool,
 		pathManager:     s.PathManager,
 		parent:          s,
+		chrtspreloded :  s.Chrtspreloded,
 	}
 	se.initialize()
 	s.mutex.Lock()

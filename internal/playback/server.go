@@ -101,7 +101,6 @@ func (s *Server) writeError(ctx *gin.Context, status int, err error) {
 func (s *Server) safeFindPathConf(name string) (*conf.Path, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-
 	_, pathConf, _, err := conf.FindPathConf(s.PathConfs, name)
 	return pathConf, err
 }

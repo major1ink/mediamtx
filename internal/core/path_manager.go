@@ -452,7 +452,6 @@ func (pm *pathManager) doAddPublisher(req defs.PathAddPublisherReq) {
 	if _, ok := pm.paths[req.AccessRequest.Name]; !ok {
 		pm.createPath(pathConfName, pathConf, req.AccessRequest.Name, pathMatches)
 	}
-
 	req.Res <- defs.PathAddPublisherRes{Path: pm.paths[req.AccessRequest.Name]}
 }
 
@@ -516,7 +515,6 @@ func (pm *pathManager) createPath(
 	pa.initialize(pm.stor, &pm.Publisher)
 
 	pm.paths[name] = pa
-
 	if _, ok := pm.pathsByConf[pathConfName]; !ok {
 		pm.pathsByConf[pathConfName] = make(map[*path]struct{})
 	}
@@ -644,6 +642,7 @@ func (pm *pathManager) AddPublisher(req defs.PathAddPublisherReq) (defs.Path, er
 	select {
 	case pm.chAddPublisher <- req:
 		res := <-req.Res
+		
 		if res.Err != nil {
 			return nil, res.Err
 		}
