@@ -17,7 +17,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/hooks"
 	"github.com/bluenviron/mediamtx/internal/logger"
-	"github.com/bluenviron/mediamtx/internal/record"
+	"github.com/bluenviron/mediamtx/internal/recorder"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
@@ -71,7 +71,6 @@ type path struct {
 	writeTimeout      conf.StringDuration
 	writeQueueSize    int
 	udpMaxPayloadSize int
-	confName          string
 	conf              *conf.Path
 	name              string
 	matches           []string
@@ -85,7 +84,7 @@ type path struct {
 	source                         defs.Source
 	publisherQuery                 string
 	stream                         *stream.Stream
-	recordAgent                    *record.Agent
+	recorder                       *recorder.Recorder
 	readyTime                      time.Time
 	onUnDemandHook                 func(string)
 	onNotReadyHook                 func()
@@ -169,26 +168,19 @@ func (pa *path) run() {
 	if pa.conf.Source == "redirect" {
 		pa.source = &sourceRedirect{}
 	} else if pa.conf.HasStaticSource() {
-		resolvedSource := pa.conf.Source
-		if len(pa.matches) > 1 {
-			for i, ma := range pa.matches[1:] {
-				resolvedSource = strings.ReplaceAll(resolvedSource, "$G"+strconv.FormatInt(int64(i+1), 10), ma)
-			}
-		}
-
 		pa.source = &staticSourceHandler{
 			conf:           pa.conf,
 			logLevel:       pa.logLevel,
 			readTimeout:    pa.readTimeout,
 			writeTimeout:   pa.writeTimeout,
 			writeQueueSize: pa.writeQueueSize,
-			resolvedSource: resolvedSource,
+			matches:        pa.matches,
 			parent:         pa,
 		}
 		pa.source.(*staticSourceHandler).initialize()
 
 		if !pa.conf.SourceOnDemand {
-			pa.source.(*staticSourceHandler).start(false)
+			pa.source.(*staticSourceHandler).start(false, "")
 		}
 	}
 
@@ -375,12 +367,12 @@ func (pa *path) doReloadConf(newConf *conf.Path) {
 	}
 
 	if pa.conf.Record {
-		if pa.stream != nil && pa.recordAgent == nil {
+		if pa.stream != nil && pa.recorder == nil {
 			pa.startRecording()
 		}
-	} else if pa.recordAgent != nil {
-		pa.recordAgent.Close()
-		pa.recordAgent = nil
+	} else if pa.recorder != nil {
+		pa.recorder.Close()
+		pa.recorder = nil
 	}
 }
 
@@ -431,7 +423,7 @@ func (pa *path) doDescribe(req defs.PathDescribeReq) {
 
 	if pa.conf.HasOnDemandStaticSource() {
 		if pa.onDemandStaticSourceState == pathOnDemandStateInitial {
-			pa.onDemandStaticSourceStart()
+			pa.onDemandStaticSourceStart(req.AccessRequest.Query)
 		}
 		pa.describeRequestsOnHold = append(pa.describeRequestsOnHold, req)
 		return
@@ -539,7 +531,7 @@ func (pa *path) doAddReader(req defs.PathAddReaderReq) {
 
 	if pa.conf.HasOnDemandStaticSource() {
 		if pa.onDemandStaticSourceState == pathOnDemandStateInitial {
-			pa.onDemandStaticSourceStart()
+			pa.onDemandStaticSourceStart(req.AccessRequest.Query)
 		}
 		pa.readerAddRequestsOnHold = append(pa.readerAddRequestsOnHold, req)
 		return
@@ -579,7 +571,7 @@ func (pa *path) doAPIPathsGet(req pathAPIPathsGetReq) {
 	req.res <- pathAPIPathsGetRes{
 		data: &defs.APIPath{
 			Name:     pa.name,
-			ConfName: pa.confName,
+			ConfName: pa.conf.Name,
 			Source: func() *defs.APIPathSourceOrReader {
 				if pa.source == nil {
 					return nil
@@ -655,8 +647,8 @@ func (pa *path) shouldClose() bool {
 		len(pa.readerAddRequestsOnHold) == 0
 }
 
-func (pa *path) onDemandStaticSourceStart() {
-	pa.source.(*staticSourceHandler).start(true)
+func (pa *path) onDemandStaticSourceStart(query string) {
+	pa.source.(*staticSourceHandler).start(true, query)
 
 	pa.onDemandStaticSourceReadyTimer.Stop()
 	pa.onDemandStaticSourceReadyTimer = time.NewTimer(time.Duration(pa.conf.SourceOnDemandStartTimeout))
@@ -772,9 +764,9 @@ func (pa *path) setNotReady() {
 
 	pa.onNotReadyHook()
 
-	if pa.recordAgent != nil {
-		pa.recordAgent.Close()
-		pa.recordAgent = nil
+	if pa.recorder != nil {
+		pa.recorder.Close()
+		pa.recorder = nil
 	}
 
 	if pa.stream != nil {
@@ -784,7 +776,7 @@ func (pa *path) setNotReady() {
 }
 
 func (pa *path) startRecording() {
-	pa.recordAgent = &record.Agent{
+	pa.recorder = &recorder.Recorder{
 		WriteQueueSize:  pa.writeQueueSize,
 		PathFormat:      pa.conf.RecordPath,
 		Format:          pa.conf.RecordFormat,
@@ -823,7 +815,7 @@ func (pa *path) startRecording() {
 		},
 		Parent: pa,
 	}
-	pa.recordAgent.Initialize()
+	pa.recorder.Initialize()
 }
 
 func (pa *path) executeRemoveReader(r defs.Reader) {

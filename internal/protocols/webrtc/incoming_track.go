@@ -1,11 +1,8 @@
 package webrtc
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/bluenviron/gortsplib/v4/pkg/format"
 	"github.com/bluenviron/gortsplib/v4/pkg/liberrors"
 	"github.com/bluenviron/gortsplib/v4/pkg/rtpreorderer"
 	"github.com/pion/rtcp"
@@ -16,10 +13,7 @@ import (
 )
 
 const (
-	keyFrameInterval = 2 * time.Second
-)
-
-const (
+	keyFrameInterval  = 2 * time.Second
 	mimeTypeMultiopus = "audio/multiopus"
 	mimeTypeL16       = "audio/L16"
 )
@@ -81,9 +75,8 @@ var incomingVideoCodecs = []webrtc.RTPCodecParameters{
 	},
 	{
 		RTPCodecCapability: webrtc.RTPCodecCapability{
-			MimeType:    webrtc.MimeTypeH264,
-			ClockRate:   90000,
-			SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+			MimeType:  webrtc.MimeTypeH265,
+			ClockRate: 90000,
 		},
 		PayloadType: 103,
 	},
@@ -91,9 +84,17 @@ var incomingVideoCodecs = []webrtc.RTPCodecParameters{
 		RTPCodecCapability: webrtc.RTPCodecCapability{
 			MimeType:    webrtc.MimeTypeH264,
 			ClockRate:   90000,
-			SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f",
+			SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
 		},
 		PayloadType: 104,
+	},
+	{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:    webrtc.MimeTypeH264,
+			ClockRate:   90000,
+			SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f",
+		},
+		PayloadType: 105,
 	},
 }
 
@@ -226,127 +227,34 @@ var incomingAudioCodecs = []webrtc.RTPCodecParameters{
 
 // IncomingTrack is an incoming track.
 type IncomingTrack struct {
-	track *webrtc.TrackRemote
-	log   logger.Writer
+	OnPacketRTP func(*rtp.Packet)
 
-	format    format.Format
-	reorderer *rtpreorderer.Reorderer
-	pkts      []*rtp.Packet
+	track     *webrtc.TrackRemote
+	receiver  *webrtc.RTPReceiver
+	writeRTCP func([]rtcp.Packet) error
+	log       logger.Writer
 }
 
-func newIncomingTrack(
-	track *webrtc.TrackRemote,
-	receiver *webrtc.RTPReceiver,
-	writeRTCP func([]rtcp.Packet) error,
-	log logger.Writer,
-) (*IncomingTrack, error) {
-	t := &IncomingTrack{
-		track:     track,
-		log:       log,
-		reorderer: rtpreorderer.New(),
-	}
+func (t *IncomingTrack) initialize() {
+	t.OnPacketRTP = func(*rtp.Packet) {}
+}
 
-	isVideo := false
+// ClockRate returns the clock rate. Needed by rtptime.GlobalDecoder
+func (t *IncomingTrack) ClockRate() int {
+	return int(t.track.Codec().ClockRate)
+}
 
-	switch strings.ToLower(track.Codec().MimeType) {
-	case strings.ToLower(webrtc.MimeTypeAV1):
-		isVideo = true
-		t.format = &format.AV1{
-			PayloadTyp: uint8(track.PayloadType()),
-		}
+// PTSEqualsDTS returns whether PTS equals DTS. Needed by rtptime.GlobalDecoder
+func (*IncomingTrack) PTSEqualsDTS(*rtp.Packet) bool {
+	return true
+}
 
-	case strings.ToLower(webrtc.MimeTypeVP9):
-		isVideo = true
-		t.format = &format.VP9{
-			PayloadTyp: uint8(track.PayloadType()),
-		}
-
-	case strings.ToLower(webrtc.MimeTypeVP8):
-		isVideo = true
-		t.format = &format.VP8{
-			PayloadTyp: uint8(track.PayloadType()),
-		}
-
-	case strings.ToLower(webrtc.MimeTypeH264):
-		isVideo = true
-		t.format = &format.H264{
-			PayloadTyp:        uint8(track.PayloadType()),
-			PacketizationMode: 1,
-		}
-
-	case strings.ToLower(mimeTypeMultiopus):
-		t.format = &format.Opus{
-			PayloadTyp:   uint8(track.PayloadType()),
-			ChannelCount: int(track.Codec().Channels),
-		}
-
-	case strings.ToLower(webrtc.MimeTypeOpus):
-		t.format = &format.Opus{
-			PayloadTyp: uint8(track.PayloadType()),
-			ChannelCount: func() int {
-				if strings.Contains(track.Codec().SDPFmtpLine, "stereo=1") {
-					return 2
-				}
-				return 1
-			}(),
-		}
-
-	case strings.ToLower(webrtc.MimeTypeG722):
-		t.format = &format.G722{}
-
-	case strings.ToLower(webrtc.MimeTypePCMU):
-		channels := track.Codec().Channels
-		if channels == 0 {
-			channels = 1
-		}
-
-		payloadType := uint8(0)
-		if channels > 1 {
-			payloadType = 118
-		}
-
-		t.format = &format.G711{
-			PayloadTyp:   payloadType,
-			MULaw:        true,
-			SampleRate:   8000,
-			ChannelCount: int(channels),
-		}
-
-	case strings.ToLower(webrtc.MimeTypePCMA):
-		channels := track.Codec().Channels
-		if channels == 0 {
-			channels = 1
-		}
-
-		payloadType := uint8(8)
-		if channels > 1 {
-			payloadType = 119
-		}
-
-		t.format = &format.G711{
-			PayloadTyp:   payloadType,
-			MULaw:        false,
-			SampleRate:   8000,
-			ChannelCount: int(channels),
-		}
-
-	case strings.ToLower(mimeTypeL16):
-		t.format = &format.LPCM{
-			PayloadTyp:   uint8(track.PayloadType()),
-			BitDepth:     16,
-			SampleRate:   int(track.Codec().ClockRate),
-			ChannelCount: int(track.Codec().Channels),
-		}
-
-	default:
-		return nil, fmt.Errorf("unsupported codec: %+v", track.Codec())
-	}
-
+func (t *IncomingTrack) start() {
 	// read incoming RTCP packets to make interceptors work
 	go func() {
 		buf := make([]byte, 1500)
 		for {
-			_, _, err := receiver.Read(buf)
+			_, _, err := t.receiver.Read(buf)
 			if err != nil {
 				return
 			}
@@ -354,13 +262,13 @@ func newIncomingTrack(
 	}()
 
 	// send period key frame requests
-	if isVideo {
+	if t.track.Kind() == webrtc.RTPCodecTypeVideo {
 		go func() {
 			keyframeTicker := time.NewTicker(keyFrameInterval)
 			defer keyframeTicker.Stop()
 
 			for range keyframeTicker.C {
-				err := writeRTCP([]rtcp.Packet{
+				err := t.writeRTCP([]rtcp.Packet{
 					&rtcp.PictureLossIndication{
 						MediaSSRC: uint32(t.track.SSRC()),
 					},
@@ -372,52 +280,30 @@ func newIncomingTrack(
 		}()
 	}
 
-	return t, nil
-}
+	// read incoming RTP packets
+	go func() {
+		reorderer := rtpreorderer.New()
 
-// Format returns the track format.
-func (t *IncomingTrack) Format() format.Format {
-	return t.format
-}
-
-// ReadRTP reads a RTP packet.
-func (t *IncomingTrack) ReadRTP() (*rtp.Packet, error) {
-	for {
-		if len(t.pkts) != 0 {
-			var pkt *rtp.Packet
-			pkt, t.pkts = t.pkts[0], t.pkts[1:]
-
-			// sometimes Chrome sends empty RTP packets. ignore them.
-			if len(pkt.Payload) == 0 {
-				continue
+		for {
+			pkt, _, err := t.track.ReadRTP()
+			if err != nil {
+				return
 			}
 
-			return pkt, nil
+			packets, lost := reorderer.Process(pkt)
+			if lost != 0 {
+				t.log.Log(logger.Warn, (liberrors.ErrClientRTPPacketsLost{Lost: lost}).Error())
+				// do not return
+			}
+
+			for _, pkt := range packets {
+				// sometimes Chrome sends empty RTP packets. ignore them.
+				if len(pkt.Payload) == 0 {
+					continue
+				}
+
+				t.OnPacketRTP(pkt)
+			}
 		}
-
-		pkt, _, err := t.track.ReadRTP()
-		if err != nil {
-			return nil, err
-		}
-
-		var lost int
-		t.pkts, lost = t.reorderer.Process(pkt)
-		if lost != 0 {
-			t.log.Log(logger.Warn, (liberrors.ErrClientRTPPacketsLost{Lost: lost}).Error())
-			// do not return
-		}
-
-		if len(t.pkts) == 0 {
-			continue
-		}
-
-		pkt, t.pkts = t.pkts[0], t.pkts[1:]
-
-		// sometimes Chrome sends empty RTP packets. ignore them.
-		if len(pkt.Payload) == 0 {
-			continue
-		}
-
-		return pkt, nil
-	}
+	}()
 }

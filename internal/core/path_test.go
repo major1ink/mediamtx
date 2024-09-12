@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -25,7 +24,7 @@ import (
 
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/protocols/rtmp"
-	"github.com/bluenviron/mediamtx/internal/protocols/webrtc"
+	"github.com/bluenviron/mediamtx/internal/protocols/whip"
 	"github.com/bluenviron/mediamtx/internal/test"
 )
 
@@ -112,16 +111,7 @@ func TestPathRunOnDemand(t *testing.T) {
 	err := os.WriteFile(srcFile,
 		[]byte(strings.ReplaceAll(runOnDemandSampleScript, "ON_DEMAND_FILE", onDemand)), 0o644)
 	require.NoError(t, err)
-
-	execFile := filepath.Join(os.TempDir(), "ondemand_cmd")
-	cmd := exec.Command("go", "build", "-o", execFile, srcFile)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	require.NoError(t, err)
-	defer os.Remove(execFile)
-
-	os.Remove(srcFile)
+	defer os.Remove(srcFile)
 
 	for _, ca := range []string{"describe", "setup", "describe and setup"} {
 		t.Run(ca, func(t *testing.T) {
@@ -133,9 +123,9 @@ func TestPathRunOnDemand(t *testing.T) {
 				"webrtc: no\n"+
 				"paths:\n"+
 				"  '~^(on)demand$':\n"+
-				"    runOnDemand: %s\n"+
+				"    runOnDemand: go run %s\n"+
 				"    runOnDemandCloseAfter: 1s\n"+
-				"    runOnUnDemand: touch %s\n", execFile, onUnDemand))
+				"    runOnUnDemand: touch %s\n", srcFile, onUnDemand))
 			require.Equal(t, true, ok)
 			defer p1.Close()
 
@@ -404,7 +394,7 @@ func TestPathRunOnRead(t *testing.T) {
 					u, err := url.Parse("http://localhost:8889/test/whep?query=value")
 					require.NoError(t, err)
 
-					c := &webrtc.WHIPClient{
+					c := &whip.Client{
 						HTTPClient: hc,
 						URL:        u,
 						Log:        test.NilLogger,
@@ -700,13 +690,14 @@ func TestPathFallback(t *testing.T) {
 	}
 }
 
-func TestPathSourceRegexp(t *testing.T) {
+func TestPathResolveSource(t *testing.T) {
 	var stream *gortsplib.ServerStream
 
 	s := gortsplib.Server{
 		Handler: &testServer{
 			onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 			) (*base.Response, *gortsplib.ServerStream, error) {
+				require.Equal(t, "key=val", ctx.Query)
 				require.Equal(t, "/a", ctx.Path)
 				return &base.Response{
 					StatusCode: base.StatusOK,
@@ -736,7 +727,7 @@ func TestPathSourceRegexp(t *testing.T) {
 	p, ok := newInstance(
 		"paths:\n" +
 			"  '~^test_(.+)$':\n" +
-			"    source: rtsp://127.0.0.1:8555/$G1\n" +
+			"    source: rtsp://127.0.0.1:8555/$G1?$MTX_QUERY\n" +
 			"    sourceOnDemand: yes\n" +
 			"  'all':\n")
 	require.Equal(t, true, ok)
@@ -744,7 +735,7 @@ func TestPathSourceRegexp(t *testing.T) {
 
 	reader := gortsplib.Client{}
 
-	u, err := base.ParseURL("rtsp://127.0.0.1:8554/test_a")
+	u, err := base.ParseURL("rtsp://127.0.0.1:8554/test_a?key=val")
 	require.NoError(t, err)
 
 	err = reader.Start(u.Scheme, u.Host)
