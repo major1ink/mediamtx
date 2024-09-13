@@ -47,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.9.0-1"
+var version = "v1.9.0-2"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -234,15 +234,11 @@ outer:
 			newConf.OptionalPaths[rtspreloded.Name] = nil
 			err:= newConf.Validate()
 			if err != nil {
-				fmt.Println(1)
-				fmt.Println(err)
 				p.Log(logger.Error, "%s", err)
 			}
 
 			err = p.reloadConf(newConf, false)
 			if err != nil {
-				fmt.Println(2)
-				fmt.Println(err)
 				p.Log(logger.Error, "%s", err)
 				break outer
 			}
@@ -526,7 +522,22 @@ func (p *Core) createResources(initial bool) error {
 
 		}
 
-		if switches.UseSrise && stor.Use {
+		if switches.UseSrise {
+			if !stor.Use && p.dbPool == nil {
+				p.conf.Database.Use = true
+			p.dbPool, err = database.CreateDbPool(
+			p.ctx,
+			database.CreatePgxConf(
+				p.conf.Database,
+			),
+		)
+		if err != nil {
+			return err
+		}
+		p.Log(logger.Info, "Connected to the database")	
+		req = psql.NewReq(p.ctx, p.dbPool,p.conf.Switches.QueryTimeOut)
+		stor.Req = req
+		}
 			if switches.UseContract {
 				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataContract))
 				data, err := stor.Req.SelectData(stor.Sql.GetDataContract)
@@ -630,6 +641,11 @@ func (p *Core) createResources(initial bool) error {
 					return err
 				}
 			}
+			if !stor.Use{
+		p.Log(logger.Info, "Closing database")
+		database.ClosePool(p.dbPool)
+		p.dbPool = nil
+		}
 
 		}
 

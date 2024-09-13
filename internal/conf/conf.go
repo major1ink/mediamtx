@@ -330,7 +330,7 @@ type Switches struct {
 
 func (conf *Conf) setDefaults() {
 	// General
-	conf.MediamMTX_ver = "v1.9.0-1"
+	conf.MediamMTX_ver = "v1.9.0-2"
 	conf.LogLevel = LogLevel(logger.Info)
 	conf.LogDestinations = LogDestinations{logger.DestinationStdout}
 	conf.LogFile = "mediamtx.log"
