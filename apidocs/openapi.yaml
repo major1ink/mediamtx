@@ -21,6 +21,30 @@ components:
         error:
           type: string
 
+    AuthInternalUser:
+      type: object
+      properties:
+        user:
+          type: string
+        pass:
+          type: string
+        ips:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthInternalUserPermission'
+
+    AuthInternalUserPermission:
+      type: object
+      properties:
+        action:
+          type: string
+        path:
+          type: string
+
     GlobalConf:
       type: object
       properties:
@@ -41,13 +65,29 @@ components:
           type: integer
         udpMaxPayloadSize:
           type: integer
-        externalAuthenticationURL:
-          type: string
         runOnConnect:
           type: string
         runOnConnectRestart:
           type: boolean
         runOnDisconnect:
+          type: string
+
+        # Authentication
+        authMethod:
+          type: string
+        authInternalUsers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthInternalUser'
+        authHTTPAddress:
+          type: string
+        authHTTPExclude:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthInternalUserPermission'
+        authJWTJWKS:
+          type: string
+        authJWTClaimKey:
           type: string
 
         # Control API
@@ -295,24 +335,6 @@ components:
         recordDeleteAfter:
           type: string
 
-        # Authentication
-        publishUser:
-          type: string
-        publishPass:
-          type: string
-        publishIPs:
-          type: array
-          items:
-            type: string
-        readUser:
-          type: string
-        readPass:
-          type: string
-        readIPs:
-          type: array
-          items:
-            type: string
-
         # Publisher source
         overridePublisher:
           type: boolean
@@ -382,14 +404,6 @@ components:
           type: string
         rpiCameraFPS:
           type: number
-        rpiCameraIDRPeriod:
-          type: integer
-        rpiCameraBitrate:
-          type: integer
-        rpiCameraProfile:
-          type: string
-        rpiCameraLevel:
-          type: string
         rpiCameraAfMode:
           type: string
         rpiCameraAfRange:
@@ -400,9 +414,21 @@ components:
           type: number
         rpiCameraAfWindow:
           type: string
+        rpiCameraFlickerPeriod:
+          type: integer
         rpiCameraTextOverlayEnable:
           type: boolean
         rpiCameraTextOverlay:
+          type: string
+        rpiCameraCodec:
+          type: string
+        rpiCameraIDRPeriod:
+          type: integer
+        rpiCameraBitrate:
+          type: integer
+        rpiCameraProfile:
+          type: string
+        rpiCameraLevel:
           type: string
 
         # Hooks
@@ -441,6 +467,8 @@ components:
       type: object
       properties:
         pageCount:
+          type: integer
+        itemCount:
           type: integer
         items:
           type: array
@@ -481,6 +509,8 @@ components:
       type: object
       properties:
         pageCount:
+          type: integer
+        itemCount:
           type: integer
         items:
           type: array
@@ -542,16 +572,12 @@ components:
       properties:
         pageCount:
           type: integer
+        itemCount:
+          type: integer
         items:
           type: array
           items:
             $ref: '#/components/schemas/HLSMuxer'
-
-    RecordingSegment:
-      type: object
-      properties:
-        start:
-          type: string
 
     Recording:
       type: object
@@ -568,10 +594,18 @@ components:
       properties:
         pageCount:
           type: integer
+        itemCount:
+          type: integer
         items:
           type: array
           items:
             $ref: '#/components/schemas/Recording'
+
+    RecordingSegment:
+      type: object
+      properties:
+        start:
+          type: string
 
     RTMPConn:
       type: object
@@ -601,6 +635,8 @@ components:
       properties:
         pageCount:
           type: integer
+        itemCount:
+          type: integer
         items:
           type: array
           items:
@@ -626,6 +662,8 @@ components:
       type: object
       properties:
         pageCount:
+          type: integer
+        itemCount:
           type: integer
         items:
           type: array
@@ -663,6 +701,8 @@ components:
       properties:
         pageCount:
           type: integer
+        itemCount:
+          type: integer
         items:
           type: array
           items:
@@ -692,6 +732,9 @@ components:
           type: integer
           format: int64
           description: The total number of received DATA packets, including retransmitted packets
+        packetsReceivedBelated:
+          type: integer
+          format: int64
         packetsSentUnique:
           type: integer
           format: int64
@@ -764,6 +807,9 @@ components:
           type: integer
           format: int64
           description: Same as packetsReceived, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
+        bytesReceivedBelated:
+          type: integer
+          format: int64
         bytesSentUnique:
           type: integer
           format: int64
@@ -889,11 +935,12 @@ components:
           format: float64
           description: Percentage of retransmitted data vs. received data
 
-
     SRTConnList:
       type: object
       properties:
         pageCount:
+          type: integer
+        itemCount:
           type: integer
         items:
           type: array
@@ -933,6 +980,8 @@ components:
       type: object
       properties:
         pageCount:
+          type: integer
+        itemCount:
           type: integer
         items:
           type: array

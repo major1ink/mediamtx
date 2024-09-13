@@ -16,8 +16,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var errNoSegmentsFound = errors.New("no recording segments found")
-
 type serverAuthManager interface {
 	Authenticate(req *auth.Request) error
 }
@@ -101,13 +99,23 @@ func (s *Server) writeError(ctx *gin.Context, status int, err error) {
 func (s *Server) safeFindPathConf(name string) (*conf.Path, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	_, pathConf, _, err := conf.FindPathConf(s.PathConfs, name)
+
+	pathConf, _, err := conf.FindPathConf(s.PathConfs, name)
 	return pathConf, err
 }
 
 func (s *Server) middlewareOrigin(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Access-Control-Allow-Origin", s.AllowOrigin)
 	ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	// preflight requests
+	if ctx.Request.Method == http.MethodOptions &&
+		ctx.Request.Header.Get("Access-Control-Request-Method") != "" {
+		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET")
+		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization")
+		ctx.AbortWithStatus(http.StatusNoContent)
+		return
+	}
 }
 
 func (s *Server) doAuth(ctx *gin.Context, pathName string) bool {

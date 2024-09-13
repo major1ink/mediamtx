@@ -18,8 +18,8 @@ import (
 	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/hooks"
 	"github.com/bluenviron/mediamtx/internal/logger"
-	"github.com/bluenviron/mediamtx/internal/record"
 	"github.com/bluenviron/mediamtx/internal/storage"
+	"github.com/bluenviron/mediamtx/internal/recorder"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
@@ -73,7 +73,6 @@ type path struct {
 	writeTimeout      conf.StringDuration
 	writeQueueSize    int
 	udpMaxPayloadSize int
-	confName          string
 	conf              *conf.Path
 	name              string
 	matches           []string
@@ -83,18 +82,17 @@ type path struct {
 	loggerPath        *logger.Logger
 	logStreams        bool
 
-	ctx            context.Context
-	ctxCancel      func()
-	confMutex      sync.RWMutex
-	source         defs.Source
-	publisherQuery string
-	stream         *stream.Stream
-	recordAgent    *record.Agent
-	readyTime      time.Time
-	onUnDemandHook func(string)
-	onNotReadyHook func()
-	readers        map[defs.Reader]struct{}
-
+	ctx                            context.Context
+	ctxCancel                      func()
+	confMutex                      sync.RWMutex
+	source                         defs.Source
+	publisherQuery                 string
+	stream                         *stream.Stream
+	recorder                       *recorder.Recorder
+	readyTime                      time.Time
+	onUnDemandHook                 func(string)
+	onNotReadyHook                 func()
+	readers                        map[defs.Reader]struct{}
 	describeRequestsOnHold         []defs.PathDescribeReq
 	readerAddRequestsOnHold        []defs.PathAddReaderReq
 	onDemandStaticSourceState      pathOnDemandState
@@ -198,26 +196,19 @@ func (pa *path) run() {
 	if pa.conf.Source == "redirect" {
 		pa.source = &sourceRedirect{}
 	} else if pa.conf.HasStaticSource() {
-		resolvedSource := pa.conf.Source
-		if len(pa.matches) > 1 {
-			for i, ma := range pa.matches[1:] {
-				resolvedSource = strings.ReplaceAll(resolvedSource, "$G"+strconv.FormatInt(int64(i+1), 10), ma)
-			}
-		}
-
 		pa.source = &staticSourceHandler{
 			conf:           pa.conf,
 			logLevel:       pa.logLevel,
 			readTimeout:    pa.readTimeout,
 			writeTimeout:   pa.writeTimeout,
 			writeQueueSize: pa.writeQueueSize,
-			resolvedSource: resolvedSource,
+			matches:        pa.matches,
 			parent:         pa,
 		}
 		pa.source.(*staticSourceHandler).initialize()
 
 		if !pa.conf.SourceOnDemand {
-			pa.source.(*staticSourceHandler).start(false)
+			pa.source.(*staticSourceHandler).start(false, "")
 		}
 	}
 
@@ -404,12 +395,12 @@ func (pa *path) doReloadConf(newConf *conf.Path) {
 		pa.source.(*staticSourceHandler).reloadConf(newConf)
 	}
 	if pa.conf.Record {
-		if pa.stream != nil && pa.recordAgent == nil {
+		if pa.stream != nil && pa.recorder == nil {
 			pa.startRecording()
 		}
-	} else if pa.recordAgent != nil {
-		pa.recordAgent.Close()
-		pa.recordAgent = nil
+	} else if pa.recorder != nil {
+		pa.recorder.Close()
+		pa.recorder = nil
 	}
 }
 
@@ -460,7 +451,7 @@ func (pa *path) doDescribe(req defs.PathDescribeReq) {
 
 	if pa.conf.HasOnDemandStaticSource() {
 		if pa.onDemandStaticSourceState == pathOnDemandStateInitial {
-			pa.onDemandStaticSourceStart()
+			pa.onDemandStaticSourceStart(req.AccessRequest.Query)
 		}
 		pa.describeRequestsOnHold = append(pa.describeRequestsOnHold, req)
 		return
@@ -568,7 +559,7 @@ func (pa *path) doAddReader(req defs.PathAddReaderReq) {
 
 	if pa.conf.HasOnDemandStaticSource() {
 		if pa.onDemandStaticSourceState == pathOnDemandStateInitial {
-			pa.onDemandStaticSourceStart()
+			pa.onDemandStaticSourceStart(req.AccessRequest.Query)
 		}
 		pa.readerAddRequestsOnHold = append(pa.readerAddRequestsOnHold, req)
 		return
@@ -608,7 +599,7 @@ func (pa *path) doAPIPathsGet(req pathAPIPathsGetReq) {
 	req.res <- pathAPIPathsGetRes{
 		data: &defs.APIPath{
 			Name:     pa.name,
-			ConfName: pa.confName,
+			ConfName: pa.conf.Name,
 			Source: func() *defs.APIPathSourceOrReader {
 				if pa.source == nil {
 					return nil
@@ -684,8 +675,8 @@ func (pa *path) shouldClose() bool {
 		len(pa.readerAddRequestsOnHold) == 0
 }
 
-func (pa *path) onDemandStaticSourceStart() {
-	pa.source.(*staticSourceHandler).start(true)
+func (pa *path) onDemandStaticSourceStart(query string) {
+	pa.source.(*staticSourceHandler).start(true, query)
 
 	pa.onDemandStaticSourceReadyTimer.Stop()
 	pa.onDemandStaticSourceReadyTimer = time.NewTimer(time.Duration(pa.conf.SourceOnDemandStartTimeout))
@@ -800,9 +791,9 @@ func (pa *path) setNotReady() {
 
 	pa.onNotReadyHook()
 
-	if pa.recordAgent != nil {
-		pa.recordAgent.Close()
-		pa.recordAgent = nil
+	if pa.recorder != nil {
+		pa.recorder.Close()
+		pa.recorder = nil
 	}
 
 	if pa.stream != nil {
@@ -812,7 +803,7 @@ func (pa *path) setNotReady() {
 }
 
 func (pa *path) startRecording() {
-	pa.recordAgent = &record.Agent{
+	pa.recorder = &recorder.Recorder{
 		WriteQueueSize:  pa.writeQueueSize,
 		PathFormat:      pa.conf.RecordPath,
 		PathFormats:     pa.conf.RecordPaths,
@@ -858,70 +849,70 @@ func (pa *path) startRecording() {
 		RecordAudio: pa.conf.RecordAudio,
 		ChConfigSet: pa.ChConfigSet,
 	}
-	pa.recordAgent.StreamName = pa.recordAgent.PathName
-	paths := strings.Split(pa.recordAgent.PathName, "/")
+	pa.recorder.StreamName = pa.recorder.PathName
+	paths := strings.Split(pa.recorder.PathName, "/")
 	if len(paths) > 1 {
-		pa.recordAgent.StreamName = paths[len(paths)-1]
+		pa.recorder.StreamName = paths[len(paths)-1]
 	}
 	var err error
 	switch{
-	case pa.recordAgent.ClientGRPC.Use:
-		if pa.recordAgent.Switches.UsePathStream {
+	case pa.recorder.ClientGRPC.Use:
+		if pa.recorder.Switches.UsePathStream {
 			pa.Log(logger.Debug, "A request has been sent to receive Cod_mp and status_record")
-			r, err :=pa.recordAgent.ClientGRPC.Select(pa.recordAgent.StreamName, "CodeMP")
+			r, err :=pa.recorder.ClientGRPC.Select(pa.recorder.StreamName, "CodeMP")
 			if err != nil {
 				pa.Log(logger.Error, "%s", err)
-				pa.recordAgent.Status_record=1
-				pa.recordAgent.PathStream="0"
+				pa.recorder.Status_record=1
+				pa.recorder.PathStream="0"
 			} else {
 				pa.Log(logger.Debug, "response received from GRPS: %s", r)
-				pa.recordAgent.PathStream = r.CodeMP
-				pa.recordAgent.Status_record = int8(r.StatusRecord)
-				if pa.recordAgent.Status_record == 0 {
-					pa.recordAgent.Pathrecord = false
+				pa.recorder.PathStream = r.CodeMP
+				pa.recorder.Status_record = int8(r.StatusRecord)
+				if pa.recorder.Status_record == 0 {
+					pa.recorder.Pathrecord = false
 				}
 			}
 		}
-		if pa.recordAgent.Switches.UseCodeMP_Contract {
+		if pa.recorder.Switches.UseCodeMP_Contract {
 			pa.Log(logger.Debug, "A request has been sent to receive CodeMP_Contract")
-			r,err:= pa.recordAgent.ClientGRPC.Select(pa.recordAgent.StreamName, "CodeMP_Contract")
+			r,err:= pa.recorder.ClientGRPC.Select(pa.recorder.StreamName, "CodeMP_Contract")
 			if err != nil {
 				pa.Log(logger.Error, "%s", err)
-				pa.recordAgent.CodeMp="0"
+				pa.recorder.CodeMp="0"
 			} else {
 				pa.Log(logger.Debug, "response received from GRPS: %s", r.CodeMPContract)
-				pa.recordAgent.CodeMp = r.CodeMPContract
+				pa.recorder.CodeMp = r.CodeMPContract
 			}
 		}
 		
-	case pa.recordAgent.Stor.Use:
-				if pa.recordAgent.Switches.UseCodeMP_Contract {
-				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName)))
-				pa.recordAgent.CodeMp, err = pa.recordAgent.Stor.Req.SelectCodeMP_Contract(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetCodeMP, pa.recordAgent.StreamName))
+	case pa.recorder.Stor.Use:
+				if pa.recorder.Switches.UseCodeMP_Contract {
+				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recorder.Stor.Sql.GetCodeMP, pa.recorder.StreamName)))
+				pa.recorder.CodeMp, err = pa.recorder.Stor.Req.SelectCodeMP_Contract(fmt.Sprintf(pa.recorder.Stor.Sql.GetCodeMP, pa.recorder.StreamName))
 				if err != nil {
 					pa.Log(logger.Error, "%s", err)
-					pa.recordAgent.CodeMp="0"
+					pa.recorder.CodeMp="0"
 				} else {
-					pa.Log(logger.Debug, "The result of executing the sql query: %s", pa.recordAgent.CodeMp)
+					pa.Log(logger.Debug, "The result of executing the sql query: %s", pa.recorder.CodeMp)
 				}
 			}
-			if pa.recordAgent.Switches.UsePathStream {
-				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName)))
-				pa.recordAgent.Status_record, pa.recordAgent.PathStream, err = pa.recordAgent.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recordAgent.Stor.Sql.GetPathStream, pa.recordAgent.StreamName))
+			if pa.recorder.Switches.UsePathStream {
+				pa.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", fmt.Sprintf(pa.recorder.Stor.Sql.GetPathStream, pa.recorder.StreamName)))
+				pa.recorder.Status_record, pa.recorder.PathStream, err = pa.recorder.Stor.Req.SelectPathStream(fmt.Sprintf(pa.recorder.Stor.Sql.GetPathStream, pa.recorder.StreamName))
 				if err != nil {
 					pa.Log(logger.Error, "%s", err)
-					pa.recordAgent.Status_record=1
-					pa.recordAgent.PathStream="0"
+					pa.recorder.Status_record=1
+					pa.recorder.PathStream="0"
 				} else {
-					pa.Log(logger.Debug, "The result of executing the sql query: %b, %s", pa.recordAgent.Status_record, pa.recordAgent.PathStream)
-					if pa.recordAgent.Status_record == 0 {
-						pa.recordAgent.Pathrecord = false
+					pa.Log(logger.Debug, "The result of executing the sql query: %b, %s", pa.recorder.Status_record, pa.recorder.PathStream)
+					if pa.recorder.Status_record == 0 {
+						pa.recorder.Pathrecord = false
 					}
 				}
 			}
 	}
 
-	pa.recordAgent.Initialize()
+	pa.recorder.Initialize()
 }
 
 func (pa *path) executeRemoveReader(r defs.Reader) {

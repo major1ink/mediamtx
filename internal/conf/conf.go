@@ -180,6 +180,7 @@ type Conf struct {
 	ExternalAuthenticationURL *string                     `json:"externalAuthenticationURL,omitempty"` // deprecated
 	AuthHTTPExclude           AuthInternalUserPermissions `json:"authHTTPExclude"`
 	AuthJWTJWKS               string                      `json:"authJWTJWKS"`
+	AuthJWTClaimKey           string                      `json:"authJWTClaimKey"`
 
 	// Control API
 	API               bool       `json:"api"`
@@ -329,7 +330,7 @@ type Switches struct {
 
 func (conf *Conf) setDefaults() {
 	// General
-	conf.MediamMTX_ver = "v1.8.3-8"
+	conf.MediamMTX_ver = "v1.9.0-1"
 	conf.LogLevel = LogLevel(logger.Info)
 	conf.LogDestinations = LogDestinations{logger.DestinationStdout}
 	conf.LogFile = "mediamtx.log"
@@ -351,6 +352,7 @@ func (conf *Conf) setDefaults() {
 			Action: AuthActionPprof,
 		},
 	}
+	conf.AuthJWTClaimKey = "mediamtx_permissions"
 
 	// Control API
 	conf.APIAddress = ":9997"
@@ -525,6 +527,12 @@ func (conf Conf) Clone() *Conf {
 func (conf *Conf) Validate() error {
 	// General
 
+	if conf.ReadTimeout <= 0 {
+		return fmt.Errorf("'readTimeout' must be greater than zero")
+	}
+	if conf.WriteTimeout <= 0 {
+		return fmt.Errorf("'writeTimeout' must be greater than zero")
+	}
 	if conf.ReadBufferCount != nil {
 		conf.WriteQueueSize = *conf.ReadBufferCount
 	}
@@ -536,6 +544,7 @@ func (conf *Conf) Validate() error {
 	}
 
 	// Authentication
+
 	if conf.ExternalAuthenticationURL != nil {
 		conf.AuthMethod = AuthMethodHTTP
 		conf.AuthHTTPAddress = *conf.ExternalAuthenticationURL
@@ -593,6 +602,9 @@ func (conf *Conf) Validate() error {
 	case AuthMethodJWT:
 		if conf.AuthJWTJWKS == "" {
 			return fmt.Errorf("'authJWTJWKS' is empty")
+		}
+		if conf.AuthJWTClaimKey == "" {
+			return fmt.Errorf("'authJWTClaimKey' is empty")
 		}
 	}
 
@@ -684,6 +696,7 @@ func (conf *Conf) Validate() error {
 		}
 	}
 	// Record (deprecated)
+
 	if conf.Record != nil {
 		conf.PathDefaults.Record = *conf.Record
 	}

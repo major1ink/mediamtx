@@ -12,7 +12,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -32,8 +31,8 @@ import (
 	"github.com/bluenviron/mediamtx/internal/metrics"
 	"github.com/bluenviron/mediamtx/internal/playback"
 	"github.com/bluenviron/mediamtx/internal/pprof"
-	"github.com/bluenviron/mediamtx/internal/record"
 	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
+	"github.com/bluenviron/mediamtx/internal/recordcleaner"
 	"github.com/bluenviron/mediamtx/internal/rlimit"
 	"github.com/bluenviron/mediamtx/internal/servers/hls"
 	"github.com/bluenviron/mediamtx/internal/servers/rtmp"
@@ -48,7 +47,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.8.3-8"
+var version = "v1.9.0-1"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -56,38 +55,6 @@ var defaultConfPaths = []string{
 	"/usr/local/etc/mediamtx.yml",
 	"/usr/etc/mediamtx.yml",
 	"/etc/mediamtx/mediamtx.yml",
-}
-
-func gatherCleanerEntries(paths map[string]*conf.Path) []record.CleanerEntry {
-	out := make(map[record.CleanerEntry]struct{})
-
-	for _, pa := range paths {
-		if pa.Record && pa.RecordDeleteAfter != 0 {
-			entry := record.CleanerEntry{
-				Path:        pa.RecordPath,
-				Format:      pa.RecordFormat,
-				DeleteAfter: time.Duration(pa.RecordDeleteAfter),
-			}
-			out[entry] = struct{}{}
-		}
-	}
-
-	out2 := make([]record.CleanerEntry, len(out))
-	i := 0
-
-	for v := range out {
-		out2[i] = v
-		i++
-	}
-
-	sort.Slice(out2, func(i, j int) bool {
-		if out2[i].Path != out2[j].Path {
-			return out2[i].Path < out2[j].Path
-		}
-		return out2[i].DeleteAfter < out2[j].DeleteAfter
-	})
-
-	return out2
 }
 
 var cli struct {
@@ -106,7 +73,7 @@ type Core struct {
 	authManager     *auth.Manager
 	metrics         *metrics.Metrics
 	pprof           *pprof.PPROF
-	recordCleaner   *record.Cleaner
+	recordCleaner   *recordcleaner.Cleaner
 	playbackServer  *playback.Server
 	pathManager     *pathManager
 	rtspServer      *rtsp.Server
@@ -434,6 +401,7 @@ func (p *Core) createResources(initial bool) error {
 			HTTPAddress:     p.conf.AuthHTTPAddress,
 			HTTPExclude:     p.conf.AuthHTTPExclude,
 			JWTJWKS:         p.conf.AuthJWTJWKS,
+			JWTClaimKey:     p.conf.AuthJWTClaimKey,
 			ReadTimeout:     time.Duration(p.conf.ReadTimeout),
 			RTSPAuthMethods: p.conf.RTSPAuthMethods,
 		}
@@ -479,12 +447,10 @@ func (p *Core) createResources(initial bool) error {
 		p.pprof = i
 	}
 
-	cleanerEntries := gatherCleanerEntries(p.conf.Paths)
-	if len(cleanerEntries) != 0 &&
-		p.recordCleaner == nil {
-		p.recordCleaner = &record.Cleaner{
-			Entries: cleanerEntries,
-			Parent:  p,
+	if p.recordCleaner == nil {
+		p.recordCleaner = &recordcleaner.Cleaner{
+			PathConfs: p.conf.Paths,
+			Parent:    p,
 		}
 		p.recordCleaner.Initialize()
 	}
@@ -1008,6 +974,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.AuthHTTPAddress != p.conf.AuthHTTPAddress ||
 		!reflect.DeepEqual(newConf.AuthHTTPExclude, p.conf.AuthHTTPExclude) ||
 		newConf.AuthJWTJWKS != p.conf.AuthJWTJWKS ||
+		newConf.AuthJWTClaimKey != p.conf.AuthJWTClaimKey ||
 		newConf.ReadTimeout != p.conf.ReadTimeout ||
 		!reflect.DeepEqual(newConf.RTSPAuthMethods, p.conf.RTSPAuthMethods)
 	if !closeAuthManager && !reflect.DeepEqual(newConf.AuthInternalUsers, p.conf.AuthInternalUsers) {
@@ -1039,8 +1006,10 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		closeLogger
 
 	closeRecorderCleaner := newConf == nil ||
-		!reflect.DeepEqual(gatherCleanerEntries(newConf.Paths), gatherCleanerEntries(p.conf.Paths)) ||
 		closeLogger
+	if !closeRecorderCleaner && !reflect.DeepEqual(newConf.Paths, p.conf.Paths) {
+		p.recordCleaner.ReloadPathConfs(newConf.Paths)
+	}
 
 	closePlaybackServer := newConf == nil ||
 		newConf.Playback != p.conf.Playback ||
