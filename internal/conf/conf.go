@@ -316,11 +316,9 @@ type Conf struct {
 type Switches struct {
 	GetDrives            bool   `json:"getDrives"`
 	UseCodeMP_Contract 	 bool   `json:"useCodeMP_Contract"`
-	UseContract        	 bool   `json:"useContract"`
 	UsePathStream     	 bool   `json:"usePathStream"`
 	TimeStatus           int    `json:"timeStatus"`
 	UseUpdaterStatus     bool   `json:"useUpdaterStatus"`
-	UseSrise             bool   `json:"useSrise"`
 	UseProxy             bool   `json:"useProxy"`
 	Login                string `json:"login"`
 	Pass                 string `json:"pass"`

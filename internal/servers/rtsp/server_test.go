@@ -1,6 +1,7 @@
 package rtsp
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -115,6 +116,8 @@ func TestServerPublish(t *testing.T) {
 		ExternalCmdPool:     nil,
 		PathManager:         pathManager,
 		Parent:              test.NilLogger,
+		Chrtspreloded: make(chan struct{ Name string;
+			 Wg *sync.WaitGroup}),
 	}
 	err := s.Initialize()
 	require.NoError(t, err)
@@ -206,6 +209,8 @@ func TestServerRead(t *testing.T) {
 		ExternalCmdPool:     nil,
 		PathManager:         pathManager,
 		Parent:              test.NilLogger,
+		Chrtspreloded: make(chan struct{ Name string;
+			 Wg *sync.WaitGroup}),
 	}
 	err = s.Initialize()
 	require.NoError(t, err)

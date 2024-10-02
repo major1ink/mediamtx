@@ -8,16 +8,41 @@ html, body {
 	margin: 0;
 	padding: 0;
 	height: 100%;
-	overflow: hidden;
+	font-family: 'Arial', sans-serif;
+	background: black;
 }
 #video {
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
 	height: 100%;
 	background: black;
 }
+#message {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	text-align: center;
+	justify-content: center;
+	font-size: 16px;
+	font-weight: bold;
+	color: white;
+	pointer-events: none;
+	padding: 20px;
+	box-sizing: border-box;
+	text-shadow: 0 0 5px black;
+}
 </style>
 </head>
 <body>
+
+<video id="video"></video>
+<div id="message"></div>
 
 <script src="hls.min.js"></script>
 
@@ -56,11 +81,18 @@ const loadStream = () => {
 		});
 
 		hls.on(Hls.Events.ERROR, (evt, data) => {
-			if (data.type === Hls.ErrorTypes.MEDIA_ERROR)
-				hls.recoverMediaError();
-			else if (data.fatal) {
+			if (data.fatal) {
 				hls.destroy();
-				setTimeout(() => create(video), 2000);
+
+				if (data.details === 'manifestIncompatibleCodecsError') {
+					setMessage('stream makes use of codecs which are incompatible with this browser or operative system');
+				} else if (data.response && data.response.code === 404) {
+					setMessage('stream not found, retrying in some seconds');
+				} else {
+					setMessage(data.error + ', retrying in some seconds');
+				}
+
+				setTimeout(() => loadStream(video), retryPause);
 			}
 		});
 
@@ -69,8 +101,15 @@ const loadStream = () => {
 		});
 
 		hls.on(Hls.Events.MANIFEST_PARSED, () => {
+			setMessage('');
 			video.play();
 		});
+
+		// when the video is resumed after a manual or forced pause
+		// (i.e. when the window is minimized), restore live streaming.
+		video.onplay = () => {
+			video.currentTime = hls.liveSyncPosition;
+		};
 
 		hls.attachMedia(video);
 
@@ -85,93 +124,33 @@ const loadStream = () => {
 	}
 };
 
-/**
- * Parses the query string from a URL into an object representing the query parameters.
- * If no URL is provided, it uses the query string from the current page's URL.
- *
- * @param {string} [url=window.location.search] - The URL to parse the query string from.
- * @returns {Object} An object representing the query parameters with keys as parameter names and values as parameter values.
- */
-const parseQueryString = (url) => {
-	const queryString = (url || window.location.search).split("?")[1];
-	if (!queryString) return {};
-
-	const paramsArray = queryString.split("&");
-	const result = {};
-
-	for (let i = 0; i < paramsArray.length; i++) {
-		const param = paramsArray[i].split("=");
-		const key = decodeURIComponent(param[0]);
-		const value = decodeURIComponent(param[1] || "");
-
-		if (key) {
-			if (result[key]) {
-				if (Array.isArray(result[key])) {
-					result[key].push(value);
-				} else {
-					result[key] = [result[key], value];
-				}
-			} else {
-				result[key] = value;
-			}
-		}
-	}
-
-	return result;
-};
-
-/**
- * Parses a string with boolean-like values and returns a boolean.
- * @param {string} str The string to parse
- * @param {boolean} defaultVal The default value
- * @returns {boolean}
- */
 const parseBoolString = (str, defaultVal) => {
-	const trueValues = ["1", "yes", "true"];
-	const falseValues = ["0", "no", "false"];
-	str = (str || "").toString();
+	str = (str || '');
 
-	if (trueValues.includes(str.toLowerCase())) {
+	if (['1', 'yes', 'true'].includes(str.toLowerCase())) {
 		return true;
-	} else if (falseValues.includes(str.toLowerCase())) {
-		return false;
-	} else {
-		return defaultVal;
 	}
+	if (['0', 'no', 'false'].includes(str.toLowerCase())) {
+		return false;
+	}
+	return defaultVal;
 };
 
-/**
- * Sets video attributes based on query string parameters or default values.
- *
- * @param {HTMLVideoElement} video - The video element on which to set the attributes.
- */
-const setVideoAttributes = (video) => {
-	let qs = parseQueryString();
-
-	video.controls = parseBoolString(qs["controls"], true);
-	video.muted = parseBoolString(qs["muted"], true);
-	video.autoplay = parseBoolString(qs["autoplay"], true);
-	video.playsInline = parseBoolString(qs["playsinline"], true);
+const loadAttributesFromQuery = () => {
+	const params = new URLSearchParams(window.location.search);
+	video.controls = parseBoolString(params.get('controls'), true);
+	video.muted = parseBoolString(params.get('muted'), true);
+	video.autoplay = parseBoolString(params.get('autoplay'), true);
+	video.playsInline = parseBoolString(params.get('playsinline'), true);
+	defaultControls = video.controls;
 };
 
-/**
- *
- * @param {(video: HTMLVideoElement) => void} callback
- * @param {HTMLElement} container
- * @returns
- */
-const initVideoElement = (callback, container) => {
-	return () => {
-		const video = document.createElement("video");
-		video.id = "video";
-
-		setVideoAttributes(video);
-		container.append(video);
-		callback(video);
-	};
+const init = () => {
+	loadAttributesFromQuery();
+	loadStream();
 };
 
-window.addEventListener('DOMContentLoaded', initVideoElement(create, document.body));
+window.addEventListener('DOMContentLoaded', init);
 
 </script>
 

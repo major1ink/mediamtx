@@ -179,9 +179,9 @@ metricsTrustedProxies: []
 # Global settings -> PPROF
 
 # Enable pprof-compatible endpoint to monitor performances.
-pprof: no
+pprof: yes
 # Address of the pprof listener.
-pprofAddress: :9999
+pprofAddress: 192.168.250.43:9999
 # Enable TLS/HTTPS on the pprof server.
 pprofEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -734,13 +734,13 @@ grpc:
 # Database settings
 database:
   # Use database or not (use PostgreSQL)
-  use: no
+  use: yes
   # Database address
   dbAddress: 192.168.250.40
   # Database port
   dbPort: 5432
   # Database name
-  dbName: l6_test
+  dbName: l3_test
   # Database user
   dbUser: major
   # Database password
@@ -781,16 +781,12 @@ switches:
   # Works with the enabled use Db Path Stream. Indicates the time in seconds how often the status needs to be checked
   timeStatus: 15
   # Enable/disable the server start with proxy streams from the database.
-  useProxy: no
-  login:
-  pass:
+  useProxy: yes
+  login: zgekv8ol9dUJ9NiNm9DuhHZskuLrbcKZe8CaASBaeLN5doQpz
+  pass: LXSwzJsopcslxzjV9vWJDapjcHgREurhJrB6UKXZjkSerBq1m
   #l6
   # Enable/disable the code_mp_contract field to create a record path
-  useCodeMP_Contract: yes
-  # Enable/disable the contract field to create a straem path. Work with useSrise: yes
-  useContract: no
-  # Enable/disable the server start with streams from the database
-  useSrise: yes
+  useCodeMP_Contract: no
   # Specifies the path and file name to save the file with outstanding sql queries
   fileSQLErr: ./sqlerr
   # Timeout for the sql query

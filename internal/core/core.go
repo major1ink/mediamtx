@@ -5,9 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net/netip"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -31,8 +29,8 @@ import (
 	"github.com/bluenviron/mediamtx/internal/metrics"
 	"github.com/bluenviron/mediamtx/internal/playback"
 	"github.com/bluenviron/mediamtx/internal/pprof"
-	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/recordcleaner"
+	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/rlimit"
 	"github.com/bluenviron/mediamtx/internal/servers/hls"
 	"github.com/bluenviron/mediamtx/internal/servers/rtmp"
@@ -292,16 +290,34 @@ outer:
 
 		case <-interrupt:
 			p.Log(logger.Info, "shutting down gracefully")
-			if p.pathManager.switches.UseUpdaterStatus && p.pathManager.stor.Use{
-				for key, path := range p.pathManager.paths {
+			if p.pathManager.switches.UseUpdaterStatus{
+				switch{
+				case p.pathManager.clientGRPC.Use:
+					for key, path := range p.pathManager.paths {
+						path.Log(logger.Debug, "sending a status change request to RMS to 0")
+					var status int32 = 0
+						err := p.pathManager.clientGRPC.Put(key, &status)
+						if err != nil {
+							path.Log(logger.Error, "%s", err)
+							break outer
+						}
+						path.Log(logger.Debug, "The request was successfully completed")
+					}
+				case p.pathManager.stor.Use:
+					for key, path := range p.pathManager.paths {
 					query := fmt.Sprintf(p.pathManager.stor.Sql.UpdateStatus, 0, key)
 					path.Log(logger.Debug, "SQL query sent:%s", query)
 					err := p.pathManager.stor.Req.ExecQuery(query)
 					if err != nil {
-						p.Log(logger.Error, "%s", err)
+						path.Log(logger.Error, "%s", err)
+						break outer
 					}
 					path.Log(logger.Debug, "The request was successfully completed")
+					}
+				default:
+					p.Log(logger.Error, "The update has not been sent, neither the database nor the RMS are enabled")
 				}
+				
 
 			}
 			break outer
@@ -482,9 +498,6 @@ func (p *Core) createResources(initial bool) error {
 		}
 		switches:= p.conf.Switches
 		if switches.UseProxy && stor.Use {
-			if switches.UseSrise {
-				return errors.New("sRise and proxy can't be used at the same time")
-			}
 			p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataForProxy))
 			data, err := stor.Req.SelectData(stor.Sql.GetDataForProxy)
 			if err != nil {
@@ -506,7 +519,7 @@ func (p *Core) createResources(initial bool) error {
 		{	
 			"name": "%s",
 			"source": "%s",
-			"sourceOnDemand": true,
+			"sourceOnDemand": true
 		}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v/%s", switches.Login, switches.Pass, i.Ip_address_out, i.Code_mp)))
 				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
 				if err != nil {
@@ -522,132 +535,6 @@ func (p *Core) createResources(initial bool) error {
 
 		}
 
-		if switches.UseSrise {
-			if !stor.Use && p.dbPool == nil {
-				p.conf.Database.Use = true
-			p.dbPool, err = database.CreateDbPool(
-			p.ctx,
-			database.CreatePgxConf(
-				p.conf.Database,
-			),
-		)
-		if err != nil {
-			return err
-		}
-		p.Log(logger.Info, "Connected to the database")	
-		req = psql.NewReq(p.ctx, p.dbPool,p.conf.Switches.QueryTimeOut)
-		stor.Req = req
-		}
-			if switches.UseContract {
-				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataContract))
-				data, err := stor.Req.SelectData(stor.Sql.GetDataContract)
-				if err != nil {
-					p.Log(logger.Error, "%v", err)
-				}
-				p.Log(logger.Debug, "The result of executing the sql query: %v", data)
-				var result []bdTable
-
-				for _, line := range data {
-					result = append(result, bdTable{
-						Id:             getTypeInt(line[0]),
-						Login:          line[1].(string),
-						Pass:           line[2].(string),
-						Ip_address_out: line[3].(netip.Prefix),
-						Cam_path:       line[4].(string),
-						Code_mp:        line[5].(string),
-						State_public:   getTypeInt(line[6]),
-						Status_public:  getTypeInt(line[7]),
-						Contract:       line[8].(string),
-						Record:         getTypeBool(line[9]),
-					})
-				}
-				for _, i := range result {
-
-					var s conf.OptionalPath
-
-					postJson := []byte(fmt.Sprintf(`
-					{	
-						"name": "%s",
-						"source": "%s",
-						"record": %t,
-						"sourceProtocol": "tcp",
-						"sourceOnDemandCloseAfter": "10s",
-						"sourceOnDemandStartTimeout": "10s",
-						"runOnDemandCloseAfter": "10s",
-						"runOnDemandStartTimeout": "10s",
-						"runOnReadyRestart": true,
-						"runOnReady": "",
-						"runOnReadRestart": false
-					}`, fmt.Sprintf("%s/%s", i.Contract, i.Code_mp), fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path), i.Record))
-					err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
-					if err != nil {
-						return err
-					}
-					stream := i.Contract + "/" + i.Code_mp
-					p.conf.AddPath(stream, &s)
-				}
-				err = p.conf.Validate()
-				if err != nil {
-					return err
-				}
-			} else {
-				p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetData))
-				data, err := stor.Req.SelectData(stor.Sql.GetData)
-				if err != nil {
-					p.Log(logger.Error, "%v", err)
-				}
-				p.Log(logger.Debug, "The result of executing the sql query: %v", data)
-				var result []bdTable
-
-				for _, line := range data {
-					result = append(result, bdTable{
-						Id:             getTypeInt(line[0]),
-						Login:          line[1].(string),
-						Pass:           line[2].(string),
-						Ip_address_out: line[3].(netip.Prefix),
-						Cam_path:       line[4].(string),
-						Code_mp:        line[5].(string),
-						State_public:   getTypeInt(line[6]),
-						Status_public:  getTypeInt(line[7]),
-						Record:         getTypeBool(line[8]),
-					})
-				}
-				for _, i := range result {
-
-					var s conf.OptionalPath
-
-					postJson := []byte(fmt.Sprintf(`
-					{	
-						"name": "%s",
-						"source": "%s",
-						"record": %t,
-						"sourceProtocol": "tcp",
-						"sourceOnDemandCloseAfter": "10s",
-						"sourceOnDemandStartTimeout": "10s",
-						"runOnDemandCloseAfter": "10s",
-						"runOnDemandStartTimeout": "10s",
-						"runOnReadyRestart": true,
-						"runOnReady": "",
-						"runOnReadRestart": false
-					}`, i.Code_mp, fmt.Sprintf("rtsp://%s:%s@%v:554%s", i.Login, i.Pass, i.Ip_address_out.Addr(), i.Cam_path), i.Record))
-					err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
-					if err != nil {
-						return err
-					}
-					p.conf.AddPath(i.Code_mp, &s)
-				}
-				err = p.conf.Validate()
-				if err != nil {
-					return err
-				}
-			}
-			if !stor.Use{
-		p.Log(logger.Info, "Closing database")
-		database.ClosePool(p.dbPool)
-		p.dbPool = nil
-		}
-
-		}
 
 		if p.conf.Playback &&
 			p.playbackServer == nil {
@@ -1212,12 +1099,13 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		closeSRTServer ||
 		closeLogger
 
-	closeGRPC := newConf == nil ||
+	closeGRPC := (newConf == nil ||
 		newConf.GRPC.Use != p.conf.GRPC.Use ||
 		newConf.GRPC.GrpcAddress != p.conf.GRPC.GrpcAddress ||
 		newConf.GRPC.GrpcPort != p.conf.GRPC.GrpcPort ||
 		newConf.GRPC.ServerName != p.conf.GRPC.ServerName ||
-		newConf.GRPC.UseCodeMPAttribute != p.conf.GRPC.UseCodeMPAttribute 
+		newConf.GRPC.UseCodeMPAttribute != p.conf.GRPC.UseCodeMPAttribute) &&
+		p.clientGRPC.Conn != nil
 
 	closeDB := newConf == nil ||
 		newConf.Database.Use != p.conf.Database.Use ||
@@ -1350,7 +1238,8 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		database.ClosePool(p.dbPool)
 		p.dbPool = nil
 	}
-	if p.conf.GRPC.Use && closeGRPC{
+
+	if p.conf.GRPC.Use && closeGRPC {
 		p.clientGRPC.Close()
 		p.clientGRPC.Conn = nil
 		p.Log(logger.Info, "GRPC client closed")

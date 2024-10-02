@@ -66,7 +66,6 @@ func (s *WrappedServer) Initialize() error {
 	if err != nil {
 		return err
 	}
-
 	h := s.Handler
 	h = &handlerFilterRequests{h}
 	h = &handlerFilterRequests{h}

@@ -1,7 +1,6 @@
 package recorder
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,8 +11,6 @@ import (
 	"github.com/bluenviron/mediacommon/pkg/codecs/h265"
 	"github.com/bluenviron/mediacommon/pkg/codecs/mpeg4audio"
 	"github.com/bluenviron/mediacommon/pkg/formats/fmp4"
-	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
@@ -200,17 +197,17 @@ func TestRecorder(t *testing.T) {
 				},
 				Parent:       test.NilLogger,
 				restartPause: 1 * time.Millisecond,
-				ClientGRPC: RMS.GrpcClient{
-					Ctx:   context.Background(),
-					Use: true,
-					Server: "test",
-				},
+				// ClientGRPC: RMS.GrpcClient{
+				// 	Ctx:   context.Background(),
+				// 	Use: true,
+				// 	Server: "test",
+				// },
 			}
 			w.Initialize()
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			mock := RMS.NewMockGrpcClient(ctrl)
-			w.ClientGRPC.Client = mock
+			// ctrl := gomock.NewController(t)
+			// defer ctrl.Finish()
+			// mock := RMS.NewMockGrpcClient(ctrl)
+			// w.ClientGRPC.Client = mock
 		// 	testSelect := struct {
 		// 	// attribute   string
 		// 	// query string
@@ -243,10 +240,10 @@ func TestRecorder(t *testing.T) {
 				},
 			})
 
-			// for i := 0; i < 2; i++ {
-			// 	<-segCreated
-			// 	<-segDone
-			// }
+			for i := 0; i < 2; i++ {
+				<-segCreated
+				<-segDone
+			}
 
 			if ca == "fmp4" {
 				var init fmp4.Init
@@ -389,18 +386,18 @@ func TestRecorderFMP4NegativeDTS(t *testing.T) {
 		Parent:          test.NilLogger,
 		Pathrecord:      true,
 		RecordAudio:     true,
-		ClientGRPC: RMS.GrpcClient{
-					Ctx:   context.Background(),
-					Use: false,
-					Server: "test",
-					Conn:  nil,
-					UseCodeMPAttribute: false,
-				},
+		// ClientGRPC: RMS.GrpcClient{
+		// 			Ctx:   context.Background(),
+		// 			Use: false,
+		// 			Server: "test",
+		// 			Conn:  nil,
+		// 			UseCodeMPAttribute: false,
+		// 		},
 	}
-	ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			mock := RMS.NewMockGrpcClient(ctrl)
-			w.ClientGRPC.Client = mock
+	// ctrl := gomock.NewController(t)
+	// 		defer ctrl.Finish()
+	// 		mock := RMS.NewMockGrpcClient(ctrl)
+	// 		w.ClientGRPC.Client = mock
 		// 	testSelect := struct {
 		// 	// attribute   string
 		// 	// query string

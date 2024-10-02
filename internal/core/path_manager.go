@@ -3,8 +3,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"net/netip"
-	"reflect"
 	"sort"
 	"sync"
 	"time"
@@ -13,8 +11,8 @@ import (
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
-	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	RMS "github.com/bluenviron/mediamtx/internal/repgrpc"
 
 	"github.com/bluenviron/mediamtx/internal/stream"
 
@@ -135,48 +133,13 @@ func (pm *pathManager) initialize() {
 	go pm.run()
 }
 
-type bdTable struct {
-	Id             int
-	Login          string
-	Pass           string
-	Ip_address_out netip.Prefix
-	Cam_path       string
-	Code_mp        string
-	State_public   int
-	Status_public  int
-	Contract       string
-	Record         bool
-}
+
 
 type prohys struct {
 	Ip_address_out string
 	Code_mp        string
 }
 
-func getTypeInt(item interface{}) int {
-
-	t := reflect.TypeOf(item)
-
-	if t.Kind() == reflect.Int8 {
-		return int(item.(int8))
-	}
-
-	if t.Kind() == reflect.Int16 {
-		return int(item.(int16))
-	}
-
-	if t.Kind() == reflect.Int32 {
-		return int(item.(int32))
-	}
-
-	return int(item.(int64))
-}
-
-func getTypeBool(item interface{}) bool {
-
-	s := getTypeInt(item)
-	return s == 1
-}
 
 func (pm *pathManager) close() {
 	pm.Log(logger.Debug, "path manager is shutting down")
@@ -212,13 +175,13 @@ func (pm *pathManager) checkStatus() {
 							Record bool
 							}
 							for name := range pm.paths {
-								pm.Log(logger.Debug, "sending a request to receive a Status Record via stream: %s", name)
+								pm.paths[name].Log(logger.Debug, "sending a request to receive a Status Record via stream")
 								r,err:=pm.clientGRPC.Select(name,"StatusRecord")
 								if err != nil {
-									pm.Log(logger.Error, "%v", err)
+									pm.paths[name].Log(logger.Error, "%v", err)
 									continue
 								}
-								pm.Log(logger.Debug, "StatusRecord = %v",r.StatusRecord)
+								pm.paths[name].Log(logger.Debug, "StatusRecord = %v",r.StatusRecord)
 								if transformation(int16(r.StatusRecord)) != pm.paths[name].conf.Record {
 							pm.paths[name].Log(logger.Debug, "[record] status_record = %v",r.StatusRecord)
 							relodSt = append(relodSt, struct{Name string; Record bool}{Name: name, Record: transformation(int16(r.StatusRecord))})
@@ -526,23 +489,34 @@ func (pm *pathManager) removePath(pa *path) {
 	if len(pm.pathsByConf[pa.conf.Name]) == 0 {
 		delete(pm.pathsByConf, pa.conf.Name)
 	}
-	if pm.switches.UseUpdaterStatus && pm.stor.Use{
-		query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+	if pm.switches.UseUpdaterStatus {
+		switch{
+		case pm.clientGRPC.Use:
+		pa.Log(logger.Debug, "sending a status change request to RMS to 0")
+		var status int32 = 0
+		err := pm.clientGRPC.Put(pa.Name(), &status)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+
+		} else {
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}
+
+		case pm.stor.Use:
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
 		pa.Log(logger.Debug, "SQL status %s", query)
 		err := pm.stor.Req.ExecQuery(query)
 		if err != nil {
 			pa.Log(logger.Error, "%s", err)
+		} else {
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}	
+	
+	default:
+		pa.Log(logger.Debug, "The update has not been sent, neither the database nor the RMS are enabled")
+			
 		}
-		pa.Log(logger.Debug, "The request was successfully completed")
-	}
-	if pm.switches.UseUpdaterStatus && pm.stor.Use{
-		query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
-		pa.Log(logger.Debug, "SQL status %s", query)
-		err := pm.stor.Req.ExecQuery(query)
-		if err != nil {
-			pa.Log(logger.Error, "%s", err)
-		}
-		pa.Log(logger.Debug, "The request was successfully completed")
+		
 	}
 	delete(pm.paths, pa.name)
 }
@@ -559,14 +533,31 @@ func (pm *pathManager) ReloadPathConfs(pathConfs map[string]*conf.Path) {
 func (pm *pathManager) pathReady(pa *path) {
 	select {
 	case pm.chPathReady <- pa:
-		if pm.switches.UseUpdaterStatus && pm.stor.Use{
-			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 1, pa.Name())
-			pa.Log(logger.Debug, "SQL status %s", query)
-			err := pm.stor.Req.ExecQuery(query)
-			if err != nil {
-				pa.Log(logger.Error, "%s", err)
-			}
+		if pm.switches.UseUpdaterStatus {
+			switch{
+	case pm.clientGRPC.Use:
+		pa.Log(logger.Debug, "sending a status change request to RMS to 1")
+		var status int32 = 1
+		err := pm.clientGRPC.Put(pa.Name(), &status)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+
+		} else {
 			pa.Log(logger.Debug, "The request was successfully completed")
+		}
+	case pm.stor.Use:
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 1, pa.Name())
+		pa.Log(logger.Debug, "SQL status %s", query)
+		err := pm.stor.Req.ExecQuery(query)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+		} else {
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}
+	default:
+		pa.Log(logger.Debug, "The update has not been sent, neither the database nor the RMS are enabled")
+			
+		}
 		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
@@ -577,14 +568,33 @@ func (pm *pathManager) pathReady(pa *path) {
 func (pm *pathManager) pathNotReady(pa *path) {
 	select {
 	case pm.chPathNotReady <- pa:
-		if pm.switches.UseUpdaterStatus && pm.stor.Use{
-			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
-			pa.Log(logger.Debug, "SQL status %s", query)
-			err := pm.stor.Req.ExecQuery(query)
-			if err != nil {
-				pa.Log(logger.Error, "%s", err)
-			}
+		if pm.switches.UseUpdaterStatus{
+			switch{
+		
+		
+	case pm.clientGRPC.Use:
+		pa.Log(logger.Debug, "sending a status change request to RMS to 0")
+		var status int32 = 0
+		err := pm.clientGRPC.Put(pa.Name(), &status)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+
+		} else {
 			pa.Log(logger.Debug, "The request was successfully completed")
+		}
+	case pm.stor.Use:
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+		pa.Log(logger.Debug, "SQL status %s", query)
+		err := pm.stor.Req.ExecQuery(query)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+		} else {
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}
+	default:
+		pa.Log(logger.Debug, "The update has not been sent, neither the database nor the RMS are enabled")
+			
+		}
 		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()
@@ -595,14 +605,33 @@ func (pm *pathManager) pathNotReady(pa *path) {
 func (pm *pathManager) closePath(pa *path) {
 	select {
 	case pm.chClosePath <- pa:
-		if pm.switches.UseUpdaterStatus && pm.stor.Use{
-			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
-			pa.Log(logger.Debug, "SQL status %s", query)
-			err := pm.stor.Req.ExecQuery(query)
-			if err != nil {
-				pa.Log(logger.Error, "%s", err)
-			}
+		if pm.switches.UseUpdaterStatus{
+			switch{
+		
+		
+	case pm.clientGRPC.Use:
+		pa.Log(logger.Debug, "sending a status change request to RMS to 0")
+		var status int32 = 0
+		err := pm.clientGRPC.Put(pa.Name(), &status)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+
+		} else {
 			pa.Log(logger.Debug, "The request was successfully completed")
+		}
+	case pm.stor.Use:
+			query := fmt.Sprintf(pm.stor.Sql.UpdateStatus, 0, pa.Name())
+		pa.Log(logger.Debug, "SQL status %s", query)
+		err := pm.stor.Req.ExecQuery(query)
+		if err != nil {
+			pa.Log(logger.Error, "%s", err)
+		} else {
+			pa.Log(logger.Debug, "The request was successfully completed")
+		}
+	default:
+		pa.Log(logger.Debug, "The update has not been sent, neither the database nor the RMS are enabled")
+			
+		}
 		}
 	case <-pm.ctx.Done():
 	case <-pa.ctx.Done(): // in case pathManager is blocked by path.wait()

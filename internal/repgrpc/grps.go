@@ -31,6 +31,14 @@ func CreateGrpcClient(ctx context.Context, cfg conf.GRPC) (GrpcClient, error) {
 	}
 	return client, nil
 }
+func (c *GrpcClient) Put (streamName string, status *int32) (error){
+ _,err := c.Client.Put(c.Ctx, &pb.Update{Server: c.Server,	Stream: streamName,	Status: status,})
+ if err != nil {
+	return  err
+ }
+ return  nil
+}
+
 func (c *GrpcClient) Post (attribute,query string) ( error){
 	_,err := c.Client.Post(c.Ctx, &pb.Insert{	Server: c.Server,	Attribute: attribute,	Query: query,})
 	if err != nil {
