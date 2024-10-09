@@ -497,11 +497,36 @@ func (p *Core) createResources(initial bool) error {
 			Sql:                  p.conf.Database.Sql,
 		}
 		switches:= p.conf.Switches
-		if switches.UseProxy && stor.Use {
+		if switches.UseProxy {
+			if !stor.Use {
+			p.conf.Database.Use = true
+			p.dbPool, err = database.CreateDbPool(
+			p.ctx,
+			database.CreatePgxConf(
+				p.conf.Database,
+				),
+			)
+			p.conf.Database.Use = false
+			if err != nil {
+				return err
+			}
+			p.Log(logger.Info, "Connected to the database")
+			req := psql.NewReq(p.ctx, p.dbPool,p.conf.Switches.QueryTimeOut)
+			stor.Req = req
+			}
+
 			p.Log(logger.Debug, fmt.Sprintf("SQL query sent:%s", stor.Sql.GetDataForProxy))
 			data, err := stor.Req.SelectData(stor.Sql.GetDataForProxy)
 			if err != nil {
 				p.Log(logger.Error, "%v", err)
+			}
+			if !stor.Use {
+				if  p.dbPool != nil {
+					p.Log(logger.Info, "Closing database")
+					database.ClosePool(p.dbPool)
+					p.dbPool = nil
+					stor.Req = nil
+				}
 			}
 			p.Log(logger.Debug, "The result of executing the sql query: %v", data)
 			var result []prohys

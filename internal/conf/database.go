@@ -19,7 +19,6 @@ type Sql struct {
 	GetDrives         string `json:"getDrives"`
 	UpdateStatus      string `json:"updateStatus"`
 	GetData           string `json:"getData"`
-	GetDataContract   string `json:"getDataContract"`
 	GetDataForProxy   string `json:"getDataForProxy"`
 	GetStatus_records string `json:"getStatus_records"`
 }

@@ -462,7 +462,7 @@ pathDefaults:
 
   # Record streams to disk.
 
-  record: yes
+  record: no
   # Save audio from stream.
   recordAudio: no
 
@@ -473,9 +473,8 @@ pathDefaults:
   recordPath: /cctv/%v/%path/%Y-%m-%d/%path-%s-%f
   # if the db Drive s field is "no", then local paths for saving video files are specified.
   recordPaths: 
-    /media/anton/Tom2/video: "3" 
-    /media/anton/Tom/video: "3"
-    /home/anton/go/video: "3"
+    /media/anton/Tom2/video: "4" 
+    /media/anton/Tom/video: "4"
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
   recordFormat: mpegts
@@ -724,7 +723,7 @@ paths:
   # do not match another entry.
   all_others:
 grpc:
-  use : yes
+  use : no
   grpcAddress: 192.168.250.40
   grpcPort: 8080
   serverName: l3
@@ -734,7 +733,7 @@ grpc:
 # Database settings
 database:
   # Use database or not (use PostgreSQL)
-  use: yes
+  use: no
   # Database address
   dbAddress: 192.168.250.40
   # Database port
@@ -750,7 +749,7 @@ database:
   # SQL queryes
   sql:
     # SQL query to insert video record
-    insertPath: "INSERT INTO \"VideoRecord\" (\"stream\",\"pathRecord\", \"fileName\",\"recordTime\",\"file_size\",\"end_record_time\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
+    insertPath: "INSERT INTO \"video_record\" (\"code_mp_cam\", \"path_record\", \"file_name\", \"date_time_start\", \"file_size\", \"date_time_end\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
     # Specifies the request to be executed with the useDbPathStream: yes, and PathStream are unequal to 0    
     insertPathStream: "INSERT INTO \"VideoRecord\" (\"pathStream\", \"pathRecord\", \"fileName\",\"recordTime\", \"file_size\", \"end_record_time\",\"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
    # The request to get Status_record and PathStream is executed when useDbPathStream: yes
@@ -764,7 +763,6 @@ database:
     # request for a list of streams
     getData: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" IS NULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" IS NULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" IS NULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" IS NULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" IS NULL THEN '0' ELSE vc.\"status_public\" END), vcont.\"record_status\" FROM \"public\".\"videocameras\" vc, \"mount_place_cam\" mpc, \"video_contract\" vcont WHERE vc.\"code_mp\"=mpc.\"code_mp_cam\" AND mpc.\"code_mp_contract\" = vcont.\"code_mp\" AND vc.\"cam_path\" IS NOT NULL AND vc.\"state_public\" = '1'"
     #
-    getDataContract: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" IS NULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" IS NULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\",  (CASE WHEN vc.\"cam_path\" IS NULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" IS NULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" IS NULL THEN '0' ELSE vc.\"status_public\" END), mpc.\"code_mp_contract\", vcont.\"record_status\" FROM \"public\".\"videocameras\" vc, \"public\".\"mount_place_cam\" mpc, \"public\".\"video_contract\" vcont WHERE vc.\"code_mp\" = mpc.\"code_mp_cam\" AND mpc.\"code_mp_contract\" = vcont.\"code_mp\" AND vc.\"cam_path\" IS NOT NULL AND vc.\"state_public\" = '1'"
     # for l3
     getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp, \"DataDevice\" dd, \"MountPlace\" mp, \"video_servers\" vs WHERE vp.\"Stream\" = dd.\"UID\" AND dd.\"codeMP\" = mp.\"codeMP\" AND mp.\"id_video_servers\" = vs.\"id\" AND vp.\"StatePublic\" = '1' LIMIT 20"
     #request to get Status_record for all streams
