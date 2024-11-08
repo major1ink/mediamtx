@@ -59,7 +59,7 @@ type httpServer struct {
 	pathManager    serverPathManager
 	parent         *Server
 
-	inner *httpp.WrappedServer
+	inner *httpp.Server
 }
 
 func (s *httpServer) initialize() error {
@@ -69,7 +69,7 @@ func (s *httpServer) initialize() error {
 
 	network, address := restrictnetwork.Restrict("tcp", s.address)
 
-	s.inner = &httpp.WrappedServer{
+	s.inner = &httpp.Server{
 		Network:     network,
 		Address:     address,
 		ReadTimeout: time.Duration(s.readTimeout),

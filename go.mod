@@ -35,6 +35,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
+require github.com/gin-contrib/pprof v1.5.0
+
 require (
 	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/alecthomas/repr v0.4.0 // indirect

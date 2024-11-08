@@ -49,6 +49,7 @@ type session struct {
 		 Name string
 		Wg *sync.WaitGroup
 	}
+	chrtspclosed chan string
 }
 
 func (s *session) initialize() {
@@ -90,10 +91,17 @@ func (s *session) onClose(err error) {
 		s.path.RemovePublisher(defs.PathRemovePublisherReq{Author: s})
 	}
 
+	if s.chrtspclosed != nil {
+		select{
+		case s.chrtspclosed <- s.pathName:
+		default:
+		}
+	}
 	s.path = nil
 	s.stream = nil
 
 	s.Log(logger.Info, "destroyed: %v", err)
+	
 }
 
 // onAnnounce is called by rtspServer.

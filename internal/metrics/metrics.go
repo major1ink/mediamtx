@@ -52,7 +52,7 @@ type Metrics struct {
 	AuthManager    metricsAuthManager
 	Parent         metricsParent
 
-	httpServer   *httpp.WrappedServer
+	httpServer   *httpp.Server
 	mutex        sync.Mutex
 	pathManager  api.PathManager
 	rtspServer   api.RTSPServer
@@ -72,7 +72,7 @@ func (m *Metrics) Initialize() error {
 
 	network, address := restrictnetwork.Restrict("tcp", m.Address)
 
-	m.httpServer = &httpp.WrappedServer{
+	m.httpServer = &httpp.Server{
 		Network:     network,
 		Address:     address,
 		ReadTimeout: time.Duration(m.ReadTimeout),

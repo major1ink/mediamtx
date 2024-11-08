@@ -95,6 +95,7 @@ type Server struct {
 		 Name string
 		Wg *sync.WaitGroup
 	}
+	Chrtspclosed chan string
 }
 
 // Initialize initializes the server.
@@ -247,6 +248,7 @@ func (s *Server) OnSessionOpen(ctx *gortsplib.ServerHandlerOnSessionOpenCtx) {
 		pathManager:     s.PathManager,
 		parent:          s,
 		chrtspreloded :  s.Chrtspreloded,
+		chrtspclosed  :  s.Chrtspclosed,
 	}
 	se.initialize()
 	s.mutex.Lock()

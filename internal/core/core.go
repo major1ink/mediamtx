@@ -45,7 +45,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.9.0-3"
+var version = "v1.9.0-4"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -96,6 +96,7 @@ type Core struct {
 		 Name string
 		Wg *sync.WaitGroup
 	}
+	chrtspclosed chan string
 
 	// out
 	done chan struct{}
@@ -139,6 +140,7 @@ func New(args []string) (*Core, bool) {
 		 Name string
 		Wg *sync.WaitGroup
 	}),
+	chrtspclosed: make(chan string,50),
 		chConfigSet: make(chan []struct {
 			Name   string
 			Record bool
@@ -227,6 +229,25 @@ outer:
 				p.Log(logger.Error, "%s", err)
 				break outer
 			}
+
+		case name := <-p.chrtspclosed:
+			newConf := p.conf.Clone()
+			err := newConf.RemovePath(name)
+			if err != nil {
+				p.Log(logger.Error, "%s", err)
+				continue outer
+			}
+			err = newConf.Validate()
+			if err != nil {
+				p.Log(logger.Error, "%s", err)
+				continue outer
+			}
+			err = p.reloadConf(newConf, true)
+			if err != nil {
+				p.Log(logger.Error, "%s", err)
+				continue outer
+			}
+			p.api.Conf=newConf
 		case  rtspreloded:= <-p.chrtspreloded:
 			newConf:=p.conf.Clone()
 			newConf.OptionalPaths[rtspreloded.Name] = nil
@@ -238,7 +259,7 @@ outer:
 			err = p.reloadConf(newConf, false)
 			if err != nil {
 				p.Log(logger.Error, "%s", err)
-				break outer
+				continue outer
 			}
 		
 			rtspreloded.Wg.Done()
@@ -267,25 +288,25 @@ outer:
 				err := json.NewDecoder(bytes.NewReader(postJson)).Decode(&s)
 				if err != nil {
 					p.Log(logger.Error, "%s", err)
-					return
+					continue 
 				}
 
 
 				err = newConf.PatchPath(pathConf[i].Name, &s)
 				if err != nil {
 					p.Log(logger.Error, "%s", err)
-					return
+					continue 
 				}
 				err = newConf.Validate()
 				if err != nil {
 					p.Log(logger.Error, "%s", err)
-					return
+					continue 
 				}
 			}
 			err := p.reloadConf(newConf, true)
 			if err != nil {
 				p.Log(logger.Error, "%s", err)
-				break outer
+				continue outer
 			}
 
 		case <-interrupt:
@@ -299,7 +320,7 @@ outer:
 						err := p.pathManager.clientGRPC.Put(key, &status)
 						if err != nil {
 							path.Log(logger.Error, "%s", err)
-							break outer
+							continue
 						}
 						path.Log(logger.Debug, "The request was successfully completed")
 					}
@@ -310,16 +331,16 @@ outer:
 					err := p.pathManager.stor.Req.ExecQuery(query)
 					if err != nil {
 						path.Log(logger.Error, "%s", err)
-						break outer
+						continue
 					}
 					path.Log(logger.Debug, "The request was successfully completed")
 					}
 				default:
 					p.Log(logger.Error, "The update has not been sent, neither the database nor the RMS are enabled")
 				}
-				
 
 			}
+
 			break outer
 
 		case <-p.ctx.Done():
@@ -328,7 +349,6 @@ outer:
 	}
 
 	p.ctxCancel()
-
 	p.closeResources(nil, false)
 }
 
@@ -637,6 +657,7 @@ func (p *Core) createResources(initial bool) error {
 			PathManager:         p.pathManager,
 			Parent:              p,
 			Chrtspreloded :      p.chrtspreloded,
+			Chrtspclosed  :      p.chrtspclosed,
 		}
 		err = i.Initialize()
 		if err != nil {
@@ -678,6 +699,7 @@ func (p *Core) createResources(initial bool) error {
 			PathManager:         p.pathManager,
 			Parent:              p,
 			Chrtspreloded :      p.chrtspreloded,
+			Chrtspclosed  :      p.chrtspclosed,
 		}
 		err = i.Initialize()
 		if err != nil {
@@ -1197,7 +1219,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		if p.metrics != nil {
 			p.metrics.SetRTMPServer(nil)
 		}
-
+		
 		p.rtmpServer.Close()
 		p.rtmpServer = nil
 	}
@@ -1215,9 +1237,9 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		if p.metrics != nil {
 			p.metrics.SetRTSPServer(nil)
 		}
-
 		p.rtspServer.Close()
 		p.rtspServer = nil
+		close(p.chrtspclosed)
 	}
 
 	if closePathManager && p.pathManager != nil {
@@ -1275,6 +1297,7 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		p.logger.Close()
 		p.logger = nil
 	}
+
 }
 
 func (p *Core) reloadConf(newConf *conf.Conf, calledByAPI bool) error {

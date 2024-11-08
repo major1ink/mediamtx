@@ -150,7 +150,7 @@ type API struct {
 	Parent         apiParent
 
 
-	httpServer *httpp.WrappedServer
+	httpServer *httpp.Server
 	mutex      sync.RWMutex
 
 	Publisher *int
@@ -233,7 +233,7 @@ func (a *API) Initialize() error {
 
 	network, address := restrictnetwork.Restrict("tcp", a.Address)
 
-	a.httpServer = &httpp.WrappedServer{
+	a.httpServer = &httpp.Server{
 		Network:     network,
 		Address:     address,
 		ReadTimeout: time.Duration(a.ReadTimeout),

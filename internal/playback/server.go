@@ -33,7 +33,7 @@ type Server struct {
 	AuthManager    serverAuthManager
 	Parent         logger.Writer
 
-	httpServer *httpp.WrappedServer
+	httpServer *httpp.Server
 	mutex      sync.RWMutex
 }
 
@@ -50,7 +50,7 @@ func (s *Server) Initialize() error {
 
 	network, address := restrictnetwork.Restrict("tcp", s.Address)
 
-	s.httpServer = &httpp.WrappedServer{
+	s.httpServer = &httpp.Server{
 		Network:     network,
 		Address:     address,
 		ReadTimeout: time.Duration(s.ReadTimeout),
