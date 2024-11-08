@@ -18,7 +18,6 @@ type Sql struct {
 	GetCodeMP         string `json:"getCodeMP"`
 	GetDrives         string `json:"getDrives"`
 	UpdateStatus      string `json:"updateStatus"`
-	GetData           string `json:"getData"`
 	GetDataForProxy   string `json:"getDataForProxy"`
 	GetStatus_records string `json:"getStatus_records"`
 }

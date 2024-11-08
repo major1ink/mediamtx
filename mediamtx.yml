@@ -760,8 +760,6 @@ database:
     getDrives: "SELECT sd.\"id_storage\", sd.\"mount_point\" FROM \"storage_disks\" sd,\"storage_servers\" ss WHERE sd.\"id_storage\"=ss.\"id\" AND ss.\"state\"='3' AND sd.\"state\"='3' AND sd.\"status\"='3'   ORDER BY sd.\"mount_point\"123"
     # request to update stream statuses
     updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"
-    # request for a list of streams
-    getData: "SELECT vc.\"id\", (CASE WHEN vc.\"login\" IS NULL THEN '' ELSE vc.\"login\" END), (CASE WHEN vc.\"pass\" IS NULL THEN '' ELSE vc.\"pass\" END), vc.\"ip_address_out\", (CASE WHEN vc.\"cam_path\" IS NULL THEN '' ELSE vc.\"cam_path\" END), vc.\"code_mp\", (CASE WHEN vc.\"state_public\" IS NULL THEN '0' ELSE vc.\"state_public\" END),(CASE WHEN vc.\"status_public\" IS NULL THEN '0' ELSE vc.\"status_public\" END), vcont.\"record_status\" FROM \"public\".\"videocameras\" vc, \"mount_place_cam\" mpc, \"video_contract\" vcont WHERE vc.\"code_mp\"=mpc.\"code_mp_cam\" AND mpc.\"code_mp_contract\" = vcont.\"code_mp\" AND vc.\"cam_path\" IS NOT NULL AND vc.\"state_public\" = '1'"
     #
     # for l3
     getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp, \"DataDevice\" dd, \"MountPlace\" mp, \"video_servers\" vs WHERE vp.\"Stream\" = dd.\"UID\" AND dd.\"codeMP\" = mp.\"codeMP\" AND mp.\"id_video_servers\" = vs.\"id\" AND vp.\"StatePublic\" = '1' LIMIT 20"
