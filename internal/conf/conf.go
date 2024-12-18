@@ -310,6 +310,7 @@ type Conf struct {
 	Database Database `json:"database"`
 	//GRPC
 	GRPC GRPC `json:"grpc"`
+	LossСatcher LossСatcher `json:"lossСatcher"`
 	// switches
 	Switches Switches `json:"switches"`
 }
@@ -328,7 +329,7 @@ type Switches struct {
 
 func (conf *Conf) setDefaults() {
 	// General
-	conf.MediamMTX_ver = "v1.9.0-4"
+	conf.MediamMTX_ver = "v1.9.0-5"
 	conf.LogLevel = LogLevel(logger.Info)
 	conf.LogDestinations = LogDestinations{logger.DestinationStdout}
 	conf.LogFile = "mediamtx.log"

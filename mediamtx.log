@@ -1,0 +1,133 @@
+2024/12/18 15:40:24 INF MediaMTX v1.9.0-5
+2024/12/18 15:40:24 INF configuration loaded from /home/anton/go/src/github.com/gubka595/bluenviron/mediamtx/mediamtx.yml
+2024/12/18 15:40:24 INF Connected to the RMS on 192.168.250.40:8080
+2024/12/18 15:40:24 INF Connected to the LossСatcher on 192.168.250.40:8085
+2024/12/18 15:40:24 INF [metrics] listener opened on 192.168.250.43:9998
+2024/12/18 15:40:24 INF [pprof] listener opened on 192.168.250.43:9999
+2024/12/18 15:40:24 DEB path manager created
+2024/12/18 15:40:24 INF [RTSP] listener opened on 192.168.250.43:8554 (TCP), :8000 (UDP/RTP), :8001 (UDP/RTCP)
+2024/12/18 15:40:24 INF [RTMP] listener opened on :1935
+2024/12/18 15:40:24 INF [HLS] listener opened on :8888
+2024/12/18 15:40:24 INF [WebRTC] listener opened on 192.168.250.43:8889 (HTTP), :8189 (ICE/UDP)
+2024/12/18 15:40:24 INF [SRT] listener opened on :8890 (UDP)
+2024/12/18 15:40:24 INF [API] listener opened on 192.168.250.43:9997
+2024/12/18 15:40:29 INF [RTSP] [conn 192.168.250.43:41986] opened
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [c->s] OPTIONS rtsp://192.168.250.43:8554/41574336307958053922 RTSP/1.0
+CSeq: 1
+User-Agent: Lavf58.29.100
+
+
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [s->c] RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, PAUSE, GET_PARAMETER, TEARDOWN
+Server: gortsplib
+
+
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [c->s] ANNOUNCE rtsp://192.168.250.43:8554/41574336307958053922 RTSP/1.0
+CSeq: 2
+Content-Length: 294
+Content-Type: application/sdp
+User-Agent: Lavf58.29.100
+
+v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=RTSP Session
+c=IN IP4 192.168.250.43
+t=0 0
+a=tool:libavformat 58.29.100
+m=video 0 RTP/AVP 96
+a=rtpmap:96 H264/90000
+a=fmtp:96 packetization-mode=1; sprop-parameter-sets=Z2QAH6zSAUAW6EAAAPpAAB1TgQ==,aOqPLA==; profile-level-id=64001F
+a=control:streamid=0
+
+2024/12/18 15:40:29 INF [RTSP] [session 98ca1e89] created by 192.168.250.43:41986
+2024/12/18 15:40:29 DEB [RTSP] [session 98ca1e89] Sending a message to lossCatcher: CodeMpCam: 41574336307958053922, Ip: 192.168.250.43:41986, SessionName: 98ca1e89, StartTime: 2024-12-18 15:40:29.725198196 +0300 MSK m=+5.627968773
+2024/12/18 15:40:29 ERR [RTSP] [session 98ca1e89] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8085: connect: connection refused"
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [s->c] RTSP/1.0 200 OK
+CSeq: 2
+Server: gortsplib
+
+
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [c->s] SETUP rtsp://192.168.250.43:8554/41574336307958053922/streamid=0 RTSP/1.0
+CSeq: 3
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1;mode=record
+User-Agent: Lavf58.29.100
+
+
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [s->c] RTSP/1.0 200 OK
+CSeq: 3
+Server: gortsplib
+Session: 41375d8e096a47d6aa8e9759ba62d3a5
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1
+
+
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [c->s] RECORD rtsp://192.168.250.43:8554/41574336307958053922 RTSP/1.0
+CSeq: 4
+Range: npt=0.000-
+Session: 41375d8e096a47d6aa8e9759ba62d3a5
+User-Agent: Lavf58.29.100
+
+
+2024/12/18 15:40:29 INF [RTSP] [session 98ca1e89] is publishing to path '41574336307958053922', 1 track (H264)
+2024/12/18 15:40:29 DEB [RTSP] [conn 192.168.250.43:41986] [s->c] RTSP/1.0 200 OK
+CSeq: 4
+Server: gortsplib
+Session: 41375d8e096a47d6aa8e9759ba62d3a5
+
+
+2024/12/18 15:41:24 DEB [RTSP] [session 98ca1e89] Sending a message to lossCatcher: CodeMpCam: 41574336307958053922, Ip: 192.168.250.43:41986, SessionName: 98ca1e89, StartTime: 2024-12-18 15:40:29.725198196 +0300 MSK m=+5.627968773
+2024/12/18 15:41:24 ERR [RTSP] [session 98ca1e89] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8085: connect: connection refused"
+2024/12/18 15:42:24 DEB [RTSP] [session 98ca1e89] Sending a message to lossCatcher: CodeMpCam: 41574336307958053922, Ip: 192.168.250.43:41986, SessionName: 98ca1e89, StartTime: 2024-12-18 15:40:29.725198196 +0300 MSK m=+5.627968773
+2024/12/18 15:42:24 ERR [RTSP] [session 98ca1e89] rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing: dial tcp 192.168.250.40:8085: connect: connection refused"
+2024/12/18 15:42:38 DEB [API] [conn 192.168.250.43:37296] [c->s] GET /v3/config/paths/list HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36
+
+
+2024/12/18 15:42:38 DEB [API] [conn 192.168.250.43:37296] [s->c] HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Server: mediamtx
+
+(body of 3805 bytes)
+2024/12/18 15:42:39 DEB [API] [conn 192.168.250.43:37296] [c->s] GET /favicon.ico HTTP/1.1
+Host: 192.168.250.43:9997
+Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+Accept-Encoding: gzip, deflate
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Connection: keep-alive
+Referer: http://192.168.250.43:9997/v3/config/paths/list
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36
+
+
+2024/12/18 15:42:39 DEB [API] [conn 192.168.250.43:37296] [s->c] HTTP/1.1 404 Not Found
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: *
+Content-Type: text/plain
+Server: mediamtx
+
+(body of 18 bytes)
+2024/12/18 15:43:24 DEB [RTSP] [session 98ca1e89] Sending a message to lossCatcher: CodeMpCam: 41574336307958053922, Ip: 192.168.250.43:41986, SessionName: 98ca1e89, StartTime: 2024-12-18 15:40:29.725198196 +0300 MSK m=+5.627968773
+2024/12/18 15:44:24 DEB [RTSP] [session 98ca1e89] Sending a message to lossCatcher: CodeMpCam: 41574336307958053922, Ip: 192.168.250.43:41986, SessionName: 98ca1e89, StartTime: 2024-12-18 15:40:29.725198196 +0300 MSK m=+5.627968773
+2024/12/18 15:45:03 INF shutting down gracefully
+2024/12/18 15:45:03 INF [API] listener is closing
+2024/12/18 15:45:03 INF [SRT] listener is closing
+2024/12/18 15:45:03 INF [WebRTC] listener is closing
+2024/12/18 15:45:03 INF [HLS] listener is closing
+2024/12/18 15:45:03 INF [RTMP] listener is closing
+2024/12/18 15:45:03 INF [RTSP] listener is closing
+2024/12/18 15:45:03 INF [RTSP] [conn 192.168.250.43:41986] closed: terminated
+2024/12/18 15:45:03 DEB [RTSP] [session 98ca1e89] Sending a message to lossCatcher: CodeMpCam: 41574336307958053922, Ip: 192.168.250.43:41986, SessionName: 98ca1e89, StartTime: 2024-12-18 15:40:29.725198196 +0300 MSK m=+5.627968773, EndTime: 2024-12-18 15:45:03.590162975 +0300 MSK m=+279.492933559
+2024/12/18 15:45:03 INF [RTSP] [session 98ca1e89] destroyed: terminated
+2024/12/18 15:45:03 DEB path manager is shutting down
+2024/12/18 15:45:03 INF [pprof] listener is closing
+2024/12/18 15:45:03 INF [metrics] listener is closing
+2024/12/18 15:45:03 INF waiting for running hooks
+2024/12/18 15:45:03 INF GRPC client closed
+2024/12/18 15:45:03 INF LossСatcher client closed

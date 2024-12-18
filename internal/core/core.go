@@ -45,7 +45,7 @@ type MaxPub struct {
 	Max int
 }
 
-var version = "v1.9.0-4"
+var version = "v1.9.0-5"
 
 var defaultConfPaths = []string{
 	"rtsp-simple-server.yml",
@@ -85,6 +85,7 @@ type Core struct {
 	confWatcher     *confwatcher.ConfWatcher
 	dbPool          *pgxpool.Pool
 	clientGRPC      RMS.GrpcClient
+	clientLossСatcher RMS.GrpcClient
 
 	// in
 	chAPIConfigSet chan *conf.Conf
@@ -420,6 +421,13 @@ func (p *Core) createResources(initial bool) error {
 		}
 		p.Log(logger.Info, "Connected to the RMS on %s:%v", p.conf.GRPC.GrpcAddress, p.conf.GRPC.GrpcPort)
 	}
+	if p.conf.LossСatcher.Use &&p.clientLossСatcher.Conn==nil {
+		p.clientLossСatcher, err = RMS.CreateLossСatcherClient( p.ctx,p.conf.LossСatcher)
+		if err != nil {
+			return err
+		}
+		p.Log(logger.Info, "Connected to the LossСatcher on %s:%v", p.conf.LossСatcher.GrpcAddress, p.conf.LossСatcher.GrpcPort)
+	}
 	if p.conf.Switches.TimeStatus <= 0 {
 		p.conf.Switches.TimeStatus = 15
 	}
@@ -658,6 +666,7 @@ func (p *Core) createResources(initial bool) error {
 			Parent:              p,
 			Chrtspreloded :      p.chrtspreloded,
 			Chrtspclosed  :      p.chrtspclosed,
+			ClientLossСatcher:   p.clientLossСatcher,
 		}
 		err = i.Initialize()
 		if err != nil {
@@ -700,6 +709,8 @@ func (p *Core) createResources(initial bool) error {
 			Parent:              p,
 			Chrtspreloded :      p.chrtspreloded,
 			Chrtspclosed  :      p.chrtspclosed,
+			ClientLossСatcher:	 p.clientLossСatcher,
+
 		}
 		err = i.Initialize()
 		if err != nil {
@@ -1154,6 +1165,13 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		newConf.GRPC.UseCodeMPAttribute != p.conf.GRPC.UseCodeMPAttribute) &&
 		p.clientGRPC.Conn != nil
 
+	closeLossСatcher := (newConf == nil ||
+		newConf.LossСatcher.Use != p.conf.LossСatcher.Use ||
+		newConf.LossСatcher.GrpcAddress != p.conf.LossСatcher.GrpcAddress ||
+		newConf.LossСatcher.ServerName != p.conf.LossСatcher.ServerName ||
+		newConf.LossСatcher.GrpcPort != p.conf.LossСatcher.GrpcPort) &&
+		p.clientLossСatcher.Conn != nil
+
 	closeDB := newConf == nil ||
 		newConf.Database.Use != p.conf.Database.Use ||
 		newConf.Database.DbAddress != p.conf.Database.DbAddress ||
@@ -1239,7 +1257,6 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		}
 		p.rtspServer.Close()
 		p.rtspServer = nil
-		close(p.chrtspclosed)
 	}
 
 	if closePathManager && p.pathManager != nil {
@@ -1290,6 +1307,11 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		p.clientGRPC.Close()
 		p.clientGRPC.Conn = nil
 		p.Log(logger.Info, "GRPC client closed")
+	}
+	if p.conf.LossСatcher.Use && closeLossСatcher {
+		p.clientLossСatcher.Close()
+		p.clientLossСatcher.Conn = nil
+		p.Log(logger.Info, "LossСatcher client closed")
 	}
 
 

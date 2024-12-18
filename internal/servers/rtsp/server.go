@@ -4,6 +4,7 @@ package rtsp
 import (
 	"context"
 	"crypto/tls"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
@@ -22,6 +23,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
@@ -96,6 +98,7 @@ type Server struct {
 		Wg *sync.WaitGroup
 	}
 	Chrtspclosed chan string
+	ClientLossСatcher repgrpc.GrpcClient
 }
 
 // Initialize initializes the server.
@@ -143,6 +146,7 @@ func (s *Server) Initialize() error {
 
 	s.wg.Add(1)
 	go s.run()
+	go s.sendLostStreams()
 
 	return nil
 }
@@ -249,6 +253,7 @@ func (s *Server) OnSessionOpen(ctx *gortsplib.ServerHandlerOnSessionOpenCtx) {
 		parent:          s,
 		chrtspreloded :  s.Chrtspreloded,
 		chrtspclosed  :  s.Chrtspclosed,
+		clientLossСatcher:      s.ClientLossСatcher,
 	}
 	se.initialize()
 	s.mutex.Lock()
@@ -454,4 +459,27 @@ func (s *Server) APISessionsKick(uuid uuid.UUID) error {
 	delete(s.sessions, key)
 	sx.onClose(liberrors.ErrServerTerminated{})
 	return nil
+}
+
+func (s *Server)sendLostStreams(){
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-time.After(time.Minute * 1):
+			for _, sx := range s.sessions {
+				message := repgrpc.PacketEror{
+					CodeMpCam: sx.pathName,
+					Ip: sx.rconn.NetConn().RemoteAddr().String(),
+					SessionName: hex.EncodeToString(sx.uuid[:4]),
+					StartTime: sx.created,
+				}
+				sx.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v", message.CodeMpCam, message.Ip, message.SessionName, message.StartTime)
+				err:=sx.clientLossСatcher.Packet(message)
+				if err != nil {
+					sx.Log(logger.Error, err.Error())
+				}
+			}
+		}
+	}
 }

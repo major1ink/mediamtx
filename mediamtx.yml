@@ -6,7 +6,7 @@
 ###############################################
 # Global settings -> General
 # Service version
-mediaMTX_ver: v1.9.0-4
+mediaMTX_ver: v1.9.0-5
 # Verbosity of the program; available values are "error", "warn", "info", "debug".
 logLevel: debug
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
@@ -462,7 +462,7 @@ pathDefaults:
 
   # Record streams to disk.
 
-  record: no
+  record: yes
   # Save audio from stream.
   recordAudio: no
 
@@ -729,6 +729,12 @@ grpc:
   serverName: l3
   useCodeMPAttribute: no
 
+lossСatcher:
+  use : yes
+  grpcAddress: 192.168.250.40
+  grpcPort: 8085
+  serverName: l3
+
 ###############################################
 # Database settings
 database:
@@ -739,7 +745,7 @@ database:
   # Database port
   dbPort: 5432
   # Database name
-  dbName: l3_test
+  dbName: l3_last
   # Database user
   dbUser: major
   # Database password
@@ -757,7 +763,7 @@ database:
     # equest to get a code_mp_contract
     getCodeMP: "SELECT \"code_mp_contract\" FROM \"public\".\"mount_place_cam\" WHERE \"code_mp_cam\" = '%s'"
     # request to get a list of discs to burn
-    getDrives: "SELECT sd.\"id_storage\", sd.\"mount_point\" FROM \"storage_disks\" sd,\"storage_servers\" ss WHERE sd.\"id_storage\"=ss.\"id\" AND ss.\"state\"='3' AND sd.\"state\"='3' AND sd.\"status\"='3'   ORDER BY sd.\"mount_point\"123"
+    getDrives: "SELECT sd.\"id_storage\", sd.\"mount_point\" FROM \"storage_disks\" sd,\"storage_servers\" ss WHERE sd.\"id_storage\"=ss.\"id\" AND ss.\"state\"='3' AND sd.\"state\"='3' AND sd.\"status\"='3'   ORDER BY sd.\"mount_point\""
     # request to update stream statuses
     updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"
     #
@@ -773,7 +779,7 @@ switches:
   useUpdaterStatus: no
   #L3
   # Enable/disable the PathStream field to create a record path
-  usePathStream: yes
+  usePathStream: no
   # Works with the enabled use Db Path Stream. Indicates the time in seconds how often the status needs to be checked
   timeStatus: 15
   # Enable/disable the server start with proxy streams from the database.
@@ -782,7 +788,7 @@ switches:
   pass: 
   #l6
   # Enable/disable the code_mp_contract field to create a record path
-  useCodeMP_Contract: no
+  useCodeMP_Contract: yes
   # Specifies the path and file name to save the file with outstanding sql queries
   fileSQLErr: ./sqlerr
   # Timeout for the sql query

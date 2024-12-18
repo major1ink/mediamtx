@@ -76,4 +76,7 @@ func (m *MockGrpcClient) Put(ctx context.Context, in *pb.Update, opts ...grpc.Ca
 }
 
 
-
+func (m *MockGrpcClient) Packet(ctx context.Context, req *pb.PacketError, opts ...grpc.CallOption) (*empty.Empty, error) {
+    // Implement the mock behavior here
+    return nil, nil
+}

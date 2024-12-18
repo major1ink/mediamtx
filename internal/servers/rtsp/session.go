@@ -20,6 +20,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/hooks"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/repgrpc"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
 
@@ -50,6 +51,7 @@ type session struct {
 		Wg *sync.WaitGroup
 	}
 	chrtspclosed chan string
+	clientLossСatcher repgrpc.GrpcClient
 }
 
 func (s *session) initialize() {
@@ -83,6 +85,23 @@ func (s *session) onClose(err error) {
 		s.onUnreadHook()
 	}
 
+	// информация о закрытии сессии
+	if s.clientLossСatcher.Use{
+		pacet:=repgrpc.PacketEror{
+		CodeMpCam: s.pathName,
+		Ip: s.rconn.NetConn().RemoteAddr().String(),
+		SessionName: hex.EncodeToString(s.uuid[:4]),
+		StartTime: s.created,
+		EndTime: time.Now(), 
+	}
+	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, EndTime: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.EndTime)
+	err1:= s.clientLossСatcher.Packet(pacet)
+	if err1 != nil {
+		s.Log(logger.Error, err1.Error())
+	}
+
+	}
+	
 	switch s.rsession.State() {
 	case gortsplib.ServerSessionStatePrePlay, gortsplib.ServerSessionStatePlay:
 		s.path.RemoveReader(defs.PathRemoveReaderReq{Author: s})
@@ -111,12 +130,24 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 			StatusCode: base.StatusBadRequest,
 		}, fmt.Errorf("invalid path")
 	}
-	// newConf:=s.conf.Clone()
-	// newConf.OptionalPaths[] = nil
 	wg:=sync.WaitGroup{}
 	wg.Add(1)
 	s.chrtspreloded <- struct{Name string; Wg *sync.WaitGroup}{ctx.Path[1:], &wg}
 	wg.Wait()
+	// информация о создании сессии
+	if s.clientLossСatcher.Use{
+	pacet:=repgrpc.PacketEror{
+		CodeMpCam: ctx.Path[1:],
+		Ip: s.rconn.NetConn().RemoteAddr().String(),
+		SessionName: hex.EncodeToString(s.uuid[:4]),
+		StartTime: s.created, 
+	}
+	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime)
+	err := s.clientLossСatcher.Packet(pacet)
+	if err !=nil {
+		s.Log(logger.Error, err.Error())
+	}
+	}
 	ctx.Path = ctx.Path[1:]
 
 	if c.authNonce == "" {
@@ -370,14 +401,41 @@ func (s *session) APIReaderDescribe() defs.APIPathSourceOrReader {
 func (s *session) APISourceDescribe() defs.APIPathSourceOrReader {
 	return s.APIReaderDescribe()
 }
-
 // onPacketLost is called by rtspServer.
 func (s *session) onPacketLost(ctx *gortsplib.ServerHandlerOnPacketLostCtx) {
+	if s.clientLossСatcher.Use{
+	pacet:=repgrpc.PacketEror{
+		CodeMpCam: s.pathName,
+		Ip: s.rconn.NetConn().RemoteAddr().String(),
+		SessionName: hex.EncodeToString(s.uuid[:4]),
+		StartTime: s.created,
+		LostPacket: ctx.Error.Error(),
+	}
+	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, LostPacket: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.LostPacket)
+	err:= s.clientLossСatcher.Packet(pacet)
+	if err != nil {
+		s.Log(logger.Error, err.Error())
+	}
+}
 	s.decodeErrLogger.Log(logger.Warn, ctx.Error.Error())
 }
 
 // onDecodeError is called by rtspServer.
 func (s *session) onDecodeError(ctx *gortsplib.ServerHandlerOnDecodeErrorCtx) {
+	if s.clientLossСatcher.Use{
+	pacet:=repgrpc.PacketEror{
+		CodeMpCam: s.pathName,
+		Ip: s.rconn.NetConn().RemoteAddr().String(),
+		SessionName: hex.EncodeToString(s.uuid[:4]),
+		StartTime: s.created,
+		InvalidPacket: ctx.Error.Error(),
+	}
+	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, InvalidPacket: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.InvalidPacket)
+	err:= s.clientLossСatcher.Packet(pacet)
+	if err != nil {
+		s.Log(logger.Error, err.Error())
+	}
+}
 	s.decodeErrLogger.Log(logger.Warn, ctx.Error.Error())
 }
 
