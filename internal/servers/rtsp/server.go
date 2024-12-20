@@ -99,6 +99,7 @@ type Server struct {
 	}
 	Chrtspclosed chan string
 	ClientLossСatcher repgrpc.GrpcClient
+	mapSessionLossCatcher *sync.Map
 }
 
 // Initialize initializes the server.
@@ -107,7 +108,7 @@ func (s *Server) Initialize() error {
 
 	s.conns = make(map[*gortsplib.ServerConn]*conn)
 	s.sessions = make(map[*gortsplib.ServerSession]*session)
-
+	s.mapSessionLossCatcher = &sync.Map{}
 	s.srv = &gortsplib.Server{
 		Handler:        s,
 		ReadTimeout:    time.Duration(s.ReadTimeout),
@@ -146,7 +147,10 @@ func (s *Server) Initialize() error {
 
 	s.wg.Add(1)
 	go s.run()
-	go s.sendLostStreams()
+	if s.ClientLossСatcher.Use{
+		go s.sendLostStreams()
+	}
+	
 
 	return nil
 }
@@ -254,6 +258,7 @@ func (s *Server) OnSessionOpen(ctx *gortsplib.ServerHandlerOnSessionOpenCtx) {
 		chrtspreloded :  s.Chrtspreloded,
 		chrtspclosed  :  s.Chrtspclosed,
 		clientLossСatcher:      s.ClientLossСatcher,
+		mapSessionLossCatcher: s.mapSessionLossCatcher,
 	}
 	se.initialize()
 	s.mutex.Lock()
@@ -467,19 +472,23 @@ func (s *Server)sendLostStreams(){
 		case <-s.ctx.Done():
 			return
 		case <-time.After(time.Minute * 1):
-			for _, sx := range s.sessions {
-				message := repgrpc.PacketEror{
-					CodeMpCam: sx.pathName,
-					Ip: sx.rconn.NetConn().RemoteAddr().String(),
-					SessionName: hex.EncodeToString(sx.uuid[:4]),
-					StartTime: sx.created,
+			s.mapSessionLossCatcher.Range(func (key, value interface{}) bool {
+				session :=	value.(*session)
+				if session.IsPublisher{
+					message := repgrpc.PacketEror{
+					CodeMpCam: key.(string),
+					Ip: session.rconn.NetConn().RemoteAddr().String(),
+					SessionName: hex.EncodeToString(session.uuid[:4]),
+					StartTime: session.created,
+					}
+					session.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v", message.CodeMpCam, message.Ip, message.SessionName, message.StartTime)
+					err:=session.clientLossСatcher.Packet(message)
+					if err != nil {
+						session.Log(logger.Error, err.Error())
+					}
 				}
-				sx.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v", message.CodeMpCam, message.Ip, message.SessionName, message.StartTime)
-				err:=sx.clientLossСatcher.Packet(message)
-				if err != nil {
-					sx.Log(logger.Error, err.Error())
-				}
-			}
+				return true
+			}) 
 		}
 	}
 }

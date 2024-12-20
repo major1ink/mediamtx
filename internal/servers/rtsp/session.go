@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,6 +53,9 @@ type session struct {
 	}
 	chrtspclosed chan string
 	clientLossСatcher repgrpc.GrpcClient
+	IsPublisher bool
+	mapSessionLossCatcher *sync.Map
+	name string
 }
 
 func (s *session) initialize() {
@@ -75,10 +79,62 @@ func (s *session) remoteAddr() net.Addr {
 
 // Log implements logger.Writer.
 func (s *session) Log(level logger.Level, format string, args ...interface{}) {
+	s.faundInvalid(level,format)
 	id := hex.EncodeToString(s.uuid[:4])
 	s.parent.Log(level, "[session %s] "+format, append([]interface{}{id}, args...)...)
 }
 
+func (s *session) faundInvalid(level logger.Level, format string){
+ if level== logger.Warn{
+	switch {
+	case strings.Contains(format,"RTP packets lost"):
+		if s.clientLossСatcher.Use && s.IsPublisher{
+		pacet:=repgrpc.PacketEror{
+			CodeMpCam: s.name,
+			Ip: s.rconn.NetConn().RemoteAddr().String(),
+			SessionName: hex.EncodeToString(s.uuid[:4]),
+			StartTime: s.created,
+			LostPacket: format,
+		}
+		s.parent.Log(logger.Debug, "[session %s] Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, LostPacket: %v",pacet.SessionName, pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.LostPacket)
+		err:= s.clientLossСatcher.Packet(pacet)
+		if err != nil {
+			s.parent.Log(logger.Error, "[session %s] "+err.Error(),pacet.SessionName)
+		}
+		}
+	case strings.Contains(format,"RTP packet lost"):
+		if s.clientLossСatcher.Use && s.IsPublisher{
+		pacet:=repgrpc.PacketEror{
+			CodeMpCam: s.name,
+			Ip: s.rconn.NetConn().RemoteAddr().String(),
+			SessionName: hex.EncodeToString(s.uuid[:4]),
+			StartTime: s.created,
+			LostPacket: format,
+		}
+		s.parent.Log(logger.Debug, "[session %s] Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, LostPacket: %v",pacet.SessionName, pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.LostPacket)
+		err:= s.clientLossСatcher.Packet(pacet)
+		if err != nil {
+			s.parent.Log(logger.Error, "[session %s] "+err.Error(),pacet.SessionName)
+		}
+		}
+	default:
+		if s.clientLossСatcher.Use && s.IsPublisher{
+			pacet:=repgrpc.PacketEror{
+			CodeMpCam: s.name,
+			Ip: s.rconn.NetConn().RemoteAddr().String(),
+			SessionName: hex.EncodeToString(s.uuid[:4]),
+			StartTime: s.created,
+			InvalidPacket: format,
+		}
+		s.parent.Log(logger.Debug, "[session %s] Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, InvalidPacket: %v",pacet.SessionName, pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.InvalidPacket)
+		err:= s.clientLossСatcher.Packet(pacet)
+		if err != nil {
+			s.parent.Log(logger.Error, "[session %s] "+err.Error(),pacet.SessionName)
+		}
+		}
+	}
+ }
+}
 // onClose is called by rtspServer.
 func (s *session) onClose(err error) {
 	if s.rsession.State() == gortsplib.ServerSessionStatePlay {
@@ -86,9 +142,10 @@ func (s *session) onClose(err error) {
 	}
 
 	// информация о закрытии сессии
-	if s.clientLossСatcher.Use{
+	if s.clientLossСatcher.Use && s.IsPublisher{
+		s.mapSessionLossCatcher.Delete(s.name)
 		pacet:=repgrpc.PacketEror{
-		CodeMpCam: s.pathName,
+		CodeMpCam: s.name,
 		Ip: s.rconn.NetConn().RemoteAddr().String(),
 		SessionName: hex.EncodeToString(s.uuid[:4]),
 		StartTime: s.created,
@@ -110,14 +167,15 @@ func (s *session) onClose(err error) {
 		s.path.RemovePublisher(defs.PathRemovePublisherReq{Author: s})
 	}
 
-	if s.chrtspclosed != nil {
+
+	s.path = nil
+	s.stream = nil
+		if s.chrtspclosed != nil && s.IsPublisher{
 		select{
 		case s.chrtspclosed <- s.pathName:
 		default:
 		}
 	}
-	s.path = nil
-	s.stream = nil
 
 	s.Log(logger.Info, "destroyed: %v", err)
 	
@@ -136,8 +194,11 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 	wg.Wait()
 	// информация о создании сессии
 	if s.clientLossСatcher.Use{
+	s.name=ctx.Path[1:]
+	s.IsPublisher=true
+	s.mapSessionLossCatcher.Store(ctx.Path[1:], s)
 	pacet:=repgrpc.PacketEror{
-		CodeMpCam: ctx.Path[1:],
+		CodeMpCam: s.name,
 		Ip: s.rconn.NetConn().RemoteAddr().String(),
 		SessionName: hex.EncodeToString(s.uuid[:4]),
 		StartTime: s.created, 
@@ -206,7 +267,6 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 		}, nil, fmt.Errorf("invalid path")
 	}
 	ctx.Path = ctx.Path[1:]
-
 	// in case the client is setupping a stream with UDP or UDP-multicast, and these
 	// transport protocols are disabled, gortsplib already blocks the request.
 	// we have only to handle the case in which the transport protocol is TCP
@@ -230,7 +290,6 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 				}, nil, err
 			}
 		}
-
 		path, stream, err := s.pathManager.AddReader(defs.PathAddReaderReq{
 			Author: s,
 			AccessRequest: defs.PathAccessRequest{
@@ -403,39 +462,11 @@ func (s *session) APISourceDescribe() defs.APIPathSourceOrReader {
 }
 // onPacketLost is called by rtspServer.
 func (s *session) onPacketLost(ctx *gortsplib.ServerHandlerOnPacketLostCtx) {
-	if s.clientLossСatcher.Use{
-	pacet:=repgrpc.PacketEror{
-		CodeMpCam: s.pathName,
-		Ip: s.rconn.NetConn().RemoteAddr().String(),
-		SessionName: hex.EncodeToString(s.uuid[:4]),
-		StartTime: s.created,
-		LostPacket: ctx.Error.Error(),
-	}
-	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, LostPacket: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.LostPacket)
-	err:= s.clientLossСatcher.Packet(pacet)
-	if err != nil {
-		s.Log(logger.Error, err.Error())
-	}
-}
 	s.decodeErrLogger.Log(logger.Warn, ctx.Error.Error())
 }
 
 // onDecodeError is called by rtspServer.
 func (s *session) onDecodeError(ctx *gortsplib.ServerHandlerOnDecodeErrorCtx) {
-	if s.clientLossСatcher.Use{
-	pacet:=repgrpc.PacketEror{
-		CodeMpCam: s.pathName,
-		Ip: s.rconn.NetConn().RemoteAddr().String(),
-		SessionName: hex.EncodeToString(s.uuid[:4]),
-		StartTime: s.created,
-		InvalidPacket: ctx.Error.Error(),
-	}
-	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, InvalidPacket: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.InvalidPacket)
-	err:= s.clientLossСatcher.Packet(pacet)
-	if err != nil {
-		s.Log(logger.Error, err.Error())
-	}
-}
 	s.decodeErrLogger.Log(logger.Warn, ctx.Error.Error())
 }
 

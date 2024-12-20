@@ -148,7 +148,7 @@ func (c *GrpcClient) Packet (paceError PacketEror) (error){
 			return nil
 		}
 		return err
-}
+		}
 	case paceError.LostPacket != "":
 		_, offset := paceError.StartTime.Zone()
 		message:= &pb.PacketError{
