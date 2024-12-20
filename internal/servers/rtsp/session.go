@@ -70,6 +70,22 @@ func (s *session) initialize() {
 
 // Close closes a Session.
 func (s *session) Close() {
+	if s.clientLossСatcher.Use && s.IsPublisher{
+		s.mapSessionLossCatcher.Delete(s.name)
+		pacet:=repgrpc.PacketEror{
+		CodeMpCam: s.name,
+		Ip: s.rconn.NetConn().RemoteAddr().String(),
+		SessionName: hex.EncodeToString(s.uuid[:4]),
+		StartTime: s.created,
+		EndTime: time.Now(), 
+	}
+	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v, EndTime: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime, pacet.EndTime)
+	err1:= s.clientLossСatcher.Packet(pacet)
+	if err1 != nil {
+		s.Log(logger.Error, err1.Error())
+	}
+
+	}
 	s.rsession.Close()
 }
 
@@ -195,18 +211,20 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 	// информация о создании сессии
 	if s.clientLossСatcher.Use{
 	s.name=ctx.Path[1:]
-	s.IsPublisher=true
-	s.mapSessionLossCatcher.Store(ctx.Path[1:], s)
-	pacet:=repgrpc.PacketEror{
-		CodeMpCam: s.name,
-		Ip: s.rconn.NetConn().RemoteAddr().String(),
-		SessionName: hex.EncodeToString(s.uuid[:4]),
-		StartTime: s.created, 
-	}
-	s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime)
-	err := s.clientLossСatcher.Packet(pacet)
-	if err !=nil {
-		s.Log(logger.Error, err.Error())
+	if _,ok:=s.mapSessionLossCatcher.Load(s.name); !ok {
+		s.IsPublisher=true
+		s.mapSessionLossCatcher.Store(s.name, s)
+		pacet:=repgrpc.PacketEror{
+			CodeMpCam: s.name,
+			Ip: s.rconn.NetConn().RemoteAddr().String(),
+			SessionName: hex.EncodeToString(s.uuid[:4]),
+			StartTime: s.created, 
+		}
+		s.Log(logger.Debug, "Sending a message to lossCatcher: CodeMpCam: %v, Ip: %v, SessionName: %v, StartTime: %v", pacet.CodeMpCam, pacet.Ip, pacet.SessionName, pacet.StartTime)
+		err := s.clientLossСatcher.Packet(pacet)
+		if err !=nil {
+			s.Log(logger.Error, err.Error())
+		}
 	}
 	}
 	ctx.Path = ctx.Path[1:]
