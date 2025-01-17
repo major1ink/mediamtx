@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -321,33 +322,61 @@ func (a *API) onConfigGlobalGet(ctx *gin.Context) {
 }
 
 func (a *API) onConfigGlobalPatch(ctx *gin.Context) {
-	var c conf.OptionalGlobal
-	err := json.NewDecoder(ctx.Request.Body).Decode(&c)
-	if err != nil {
-		a.writeError(ctx, http.StatusBadRequest, err)
-		return
+    body, err := ioutil.ReadAll(ctx.Request.Body)
+    if err != nil {
+        a.writeError(ctx, http.StatusBadRequest, err)
+        return
+    }
+
+    var c conf.OptionalGlobal
+    err = json.Unmarshal(body, &c)
+    if err != nil {
+        a.writeError(ctx, http.StatusBadRequest, err)
+        return
+    }
+
+    var c2 interface{}
+    err = json.Unmarshal(body, &c2)
+    if err != nil {
+        a.writeError(ctx, http.StatusBadRequest, err)
+        return
+    }
+
+
+    a.mutex.Lock()
+    defer a.mutex.Unlock()
+    newConf := a.Conf.Clone()
+    newConf.PatchGlobal(&c)
+    err = newConf.Validate()
+    if err != nil {
+        a.writeError(ctx, http.StatusBadRequest, err)
+        return
+    }
+	if m, ok := c2.(map[string]interface{}); ok {
+		if value, exists := m["rtsp"]; exists {
+			if bo,ok:=value.(bool);ok && !bo{
+			for name:=range newConf.Paths{
+			err := newConf.RemovePath(name)
+			if err != nil {
+				a.Log(logger.Error, "%s", err)
+				continue 
+			}
+			}
+			err = newConf.Validate()
+			if err != nil {
+				a.Log(logger.Error, "%s", err)
+				return 
+			}
+			fmt.Println(newConf.Paths)
+			}
+			
+		} 
 	}
-
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	newConf := a.Conf.Clone()
-
-	newConf.PatchGlobal(&c)
-
-	err = newConf.Validate()
-	if err != nil {
-		a.writeError(ctx, http.StatusBadRequest, err)
-		return
-	}
-
-	a.Conf = newConf
-
-	// since reloading the configuration can cause the shutdown of the API,
-	// call it in a goroutine
-	go a.Parent.APIConfigSet(newConf)
-
-	ctx.Status(http.StatusOK)
+    a.Conf = newConf
+    // since reloading the configuration can cause the shutdown of the API,
+    // call it in a goroutine
+    go a.Parent.APIConfigSet(newConf)
+    ctx.Status(http.StatusOK)
 }
 
 func (a *API) onConfigPathDefaultsGet(ctx *gin.Context) {

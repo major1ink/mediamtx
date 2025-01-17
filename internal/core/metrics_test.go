@@ -363,12 +363,10 @@ webrtc_sessions_bytes_sent 0
 			"hls":    false,
 			"webrtc": false,
 		}, nil)
-		// httpRequest(t, hc, http.MethodDelete, "http://localhost:9997/v3/config/paths/delete/rtsp_path", map[string]interface{}{}, nil)
 
 		time.Sleep(500 * time.Millisecond)
 
 		bo := httpPullFile(t, hc, "http://localhost:9998/metrics")
-		// time.Sleep(15 * time.Second)
 		require.Equal(t, "paths 0\n", string(bo))
 	})
 }

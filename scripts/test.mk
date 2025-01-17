@@ -4,7 +4,7 @@ endif
 
 test-internal:
 	go generate ./...
-	go test -v $(RACE) -coverprofile=coverage-internal.txt \
+	go test -v -race -coverprofile=coverage-internal.txt \
 	$$(go list ./internal/... | grep -v /core)
 
 test-core:
