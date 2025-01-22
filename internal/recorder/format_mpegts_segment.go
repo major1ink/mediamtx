@@ -181,7 +181,7 @@ func (s *formatMPEGTSSegment) close() error {
 				}
 				err = err3
 			}
-			s.f.ai.agent.OnSegmentComplete(s.path, duration)
+
 		}
 	}
 	return err

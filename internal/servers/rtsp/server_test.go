@@ -117,7 +117,8 @@ func TestServerPublish(t *testing.T) {
 		PathManager:         pathManager,
 		Parent:              test.NilLogger,
 		Chrtspreloded: make(chan struct{ Name string;
-			 Wg *sync.WaitGroup}),
+			 Wg *sync.WaitGroup},1),
+		Chrtspclosed: make(chan string),
 	}
 	err := s.Initialize()
 	require.NoError(t, err)
@@ -126,15 +127,16 @@ func TestServerPublish(t *testing.T) {
 	source := gortsplib.Client{}
 
 	media0 := test.UniqueMediaH264()
-
+	go func (){
+		q:=<-s.Chrtspreloded
+		q.Wg.Done()
+	}()
 	err = source.StartRecording(
 		"rtsp://myuser:mypass@127.0.0.1:8557/teststream?param=value",
 		&description.Session{Medias: []*description.Media{media0}})
 	require.NoError(t, err)
 	defer source.Close()
-
 	<-path.streamCreated
-
 	aw := asyncwriter.New(512, test.NilLogger)
 
 	recv := make(chan struct{})

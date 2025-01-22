@@ -202,7 +202,6 @@ func (s *formatFMP4Segment) close() error {
 				err = err3
 			}
 
-			s.f.ai.agent.OnSegmentComplete(s.path, duration)
 		}
 	}
 
