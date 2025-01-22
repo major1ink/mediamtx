@@ -49,6 +49,8 @@ components:
       type: object
       properties:
         # General
+        mediaMTX_ver:
+          type: string
         logLevel:
           type: string
         logDestinations:
@@ -56,6 +58,10 @@ components:
           items:
             type: string
         logFile:
+          type: string
+        logStreams:
+          type: boolean
+        logDirStreams:
           type: string
         readTimeout:
           type: string
@@ -296,6 +302,94 @@ components:
           type: boolean
         srtAddress:
           type: string
+        grpc: 
+          type: object
+          properties:
+           use:
+              type: boolean
+           grpcAddress:
+              type: string
+           grpcPort:
+              type: integer
+           serverName:
+              type: string
+           useCodeMPAttribute:
+              type: boolean
+
+        lossСatcher: 
+          type: object
+          properties:
+            use:
+              type: boolean
+            grpcAddress:
+              type: string
+            grpcPort:
+              type: integer
+            serverName:
+              type: string
+
+
+        database:
+          type: object
+          properties:
+            use:
+              type: boolean
+            dbAddress:
+              type: string
+            dbPort:
+              type: integer
+            dbName:
+              type: string
+            dbUser:
+              type: string
+            dbPassword:
+              type: string
+            maxConnections:
+              type: integer
+            sql:
+              type: object
+              properties:
+                insertPath:
+                  type: string
+                insertPathStream:
+                  type: string
+                getPathStream:
+                  type: string
+                getCodeMP:
+                  type: string
+                getDrives:
+                  type: string
+                updateStatus:
+                  type: string
+                getDataForProxy:
+                  type: string
+                getStatus_records:
+                  type: string
+        switches:
+          type: object
+          properties:
+            getDrives:
+              type: boolean
+            useCodeMP_Contract:
+              type: boolean
+            usePathStream:
+              type: boolean
+            timeStatus:
+              type: integer
+            useUpdaterStatus:
+              type: boolean
+            useProxy:
+              type: boolean
+            login:
+              type: string
+            pass:
+              type: string
+            fileSQLErr:
+              type: string
+            queryTimeOut:
+              type: integer
+
+
 
     PathConf:
       type: object
@@ -320,11 +414,17 @@ components:
           type: string
         fallback:
           type: string
+        maxPublishers:
+          type: integer
 
         # Record
         record:
           type: boolean
+        recordAudio:
+          type: boolean
         recordPath:
+          type: string
+        recordPaths:
           type: string
         recordFormat:
           type: string
@@ -337,6 +437,8 @@ components:
 
         # Publisher source
         overridePublisher:
+          type: boolean
+        playback:
           type: boolean
         srtPublishPassphrase:
           type: string

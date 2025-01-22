@@ -38,15 +38,11 @@ require (
 require github.com/gin-contrib/pprof v1.5.0
 
 require (
-	github.com/alecthomas/colour v0.1.0 // indirect
-	github.com/alecthomas/repr v0.4.0 // indirect
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.4
-	github.com/sergi/go-diff v1.2.0 // indirect
 )
 
 require (
-	github.com/alecthomas/assert v1.0.0
 	github.com/asticode/go-astikit v0.42.0 // indirect
 	github.com/asticode/go-astits v1.13.0 // indirect
 	github.com/benburkert/openpgp v0.0.0-20160410205803-c2471f86866c // indirect

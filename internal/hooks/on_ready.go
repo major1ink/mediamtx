@@ -28,7 +28,6 @@ func OnReady(params OnReadyParams) func() {
 		env["MTX_SOURCE_TYPE"] = params.Desc.Type
 		env["MTX_SOURCE_ID"] = params.Desc.ID
 	}
-
 	if params.Conf.RunOnReady != "" {
 		params.Logger.Log(logger.Info, "runOnReady command started")
 		onReadyCmd = externalcmd.NewCmd(

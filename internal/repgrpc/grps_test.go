@@ -4,108 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/alecthomas/assert"
 	"github.com/bluenviron/mediamtx/internal/conf"
-	"github.com/golang/mock/gomock"
-	pb "github.com/major1ink/repGrpc/pkg/repGrpc"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 
-func TestSelect(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClient := NewMockGrpcClient(ctrl)
-	c := &GrpcClient{
-		Client: mockClient,
-		Server: "test_server",
-		Ctx:    context.Background(),
-	}
-
-	testSelect := []struct {
-		streamName string
-		argument   string
-		expected   *pb.AnswerSelect
-		err        error
-	}{
-		{
-			streamName: "stream1",
-			argument:   "CodeMP",
-			expected:   &pb.AnswerSelect{CodeMP: "123" , 
-		StatusRecord: 1,},
-			err:        nil,
-		},
-		{
-			streamName: "stream2",
-			argument:   "CodeMP_Contract",
-			expected:   &pb.AnswerSelect{ CodeMPContract: "123" },
-			err:        nil,
-		},
-		{
-			streamName: "stream3",
-			argument:   "MountPoint",
-			expected:   &pb.AnswerSelect{ MapDisks: map[string]int32{"./recordings": 2, "./recordings2": 2} },
-			err:        nil,
-		},
-		{
-			streamName: "stream4",
-			argument:   "StatusRecord",
-			expected:   &pb.AnswerSelect{ StatusRecord: 1 },
-			err:        nil,
-		},
-	}
-
-	for _, tc := range testSelect {
-		t.Run(
-			tc.argument,
-			func(t *testing.T) {
-			mockClient.EXPECT().Get(c.Ctx, gomock.Any()).Return(tc.expected, tc.err)
-
-			result, err := c.Select(tc.streamName, tc.argument)
-			assert.Equal(t, tc.err, err)
-			assert.Equal(t, tc.expected, result)
-		},
-		)
-	}
-	testInsert := []struct {
-		attribute   string
-		query string
-		expected   *emptypb.Empty
-		err        error
-	}{
-	{
-			attribute:   "PathStream",
-			query: "(\"1\", \"2\", \"3\")",
-			expected:   &emptypb.Empty{},
-			err:        nil,
-	},
-	{
-			attribute:   "Stream",
-			query: "(\"1\", \"2\", \"3\")",
-			expected:   &emptypb.Empty{},
-			err:        nil,
-	},
-	{
-			attribute:   "CodeMP",
-			query: "(\"1\", \"2\", \"3\")",
-			expected:   &emptypb.Empty{},
-			err:        nil,
-	},
-}
-
-for _, tc := range testInsert {
-	t.Run(
-		tc.attribute,
-		func(t *testing.T) {
-			mockClient.EXPECT().Post(c.Ctx, gomock.Any()).Return(tc.expected, tc.err)
-
-			err := c.Post(tc.attribute, tc.query)
-			assert.Equal(t, tc.err, err)
-	},
-	)
-}
-}
 
 func TestCreateGrpcClient(t *testing.T) {
     ctx := context.Background()

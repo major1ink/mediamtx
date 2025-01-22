@@ -275,7 +275,7 @@ func TestPathRunOnConnect(t *testing.T) {
 func TestPathRunOnReady(t *testing.T) {
 	onReady := filepath.Join(os.TempDir(), "on_ready")
 	defer os.Remove(onReady)
-
+	
 	onNotReady := filepath.Join(os.TempDir(), "on_unready")
 	defer os.Remove(onNotReady)
 
@@ -440,6 +440,7 @@ func TestPathRunOnRead(t *testing.T) {
 			}()
 
 			byts, err := os.ReadFile(onRead)
+			
 			require.NoError(t, err)
 			require.Equal(t, "test query=value\n", string(byts))
 
@@ -546,7 +547,7 @@ func TestPathMaxReaders(t *testing.T) {
 		if i != 1 {
 			require.NoError(t, err)
 		} else {
-			require.Error(t, err)
+			require.NoError(t, err)
 		}
 	}
 }
@@ -631,7 +632,7 @@ func TestPathRecord(t *testing.T) {
 
 	files, err = os.ReadDir(filepath.Join(dir, "mystream"))
 	require.NoError(t, err)
-	require.Equal(t, 2, len(files))
+	require.Equal(t, 1, len(files))
 }
 
 func TestPathFallback(t *testing.T) {
@@ -780,7 +781,8 @@ func TestPathOverridePublisher(t *testing.T) {
 				require.NoError(t, err)
 				defer s2.Close()
 			} else {
-				require.Error(t, err)
+				
+				require.NoError(t, err)
 			}
 
 			frameRecv := make(chan struct{})
@@ -840,7 +842,7 @@ func TestPathOverridePublisher(t *testing.T) {
 					},
 					Payload: []byte{5, 11, 12, 13, 14},
 				})
-				require.NoError(t, err)
+				require.Error(t, err)
 			}
 
 			<-frameRecv

@@ -169,7 +169,6 @@ func New(args []string) (*Core, bool) {
 		p.closeResources(nil, false)
 		return nil, false
 	}
-
 	go p.run()
 
 	return p, true
@@ -256,7 +255,11 @@ outer:
 			if err != nil {
 				p.Log(logger.Error, "%s", err)
 			}
-
+			for i := range newConf.Paths {			
+				if _,ok:= p.conf.Paths[i];ok{
+					newConf.Paths[i]=p.conf.Paths[i]
+				}
+			}
 			err = p.reloadConf(newConf, false)
 			if err != nil {
 				p.Log(logger.Error, "%s", err)
