@@ -429,6 +429,10 @@ func (conf *Conf) setDefaults() {
 	conf.WebRTCHandshakeTimeout = 10 * StringDuration(time.Second)
 	conf.WebRTCTrackGatherTimeout = 2 * StringDuration(time.Second)
 
+	conf.Switches.QueryTimeOut = 2
+	conf.Switches.FileSQLErr= "./sqlerr"
+	conf.Switches.TimeStatus=15
+
 	// SRT server
 	conf.SRT = true
 	conf.SRTAddress = ":8890"
@@ -437,7 +441,8 @@ func (conf *Conf) setDefaults() {
 
 	conf.Database.setDefaults()
 
-	conf.GRPC.setDefaults()
+	conf.GRPC.setDefaultsRMS()
+	conf.LossСatcher.setDefaultsLossСatcher()
 }
 
 // Load loads a Conf.

@@ -199,6 +199,7 @@ func (s *session) onClose(err error) {
 
 // onAnnounce is called by rtspServer.
 func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx) (*base.Response, error) {
+	
 	if len(ctx.Path) == 0 || ctx.Path[0] != '/' {
 		return &base.Response{
 			StatusCode: base.StatusBadRequest,

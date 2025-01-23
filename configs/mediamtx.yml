@@ -5,24 +5,25 @@
 
 ###############################################
 # Global settings -> General
+# Service version
 mediaMTX_ver: v1.9.0-11
 # Verbosity of the program; available values are "error", "warn", "info", "debug".
-logLevel: info
+logLevel: debag
 # Destinations of log messages; available values are "stdout", "file" and "syslog".
-logDestinations: [stdout]
+logDestinations: [file]
 # If "file" is in logDestinations, this is the file which will receive the logs.
 logFile: mediamtx.log
 # Enabling the creation of separate log files by streams
-logStreams: no
+logStreams: yes
 # The path for creating log files by streams is specified, if the path is empty, log files will be created along the path of the main log file
-logDirStreams: 
+logDirStreams: ./logs/
 # Timeout of read operations.
 readTimeout: 10s
 # Timeout of write operations.
 writeTimeout: 10s
 # Size of the queue of outgoing packets.
 # A higher value allows to increase throughput, a lower value allows to save RAM.
-writeQueueSize: 512
+writeQueueSize: 1024
 # Maximum size of outgoing UDP packets.
 # This can be decreased to avoid fragmentation on networks with a low UDP MTU.
 udpMaxPayloadSize: 1472
@@ -77,11 +78,12 @@ authInternalUsers:
   # if the IP is localhost.
 - user: any
   pass:
-  ips: ['127.0.0.1', '::1']
+  ips: []
   permissions:
   - action: api
   - action: metrics
   - action: pprof
+
 
 # HTTP-based authentication.
 # URL called to perform authentication. Every time a user wants
@@ -131,18 +133,18 @@ authJWTClaimKey: mediamtx_permissions
 # Global settings -> Control API
 
 # Enable controlling the server through the Control API.
-api: no
+api: yes
 # Address of the Control API listener.
-apiAddress: :9997
+apiAddress: 192.168.250.43:9997
 # Enable TLS/HTTPS on the Control API server.
 apiEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
 # This can be generated with:
 # openssl genrsa -out server.key 2048
 # openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650
-apiServerKey: server.key
+apiServerKey: 
 # Path to the server certificate.
-apiServerCert: server.crt
+apiServerCert: 
 # Value of the Access-Control-Allow-Origin header provided in every HTTP response.
 apiAllowOrigin: '*'
 # List of IPs or CIDRs of proxies placed before the HTTP server.
@@ -154,9 +156,9 @@ apiTrustedProxies: []
 # Global settings -> Metrics
 
 # Enable Prometheus-compatible metrics.
-metrics: no
+metrics: yes
 # Address of the metrics HTTP listener.
-metricsAddress: :9998
+metricsAddress: 192.168.250.43:9998
 # Enable TLS/HTTPS on the Metrics server.
 metricsEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -177,9 +179,9 @@ metricsTrustedProxies: []
 # Global settings -> PPROF
 
 # Enable pprof-compatible endpoint to monitor performances.
-pprof: no
+pprof: yes
 # Address of the pprof listener.
-pprofAddress: :9999
+pprofAddress: 192.168.250.43:9999
 # Enable TLS/HTTPS on the pprof server.
 pprofEncryption: no
 # Path to the server key. This is needed only when encryption is yes.
@@ -195,6 +197,7 @@ pprofAllowOrigin: '*'
 # If the server receives a request from one of these entries, IP in logs
 # will be taken from the X-Forwarded-For header.
 pprofTrustedProxies: []
+
 
 ###############################################
 # Global settings -> Playback server
@@ -219,6 +222,7 @@ playbackAllowOrigin: '*'
 # will be taken from the X-Forwarded-For header.
 playbackTrustedProxies: []
 
+
 ###############################################
 # Global settings -> RTSP server
 
@@ -235,7 +239,7 @@ protocols: [udp, multicast, tcp]
 # Available values are "no", "strict", "optional".
 encryption: "no"
 # Address of the TCP/RTSP listener. This is needed only when encryption is "no" or "optional".
-rtspAddress: :8554
+rtspAddress: 192.168.250.43:8554
 # Address of the TCP/TLS/RTSPS listener. This is needed only when encryption is "strict" or "optional".
 rtspsAddress: :8322
 # Address of the UDP/RTP listener. This is needed only when "udp" is in protocols.
@@ -344,7 +348,7 @@ hlsMuxerCloseAfter: 60s
 # Enable publishing and reading streams with the WebRTC protocol.
 webrtc: yes
 # Address of the WebRTC HTTP listener.
-webrtcAddress: :8889
+webrtcAddress: 192.168.250.43:8889
 # Enable TLS/HTTPS on the WebRTC server.
 webrtcEncryption: no
 # Path to the server key.
@@ -445,6 +449,8 @@ pathDefaults:
   sourceOnDemandCloseAfter: 10s
   # Maximum number of readers. Zero means no limit.
   maxReaders: 0
+  # Maximum number of publishers. Zero means no limit.
+  maxPublishers: 0
   # SRT encryption passphrase require to read from this path
   srtReadPassphrase:
   # If the stream is not available, redirect readers to this path.
@@ -455,24 +461,33 @@ pathDefaults:
   # Default path settings -> Record
 
   # Record streams to disk.
-  record: no
+
+  record: yes
+  # Save audio from stream.
+  recordAudio: no
+
   # Path of recording segments.
   # Extension is added automatically.
   # Available variables are %path (path name), %Y %m %d %H %M %S %f %s (time in strftime format)
-  recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  #/ttttt/%v/%Y-%m-%d/%path-%s-%f
+  recordPath: /cctv/%v/%path/%Y-%m-%d/%path-%s-%f
+  # if the db Drive s field is "no", then local paths for saving video files are specified.
+  recordPaths: 
+    /media/anton/Tom2/video: "4" 
+    /media/anton/Tom/video: "4"
   # Format of recorded segments.
   # Available formats are "fmp4" (fragmented MP4) and "mpegts" (MPEG-TS).
-  recordFormat: fmp4
+  recordFormat: mpegts
   # fMP4 segments are concatenation of small MP4 files (parts), each with this duration.
   # MPEG-TS segments are concatenation of 188-bytes packets, flushed to disk with this period.
   # When a system failure occurs, the last part gets lost.
   # Therefore, the part duration is equal to the RPO (recovery point objective).
   recordPartDuration: 1s
   # Minimum duration of each segment.
-  recordSegmentDuration: 1h
+  recordSegmentDuration: 15s
   # Delete segments after this timespan.
   # Set to 0s to disable automatic deletion.
-  recordDeleteAfter: 24h
+  recordDeleteAfter: 0s
 
   ###############################################
   # Default path settings -> Publisher source (when source is "publisher")
@@ -651,7 +666,7 @@ pathDefaults:
   runOnReadyRestart: no
   # Command to run when the stream is not available anymore.
   # Environment variables are the same of runOnReady.
-  runOnNotReady:
+  runOnNotReady: 
 
   # Command to run when a client starts reading.
   # This is terminated with SIGINT when a client stops reading.
@@ -699,25 +714,26 @@ pathDefaults:
 # for example "~^(test1|test2)$" will match both "test1" and "test2",
 # for example "~^prefix" will match all paths that start with "prefix".
 paths:
+
   # example:
-  # my_camera:
-  #   source: rtsp://my_camera
+  # "121212":
+  #   source: rtsp://admin:12345678@10.0.0.4:554/live/main/
 
   # Settings under path "all_others" are applied to all paths that
   # do not match another entry.
   all_others:
 grpc:
   use : no
-  grpcAddress: 
+  grpcAddress: 192.168.250.40
   grpcPort: 8080
-  serverName: 
+  serverName: l3
   useCodeMPAttribute: no
 
 lossСatcher:
   use : no
-  grpcAddress: 
+  grpcAddress: 192.168.250.40
   grpcPort: 8085
-  serverName: 
+  serverName: l3
 
 ###############################################
 # Database settings
@@ -725,40 +741,40 @@ database:
   # Use database or not (use PostgreSQL)
   use: no
   # Database address
-  dbAddress: 
+  dbAddress: 192.168.250.40
   # Database port
   dbPort: 5432
   # Database name
-  dbName: 
+  dbName: l6_test
   # Database user
-  dbUser: 
+  dbUser: major
   # Database password
-  dbPassword: ""
+  dbPassword: "980601"
   # Maximum number of connections
   maxConnections: 1
   # SQL queryes
   sql:
     # SQL query to insert video record
-    insertPath: 
+    insertPath: "INSERT INTO \"video_record\" (\"code_mp_cam\", \"path_record\", \"file_name\", \"date_time_start\", \"file_size\", \"date_time_end\", \"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
     # Specifies the request to be executed with the useDbPathStream: yes, and PathStream are unequal to 0    
-    insertPathStream: 
+    insertPathStream: "INSERT INTO \"VideoRecord\" (\"pathStream\", \"pathRecord\", \"fileName\",\"recordTime\", \"file_size\", \"end_record_time\",\"id_storage\") VALUES ('%s', '%s','%s','%s','%s','%s', '%s')"
    # The request to get Status_record and PathStream is executed when useDbPathStream: yes
-    getPathStream: 
+    getPathStream: "SELECT mp.\"Status_record\", mp.\"codeMP\" FROM \"public\".\"MountPlace\" as mp, \"public\".\"DataDevice\" as dd WHERE dd.\"codeMP\" = mp.\"codeMP\" AND dd.\"UID\"  = '%s'"
     # equest to get a code_mp_contract
-    getCodeMP: 
+    getCodeMP: "SELECT \"code_mp_contract\" FROM \"public\".\"mount_place_cam\" WHERE \"code_mp_cam\" = '%s'"
     # request to get a list of discs to burn
-    getDrives: 
+    getDrives: "SELECT sd.\"id_storage\", sd.\"mount_point\" FROM \"storage_disks\" sd,\"storage_servers\" ss WHERE sd.\"id_storage\"=ss.\"id\" AND ss.\"state\"='3' AND sd.\"state\"='4' AND sd.\"status\"='4'   ORDER BY sd.\"mount_point\""
     # request to update stream statuses
-    updateStatus: 
+    updateStatus: "UPDATE public.\"VideoPublic\" SET \"StatusPublic\"='%d' WHERE \"Stream\"='%s'"
     #
     # for l3
-    getDataForProxy: 
+    getDataForProxy: "SELECT vp.\"Stream\", vs.\"srv_address_dvc\" FROM \"VideoPublic\" vp, \"DataDevice\" dd, \"MountPlace\" mp, \"video_servers\" vs WHERE vp.\"Stream\" = dd.\"UID\" AND dd.\"codeMP\" = mp.\"codeMP\" AND mp.\"id_video_servers\" = vs.\"id\" AND vp.\"StatePublic\" = '1' LIMIT 20"
     #request to get Status_record for all streams
-    getStatus_records: 
+    getStatus_records: "SELECT mp.\"Status_record\", dd.\"UID\" FROM \"public\".\"MountPlace\" as mp, \"public\".\"DataDevice\" as dd WHERE dd.\"codeMP\" = mp.\"codeMP\" AND dd.\"UID\" in "
 
 switches: 
   # Enable/disable discs from the database for recording
-  getDrives: no
+  getDrives: yes
   # Enable/disable updating the status of a stream in the database
   useUpdaterStatus: no
   #L3
@@ -772,7 +788,7 @@ switches:
   pass: 
   #l6
   # Enable/disable the code_mp_contract field to create a record path
-  useCodeMP_Contract: no
+  useCodeMP_Contract: yes
   # Specifies the path and file name to save the file with outstanding sql queries
   fileSQLErr: ./sqlerr
   # Timeout for the sql query

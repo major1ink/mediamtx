@@ -30,13 +30,16 @@ func (db *Database) setDefaults() {
 	db.DbName = "postgres"
 	db.DbUser = "postgres"
 	db.DbPassword = ""
-	db.MaxConnections = 0
+	db.MaxConnections = 1
 	db.Sql = Sql{
 		InsertPath:    "",
+		InsertPathStream: "",
 		GetPathStream: "",
 		GetDrives:     "",
 		GetCodeMP:     "",
 		UpdateStatus:  "",
+		GetDataForProxy: "",
+		GetStatus_records: "",
 	}
 
 }
