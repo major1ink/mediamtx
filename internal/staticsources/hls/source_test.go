@@ -40,7 +40,7 @@ func TestSource(t *testing.T) {
 	router := gin.New()
 
 	router.GET("/stream.m3u8", func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Content-Type", `application/vnd.apple.mpegurl`)
+		ctx.Header("Content-Type", `application/vnd.apple.mpegurl`)
 		ctx.Writer.Write([]byte("#EXTM3U\n" +
 			"#EXT-X-VERSION:3\n" +
 			"#EXT-X-ALLOW-CACHE:NO\n" +
@@ -56,14 +56,14 @@ func TestSource(t *testing.T) {
 	})
 
 	router.GET("/segment1.ts", func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Content-Type", `video/MP2T`)
+		ctx.Header("Content-Type", `video/MP2T`)
 
 		w := mpegts.NewWriter(ctx.Writer, tracks)
 
 		err := w.WriteMPEG4Audio(track2, 1*90000, [][]byte{{1, 2, 3, 4}})
 		require.NoError(t, err)
 
-		err = w.WriteH264(track1, 2*90000, 2*90000, true, [][]byte{
+		err = w.WriteH2642(track1, 2*90000, 2*90000, [][]byte{
 			{7, 1, 2, 3}, // SPS
 			{8},          // PPS
 		})
@@ -71,7 +71,7 @@ func TestSource(t *testing.T) {
 	})
 
 	router.GET("/segment2.ts", func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Content-Type", `video/MP2T`)
+		ctx.Header("Content-Type", `video/MP2T`)
 
 		w := mpegts.NewWriter(ctx.Writer, tracks)
 

@@ -69,13 +69,12 @@ type Server struct {
 	AlwaysRemux     bool
 	Variant         conf.HLSVariant
 	SegmentCount    int
-	SegmentDuration conf.StringDuration
-	PartDuration    conf.StringDuration
+	SegmentDuration conf.Duration
+	PartDuration    conf.Duration
 	SegmentMaxSize  conf.StringSize
 	Directory       string
-	ReadTimeout     conf.StringDuration
-	WriteQueueSize  int
-	MuxerCloseAfter conf.StringDuration
+	ReadTimeout     conf.Duration
+	MuxerCloseAfter conf.Duration
 	PathManager     serverPathManager
 	Parent          serverParent
 
@@ -227,7 +226,6 @@ func (s *Server) createMuxer(pathName string, remoteAddr string, query string) *
 		partDuration:    s.PartDuration,
 		segmentMaxSize:  s.SegmentMaxSize,
 		directory:       s.Directory,
-		writeQueueSize:  s.WriteQueueSize,
 		wg:              &s.wg,
 		pathName:        pathName,
 		pathManager:     s.PathManager,

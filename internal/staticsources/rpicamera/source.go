@@ -14,6 +14,12 @@ import (
 	"github.com/bluenviron/mediamtx/internal/unit"
 )
 
+func multiplyAndDivide(v, m, d int64) int64 {
+	secs := v / d
+	dec := v % d
+	return (secs*m + dec*m/d)
+}
+
 func paramsFromConf(logLevel conf.LogLevel, cnf *conf.Path) params {
 	return params{
 		LogLevel: func() string {
@@ -105,11 +111,17 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 		stream.WriteUnit(medi, medi.Formats[0], &unit.H264{
 			Base: unit.Base{
 				NTP: time.Now(),
-				PTS: dts,
+				PTS: multiplyAndDivide(int64(dts), 90000, int64(time.Second)),
 			},
 			AU: au,
 		})
 	}
+
+	defer func() {
+		if stream != nil {
+			s.Parent.SetNotReady(defs.PathSourceStaticSetNotReadyReq{})
+		}
+	}()
 
 	cam := &camera{
 		Params: paramsFromConf(s.LogLevel, params.Conf),
@@ -121,14 +133,16 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	}
 	defer cam.close()
 
-	defer func() {
-		if stream != nil {
-			s.Parent.SetNotReady(defs.PathSourceStaticSetNotReadyReq{})
-		}
+	cameraErr := make(chan error)
+	go func() {
+		cameraErr <- cam.wait()
 	}()
 
 	for {
 		select {
+		case err := <-cameraErr:
+			return err
+
 		case cnf := <-params.ReloadConf:
 			cam.reloadParams(paramsFromConf(s.LogLevel, cnf))
 

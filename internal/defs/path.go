@@ -2,13 +2,9 @@ package defs
 
 import (
 	"fmt"
-	"net"
 
-	"github.com/bluenviron/gortsplib/v4/pkg/base"
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
-	"github.com/google/uuid"
 
-	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/stream"
@@ -33,44 +29,6 @@ type Path interface {
 	StopPublisher(req PathStopPublisherReq)
 	RemovePublisher(req PathRemovePublisherReq)
 	RemoveReader(req PathRemoveReaderReq)
-}
-
-// PathAccessRequest is an access request.
-type PathAccessRequest struct {
-	Name     string
-	Query    string
-	Publish  bool
-	SkipAuth bool
-
-	// only if skipAuth = false
-	IP          net.IP
-	User        string
-	Pass        string
-	Proto       auth.Protocol
-	ID          *uuid.UUID
-	RTSPRequest *base.Request
-	RTSPNonce   string
-}
-
-// ToAuthRequest converts a path access request into an authentication request.
-func (r *PathAccessRequest) ToAuthRequest() *auth.Request {
-	return &auth.Request{
-		User: r.User,
-		Pass: r.Pass,
-		IP:   r.IP,
-		Action: func() conf.AuthAction {
-			if r.Publish {
-				return conf.AuthActionPublish
-			}
-			return conf.AuthActionRead
-		}(),
-		Path:        r.Name,
-		Protocol:    r.Proto,
-		ID:          r.ID,
-		Query:       r.Query,
-		RTSPRequest: r.RTSPRequest,
-		RTSPNonce:   r.RTSPNonce,
-	}
 }
 
 // PathFindPathConfRes contains the response of FindPathConf().

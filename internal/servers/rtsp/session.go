@@ -25,13 +25,13 @@ import (
 
 type session struct {
 	isTLS           bool
-	protocols       map[conf.Protocol]struct{}
+	transports      conf.RTSPTransports
 	rsession        *gortsplib.ServerSession
 	rconn           *gortsplib.ServerConn
 	rserver         *gortsplib.Server
 	externalCmdPool *externalcmd.Pool
 	pathManager     serverPathManager
-	parent          *Server
+	parent          logger.Writer
 
 	uuid            uuid.UUID
 	created         time.Time
@@ -111,21 +111,24 @@ func (s *session) onAnnounce(c *conn, ctx *gortsplib.ServerHandlerOnAnnounceCtx)
 		}
 	}
 
+	req := defs.PathAccessRequest{
+		Name:        ctx.Path,
+		Query:       ctx.Query,
+		Publish:     true,
+		IP:          c.ip(),
+		Proto:       auth.ProtocolRTSP,
+		ID:          &c.uuid,
+		RTSPRequest: ctx.Request,
+		RTSPNonce:   c.authNonce,
+	}
+	req.FillFromRTSPRequest(ctx.Request)
+
 	path, err := s.pathManager.AddPublisher(defs.PathAddPublisherReq{
-		Author: s,
-		AccessRequest: defs.PathAccessRequest{
-			Name:        ctx.Path,
-			Query:       ctx.Query,
-			Publish:     true,
-			IP:          c.ip(),
-			Proto:       auth.ProtocolRTSP,
-			ID:          &c.uuid,
-			RTSPRequest: ctx.Request,
-			RTSPNonce:   c.authNonce,
-		},
+		Author:        s,
+		AccessRequest: req,
 	})
 	if err != nil {
-		var terr auth.Error
+		var terr *auth.Error
 		if errors.As(err, &terr) {
 			return c.handleAuthError(terr)
 		}
@@ -163,7 +166,7 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 	// we have only to handle the case in which the transport protocol is TCP
 	// and it is disabled.
 	if ctx.Transport == gortsplib.TransportTCP {
-		if _, ok := s.protocols[conf.Protocol(gortsplib.TransportTCP)]; !ok {
+		if _, ok := s.transports[gortsplib.TransportTCP]; !ok {
 			return &base.Response{
 				StatusCode: base.StatusUnsupportedTransport,
 			}, nil, nil
@@ -182,20 +185,23 @@ func (s *session) onSetup(c *conn, ctx *gortsplib.ServerHandlerOnSetupCtx,
 			}
 		}
 
+		req := defs.PathAccessRequest{
+			Name:        ctx.Path,
+			Query:       ctx.Query,
+			IP:          c.ip(),
+			Proto:       auth.ProtocolRTSP,
+			ID:          &c.uuid,
+			RTSPRequest: ctx.Request,
+			RTSPNonce:   c.authNonce,
+		}
+		req.FillFromRTSPRequest(ctx.Request)
+
 		path, stream, err := s.pathManager.AddReader(defs.PathAddReaderReq{
-			Author: s,
-			AccessRequest: defs.PathAccessRequest{
-				Name:        ctx.Path,
-				Query:       ctx.Query,
-				IP:          c.ip(),
-				Proto:       auth.ProtocolRTSP,
-				ID:          &c.uuid,
-				RTSPRequest: ctx.Request,
-				RTSPNonce:   c.authNonce,
-			},
+			Author:        s,
+			AccessRequest: req,
 		})
 		if err != nil {
-			var terr auth.Error
+			var terr *auth.Error
 			if errors.As(err, &terr) {
 				res, err2 := c.handleAuthError(terr)
 				return res, nil, err2
@@ -292,7 +298,7 @@ func (s *session) onRecord(_ *gortsplib.ServerHandlerOnRecordCtx) (*base.Respons
 			cforma := forma
 
 			s.rsession.OnPacketRTP(cmedi, cforma, func(pkt *rtp.Packet) {
-				pts, ok := s.rsession.PacketPTS(cmedi, pkt)
+				pts, ok := s.rsession.PacketPTS2(cmedi, pkt)
 				if !ok {
 					return
 				}
@@ -372,6 +378,11 @@ func (s *session) apiItem() *defs.APIRTSPSession {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	stats := s.rsession.Stats()
+	if stats == nil {
+		stats = &gortsplib.StatsSession{}
+	}
+
 	return &defs.APIRTSPSession{
 		ID:         s.uuid,
 		Created:    s.created,
@@ -397,7 +408,15 @@ func (s *session) apiItem() *defs.APIRTSPSession {
 			v := s.transport.String()
 			return &v
 		}(),
-		BytesReceived: s.rsession.BytesReceived(),
-		BytesSent:     s.rsession.BytesSent(),
+		BytesReceived:       stats.BytesReceived,
+		BytesSent:           stats.BytesSent,
+		RTPPacketsReceived:  stats.RTPPacketsReceived,
+		RTPPacketsSent:      stats.RTPPacketsSent,
+		RTPPacketsLost:      stats.RTPPacketsLost,
+		RTPPacketsInError:   stats.RTPPacketsInError,
+		RTPPacketsJitter:    stats.RTPPacketsJitter,
+		RTCPPacketsReceived: stats.RTCPPacketsReceived,
+		RTCPPacketsSent:     stats.RTCPPacketsSent,
+		RTCPPacketsInError:  stats.RTCPPacketsInError,
 	}
 }

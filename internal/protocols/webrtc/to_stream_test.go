@@ -10,9 +10,19 @@ import (
 	"github.com/bluenviron/mediamtx/internal/stream"
 	"github.com/bluenviron/mediamtx/internal/test"
 	"github.com/pion/rtp"
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 	"github.com/stretchr/testify/require"
 )
+
+func TestToStreamNoSupportedCodecs(t *testing.T) {
+	pc := &PeerConnection{}
+	_, err := ToStream(pc, nil)
+	require.Equal(t, errNoSupportedCodecsTo, err)
+}
+
+// this is impossible to test since unsupported tracks cause an error
+// as they are not included inside incomingVideoCodecs or incomingAudioCodecs
+// func TestToStreamSkipUnsupportedTracks(t *testing.T)
 
 var toFromStreamCases = []struct {
 	name       string
@@ -62,10 +72,13 @@ var toFromStreamCases = []struct {
 	},
 	{
 		"h265",
-		nil,
+		&format.H265{
+			PayloadTyp: 96,
+		},
 		webrtc.RTPCodecCapability{
-			MimeType:  "video/H265",
-			ClockRate: 90000,
+			MimeType:    "video/H265",
+			ClockRate:   90000,
+			SDPFmtpLine: "level-id=93;profile-id=1;tier-flag=0;tx-mode=SRST",
 		},
 		&format.H265{
 			PayloadTyp: 96,
@@ -323,8 +336,8 @@ func TestToStream(t *testing.T) {
 	for _, ca := range toFromStreamCases {
 		t.Run(ca.name, func(t *testing.T) {
 			pc1 := &PeerConnection{
-				HandshakeTimeout:   conf.StringDuration(10 * time.Second),
-				TrackGatherTimeout: conf.StringDuration(2 * time.Second),
+				HandshakeTimeout:   conf.Duration(10 * time.Second),
+				TrackGatherTimeout: conf.Duration(2 * time.Second),
 				LocalRandomUDP:     true,
 				IPsFromInterfaces:  true,
 				Publish:            true,
@@ -338,8 +351,8 @@ func TestToStream(t *testing.T) {
 			defer pc1.Close()
 
 			pc2 := &PeerConnection{
-				HandshakeTimeout:   conf.StringDuration(10 * time.Second),
-				TrackGatherTimeout: conf.StringDuration(2 * time.Second),
+				HandshakeTimeout:   conf.Duration(10 * time.Second),
+				TrackGatherTimeout: conf.Duration(2 * time.Second),
 				LocalRandomUDP:     true,
 				IPsFromInterfaces:  true,
 				Publish:            false,
@@ -365,16 +378,16 @@ func TestToStream(t *testing.T) {
 						err2 := pc2.AddRemoteCandidate(cnd)
 						require.NoError(t, err2)
 
-					case <-pc1.Connected():
+					case <-pc1.Ready():
 						return
 					}
 				}
 			}()
 
-			err = pc1.WaitUntilConnected(context.Background())
+			err = pc1.WaitUntilReady(context.Background())
 			require.NoError(t, err)
 
-			err = pc2.WaitUntilConnected(context.Background())
+			err = pc2.WaitUntilReady(context.Background())
 			require.NoError(t, err)
 
 			err = pc1.OutgoingTracks[0].WriteRTP(&rtp.Packet{
@@ -392,10 +405,6 @@ func TestToStream(t *testing.T) {
 
 			_, err = pc2.GatherIncomingTracks(context.Background())
 			require.NoError(t, err)
-
-			/*exp := ca.webrtcOut
-			exp.RTCPFeedback = inc[0].track.Codec().RTPCodecCapability.RTCPFeedback
-			require.Equal(t, exp, inc[0].track.Codec().RTPCodecCapability)*/
 
 			var stream *stream.Stream
 			medias, err := ToStream(pc2, &stream)

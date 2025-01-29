@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pion/ice/v2"
+	"github.com/pion/ice/v4"
 	"github.com/pion/interceptor"
 	"github.com/pion/sdp/v3"
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/logger"
@@ -56,7 +56,7 @@ func TracksAreValid(medias []*sdp.MediaDescription) error {
 	}
 
 	if !videoTrack && !audioTrack {
-		return fmt.Errorf("no valid tracks count")
+		return fmt.Errorf("no valid tracks found")
 	}
 
 	return nil
@@ -72,8 +72,8 @@ type PeerConnection struct {
 	ICEServers            []webrtc.ICEServer
 	ICEUDPMux             ice.UDPMux
 	ICETCPMux             ice.TCPMux
-	HandshakeTimeout      conf.StringDuration
-	TrackGatherTimeout    conf.StringDuration
+	HandshakeTimeout      conf.Duration
+	TrackGatherTimeout    conf.Duration
 	LocalRandomUDP        bool
 	IPsFromInterfaces     bool
 	IPsFromInterfacesList []string
@@ -85,8 +85,8 @@ type PeerConnection struct {
 	wr                *webrtc.PeerConnection
 	stateChangeMutex  sync.Mutex
 	newLocalCandidate chan *webrtc.ICECandidateInit
-	connected         chan struct{}
-	disconnected      chan struct{}
+	ready             chan struct{}
+	failed            chan struct{}
 	done              chan struct{}
 	gatheringDone     chan struct{}
 	incomingTrack     chan trackRecvPair
@@ -99,6 +99,8 @@ type PeerConnection struct {
 func (co *PeerConnection) Start() error {
 	settingsEngine := webrtc.SettingEngine{}
 
+	settingsEngine.SetIncludeLoopbackCandidate(true)
+
 	settingsEngine.SetInterfaceFilter(func(iface string) bool {
 		return co.IPsFromInterfaces && (len(co.IPsFromInterfacesList) == 0 ||
 			stringInSlice(iface, co.IPsFromInterfacesList))
@@ -107,21 +109,30 @@ func (co *PeerConnection) Start() error {
 	settingsEngine.SetAdditionalHosts(co.AdditionalHosts)
 
 	var networkTypes []webrtc.NetworkType
+	enableUDP := false
 
-	// always enable UDP in order to support STUN/TURN
-	networkTypes = append(networkTypes, webrtc.NetworkTypeUDP4)
+	// UDP is always needed when there's a STUN/TURN server.
+	if len(co.ICEServers) != 0 {
+		enableUDP = true
+	}
 
 	if co.ICEUDPMux != nil {
+		enableUDP = true
 		settingsEngine.SetICEUDPMux(co.ICEUDPMux)
 	}
 
-	if co.ICETCPMux != nil {
-		settingsEngine.SetICETCPMux(co.ICETCPMux)
-		networkTypes = append(networkTypes, webrtc.NetworkTypeTCP4)
+	if co.LocalRandomUDP {
+		enableUDP = true
+		settingsEngine.SetLocalRandomUDP(true)
 	}
 
-	if co.LocalRandomUDP {
-		settingsEngine.SetICEUDPRandom(true)
+	if co.ICETCPMux != nil {
+		networkTypes = append(networkTypes, webrtc.NetworkTypeTCP4)
+		settingsEngine.SetICETCPMux(co.ICETCPMux)
+	}
+
+	if enableUDP {
+		networkTypes = append(networkTypes, webrtc.NetworkTypeUDP4)
 	}
 
 	settingsEngine.SetNetworkTypes(networkTypes)
@@ -131,15 +142,31 @@ func (co *PeerConnection) Start() error {
 	if co.Publish {
 		videoSetupped := false
 		audioSetupped := false
+		for _, tr := range co.OutgoingTracks {
+			if tr.isVideo() {
+				videoSetupped = true
+			} else {
+				audioSetupped = true
+			}
+		}
+
+		// When audio is not used, a track has to be present anyway,
+		// otherwise video is not displayed on Firefox and Chrome.
+		if !audioSetupped {
+			co.OutgoingTracks = append(co.OutgoingTracks, &OutgoingTrack{
+				Caps: webrtc.RTPCodecCapability{
+					MimeType:  webrtc.MimeTypePCMU,
+					ClockRate: 8000,
+				},
+			})
+		}
 
 		for _, tr := range co.OutgoingTracks {
 			var codecType webrtc.RTPCodecType
 			if tr.isVideo() {
 				codecType = webrtc.RTPCodecTypeVideo
-				videoSetupped = true
 			} else {
 				codecType = webrtc.RTPCodecTypeAudio
-				audioSetupped = true
 			}
 
 			err := mediaEngine.RegisterCodec(webrtc.RTPCodecParameters{
@@ -151,8 +178,8 @@ func (co *PeerConnection) Start() error {
 			}
 		}
 
-		// always register at least a video and a audio codec
-		// otherwise handshake will fail or audio will be muted on some clients (like Firefox)
+		// When video is not used, a track must not be added but a codec has to present.
+		// Otherwise audio is muted on Firefox and Chrome.
 		if !videoSetupped {
 			err := mediaEngine.RegisterCodec(webrtc.RTPCodecParameters{
 				RTPCodecCapability: webrtc.RTPCodecCapability{
@@ -161,18 +188,6 @@ func (co *PeerConnection) Start() error {
 				},
 				PayloadType: 96,
 			}, webrtc.RTPCodecTypeVideo)
-			if err != nil {
-				return err
-			}
-		}
-		if !audioSetupped {
-			err := mediaEngine.RegisterCodec(webrtc.RTPCodecParameters{
-				RTPCodecCapability: webrtc.RTPCodecCapability{
-					MimeType:  webrtc.MimeTypePCMU,
-					ClockRate: 8000,
-				},
-				PayloadType: 0,
-			}, webrtc.RTPCodecTypeAudio)
 			if err != nil {
 				return err
 			}
@@ -213,8 +228,8 @@ func (co *PeerConnection) Start() error {
 	}
 
 	co.newLocalCandidate = make(chan *webrtc.ICECandidateInit)
-	co.connected = make(chan struct{})
-	co.disconnected = make(chan struct{})
+	co.ready = make(chan struct{})
+	co.failed = make(chan struct{})
 	co.done = make(chan struct{})
 	co.gatheringDone = make(chan struct{})
 	co.incomingTrack = make(chan trackRecvPair)
@@ -230,7 +245,7 @@ func (co *PeerConnection) Start() error {
 			}
 		}
 	} else {
-		_, err = co.wr.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo, webrtc.RtpTransceiverInit{
+		_, err = co.wr.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo, webrtc.RTPTransceiverInit{
 			Direction: webrtc.RTPTransceiverDirectionRecvonly,
 		})
 		if err != nil {
@@ -238,7 +253,7 @@ func (co *PeerConnection) Start() error {
 			return err
 		}
 
-		_, err = co.wr.AddTransceiverFromKind(webrtc.RTPCodecTypeAudio, webrtc.RtpTransceiverInit{
+		_, err = co.wr.AddTransceiverFromKind(webrtc.RTPCodecTypeAudio, webrtc.RTPTransceiverInit{
 			Direction: webrtc.RTPTransceiverDirectionRecvonly,
 		})
 		if err != nil {
@@ -268,13 +283,22 @@ func (co *PeerConnection) Start() error {
 
 		switch state {
 		case webrtc.PeerConnectionStateConnected:
+			// PeerConnectionStateConnected can arrive twice, since state can
+			// switch from "disconnected" to "connected".
+			// contrarily, we're interested into emitting "ready" once.
+			select {
+			case <-co.ready:
+				return
+			default:
+			}
+
 			co.Log.Log(logger.Info, "peer connection established, local candidate: %v, remote candidate: %v",
 				co.LocalCandidate(), co.RemoteCandidate())
 
-			close(co.connected)
+			close(co.ready)
 
-		case webrtc.PeerConnectionStateDisconnected:
-			close(co.disconnected)
+		case webrtc.PeerConnectionStateFailed:
+			close(co.failed)
 
 		case webrtc.PeerConnectionStateClosed:
 			close(co.done)
@@ -286,7 +310,7 @@ func (co *PeerConnection) Start() error {
 			v := i.ToJSON()
 			select {
 			case co.newLocalCandidate <- &v:
-			case <-co.connected:
+			case <-co.ready:
 			case <-co.ctx.Done():
 			}
 		} else {
@@ -372,8 +396,8 @@ func (co *PeerConnection) waitGatheringDone(ctx context.Context) error {
 	}
 }
 
-// WaitUntilConnected waits until connection is established.
-func (co *PeerConnection) WaitUntilConnected(
+// WaitUntilReady waits until connection is established.
+func (co *PeerConnection) WaitUntilReady(
 	ctx context.Context,
 ) error {
 	t := time.NewTimer(time.Duration(co.HandshakeTimeout))
@@ -385,7 +409,7 @@ outer:
 		case <-t.C:
 			return fmt.Errorf("deadline exceeded while waiting connection")
 
-		case <-co.connected:
+		case <-co.ready:
 			break outer
 
 		case <-ctx.Done():
@@ -428,7 +452,7 @@ func (co *PeerConnection) GatherIncomingTracks(ctx context.Context) ([]*Incoming
 				return co.incomingTracks, nil
 			}
 
-		case <-co.Disconnected():
+		case <-co.Failed():
 			return nil, fmt.Errorf("peer connection closed")
 
 		case <-ctx.Done():
@@ -437,14 +461,14 @@ func (co *PeerConnection) GatherIncomingTracks(ctx context.Context) ([]*Incoming
 	}
 }
 
-// Connected returns when connected.
-func (co *PeerConnection) Connected() <-chan struct{} {
-	return co.connected
+// Ready returns when ready.
+func (co *PeerConnection) Ready() <-chan struct{} {
+	return co.ready
 }
 
-// Disconnected returns when disconnected.
-func (co *PeerConnection) Disconnected() <-chan struct{} {
-	return co.disconnected
+// Failed returns when failed.
+func (co *PeerConnection) Failed() <-chan struct{} {
+	return co.failed
 }
 
 // NewLocalCandidate returns when there's a new local candidate.

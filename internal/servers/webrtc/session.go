@@ -12,11 +12,10 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/google/uuid"
-	"github.com/pion/ice/v2"
+	"github.com/pion/ice/v4"
 	"github.com/pion/sdp/v3"
-	pwebrtc "github.com/pion/webrtc/v3"
+	pwebrtc "github.com/pion/webrtc/v4"
 
-	"github.com/bluenviron/mediamtx/internal/asyncwriter"
 	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/defs"
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
@@ -35,7 +34,6 @@ func whipOffer(body []byte) *pwebrtc.SessionDescription {
 
 type session struct {
 	parentCtx             context.Context
-	writeQueueSize        int
 	ipsFromInterfaces     bool
 	ipsFromInterfacesList []string
 	additionalHosts       []string
@@ -73,6 +71,7 @@ func (s *session) initialize() {
 	s.Log(logger.Info, "created by %s", s.req.remoteAddr)
 
 	s.wg.Add(1)
+
 	go s.run()
 }
 
@@ -127,28 +126,20 @@ func (s *session) runInner2() (int, error) {
 func (s *session) runPublish() (int, error) {
 	ip, _, _ := net.SplitHostPort(s.req.remoteAddr)
 
+	req := defs.PathAccessRequest{
+		Name:    s.req.pathName,
+		Publish: true,
+		IP:      net.ParseIP(ip),
+		Proto:   auth.ProtocolWebRTC,
+		ID:      &s.uuid,
+	}
+	req.FillFromHTTPRequest(s.req.httpRequest)
+
 	path, err := s.pathManager.AddPublisher(defs.PathAddPublisherReq{
-		Author: s,
-		AccessRequest: defs.PathAccessRequest{
-			Name:    s.req.pathName,
-			Query:   s.req.query,
-			Publish: true,
-			IP:      net.ParseIP(ip),
-			User:    s.req.user,
-			Pass:    s.req.pass,
-			Proto:   auth.ProtocolWebRTC,
-			ID:      &s.uuid,
-		},
+		Author:        s,
+		AccessRequest: req,
 	})
 	if err != nil {
-		var terr auth.Error
-		if errors.As(err, &terr) {
-			// wait some seconds to mitigate brute force attacks
-			<-time.After(auth.PauseAfterError)
-
-			return http.StatusUnauthorized, err
-		}
-
 		return http.StatusBadRequest, err
 	}
 
@@ -204,7 +195,7 @@ func (s *session) runPublish() (int, error) {
 
 	go s.readRemoteCandidates(pc)
 
-	err = pc.WaitUntilConnected(s.ctx)
+	err = pc.WaitUntilReady(s.ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -237,7 +228,7 @@ func (s *session) runPublish() (int, error) {
 	pc.StartReading()
 
 	select {
-	case <-pc.Disconnected():
+	case <-pc.Failed():
 		return 0, fmt.Errorf("peer connection closed")
 
 	case <-s.ctx.Done():
@@ -248,26 +239,19 @@ func (s *session) runPublish() (int, error) {
 func (s *session) runRead() (int, error) {
 	ip, _, _ := net.SplitHostPort(s.req.remoteAddr)
 
+	req := defs.PathAccessRequest{
+		Name:  s.req.pathName,
+		IP:    net.ParseIP(ip),
+		Proto: auth.ProtocolWebRTC,
+		ID:    &s.uuid,
+	}
+	req.FillFromHTTPRequest(s.req.httpRequest)
+
 	path, stream, err := s.pathManager.AddReader(defs.PathAddReaderReq{
-		Author: s,
-		AccessRequest: defs.PathAccessRequest{
-			Name:  s.req.pathName,
-			Query: s.req.query,
-			IP:    net.ParseIP(ip),
-			User:  s.req.user,
-			Pass:  s.req.pass,
-			Proto: auth.ProtocolWebRTC,
-			ID:    &s.uuid,
-		},
+		Author:        s,
+		AccessRequest: req,
 	})
 	if err != nil {
-		var terr1 auth.Error
-		if errors.As(err, &terr1) {
-			// wait some seconds to mitigate brute force attacks
-			<-time.After(auth.PauseAfterError)
-			return http.StatusUnauthorized, err
-		}
-
 		var terr2 defs.PathNoOnePublishingError
 		if errors.As(err, &terr2) {
 			return http.StatusNotFound, err
@@ -283,9 +267,6 @@ func (s *session) runRead() (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	writer := asyncwriter.New(s.writeQueueSize, s)
-	defer stream.RemoveReader(writer)
-
 	pc := &webrtc.PeerConnection{
 		ICEServers:            iceServers,
 		HandshakeTimeout:      s.parent.HandshakeTimeout,
@@ -299,13 +280,14 @@ func (s *session) runRead() (int, error) {
 		Log:                   s,
 	}
 
-	err = webrtc.FromStream(stream, writer, pc)
+	err = webrtc.FromStream(stream, s, pc)
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
 
 	err = pc.Start()
 	if err != nil {
+		stream.RemoveReader(s)
 		return http.StatusBadRequest, err
 	}
 	defer pc.Close()
@@ -314,6 +296,7 @@ func (s *session) runRead() (int, error) {
 
 	answer, err := pc.CreateFullAnswer(s.ctx, offer)
 	if err != nil {
+		stream.RemoveReader(s)
 		return http.StatusBadRequest, err
 	}
 
@@ -321,8 +304,9 @@ func (s *session) runRead() (int, error) {
 
 	go s.readRemoteCandidates(pc)
 
-	err = pc.WaitUntilConnected(s.ctx)
+	err = pc.WaitUntilReady(s.ctx)
 	if err != nil {
+		stream.RemoveReader(s)
 		return 0, err
 	}
 
@@ -331,7 +315,7 @@ func (s *session) runRead() (int, error) {
 	s.mutex.Unlock()
 
 	s.Log(logger.Info, "is reading from path '%s', %s",
-		path.Name(), defs.FormatsInfo(stream.FormatsForReader(writer)))
+		path.Name(), defs.FormatsInfo(stream.ReaderFormats(s)))
 
 	onUnreadHook := hooks.OnRead(hooks.OnReadParams{
 		Logger:          s,
@@ -339,18 +323,18 @@ func (s *session) runRead() (int, error) {
 		Conf:            path.SafeConf(),
 		ExternalCmdEnv:  path.ExternalCmdEnv(),
 		Reader:          s.APIReaderDescribe(),
-		Query:           s.req.query,
+		Query:           s.req.httpRequest.URL.RawQuery,
 	})
 	defer onUnreadHook()
 
-	writer.Start()
-	defer writer.Stop()
+	stream.StartReader(s)
+	defer stream.RemoveReader(s)
 
 	select {
-	case <-pc.Disconnected():
+	case <-pc.Failed():
 		return 0, fmt.Errorf("peer connection closed")
 
-	case err := <-writer.Error():
+	case err := <-stream.ReaderError(s):
 		return 0, err
 
 	case <-s.ctx.Done():
@@ -410,7 +394,7 @@ func (s *session) addCandidates(
 // APIReaderDescribe implements reader.
 func (s *session) APIReaderDescribe() defs.APIPathSourceOrReader {
 	return defs.APIPathSourceOrReader{
-		Type: "webrtcSession",
+		Type: "webRTCSession",
 		ID:   s.uuid.String(),
 	}
 }
@@ -452,7 +436,7 @@ func (s *session) apiItem() *defs.APIWebRTCSession {
 			return defs.APIWebRTCSessionStateRead
 		}(),
 		Path:          s.req.pathName,
-		Query:         s.req.query,
+		Query:         s.req.httpRequest.URL.RawQuery,
 		BytesReceived: bytesReceived,
 		BytesSent:     bytesSent,
 	}

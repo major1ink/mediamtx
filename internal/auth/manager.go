@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/bluenviron/gortsplib/v4/pkg/auth"
-	"github.com/bluenviron/gortsplib/v4/pkg/base"
 	"github.com/bluenviron/gortsplib/v4/pkg/headers"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/golang-jwt/jwt/v5"
@@ -31,41 +29,14 @@ const (
 	jwtRefreshPeriod = 60 * 60 * time.Second
 )
 
-// Protocol is a protocol.
-type Protocol string
-
-// protocols.
-const (
-	ProtocolRTSP   Protocol = "rtsp"
-	ProtocolRTMP   Protocol = "rtmp"
-	ProtocolHLS    Protocol = "hls"
-	ProtocolWebRTC Protocol = "webrtc"
-	ProtocolSRT    Protocol = "srt"
-)
-
-// Request is an authentication request.
-type Request struct {
-	User   string
-	Pass   string
-	IP     net.IP
-	Action conf.AuthAction
-
-	// only for ActionPublish, ActionRead, ActionPlayback
-	Path        string
-	Protocol    Protocol
-	ID          *uuid.UUID
-	Query       string
-	RTSPRequest *base.Request
-	RTSPNonce   string
-}
-
 // Error is a authentication error.
 type Error struct {
-	Message string
+	Message        string
+	AskCredentials bool
 }
 
 // Error implements the error interface.
-func (e Error) Error() string {
+func (e *Error) Error() string {
 	return "authentication failed: " + e.Message
 }
 
@@ -154,42 +125,39 @@ func (m *Manager) ReloadInternalUsers(u []conf.AuthInternalUser) {
 
 // Authenticate authenticates a request.
 func (m *Manager) Authenticate(req *Request) error {
-	err := m.authenticateInner(req)
-	if err != nil {
-		return Error{Message: err.Error()}
-	}
-	return nil
-}
-
-func (m *Manager) authenticateInner(req *Request) error {
-	// if this is a RTSP request, fill username and password
-	var rtspAuthHeader headers.Authorization
-
-	if req.RTSPRequest != nil {
-		err := rtspAuthHeader.Unmarshal(req.RTSPRequest.Header["Authorization"])
-		if err == nil {
-			if rtspAuthHeader.Method == headers.AuthMethodBasic {
-				req.User = rtspAuthHeader.BasicUser
-				req.Pass = rtspAuthHeader.BasicPass
-			} else { // digest
-				req.User = rtspAuthHeader.Username
-			}
-		}
-	}
+	var err error
 
 	switch m.Method {
 	case conf.AuthMethodInternal:
-		return m.authenticateInternal(req, &rtspAuthHeader)
+		err = m.authenticateInternal(req)
 
 	case conf.AuthMethodHTTP:
-		return m.authenticateHTTP(req)
+		err = m.authenticateHTTP(req)
 
 	default:
-		return m.authenticateJWT(req)
+		err = m.authenticateJWT(req)
 	}
+
+	if err != nil {
+		return &Error{
+			Message:        err.Error(),
+			AskCredentials: (req.User == "" && req.Pass == ""),
+		}
+	}
+
+	return nil
 }
 
-func (m *Manager) authenticateInternal(req *Request, rtspAuthHeader *headers.Authorization) error {
+func (m *Manager) authenticateInternal(req *Request) error {
+	var rtspAuthHeader *headers.Authorization
+	if req.RTSPRequest != nil {
+		var tmp headers.Authorization
+		err := tmp.Unmarshal(req.RTSPRequest.Header["Authorization"])
+		if err == nil {
+			rtspAuthHeader = &tmp
+		}
+	}
+
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 
@@ -220,7 +188,7 @@ func (m *Manager) authenticateWithUser(
 	}
 
 	if u.User != "any" {
-		if req.RTSPRequest != nil && rtspAuthHeader.Method == headers.AuthMethodDigest {
+		if req.RTSPRequest != nil && rtspAuthHeader != nil && rtspAuthHeader.Method == headers.AuthMethodDigest {
 			err := auth.Validate(
 				req.RTSPRequest,
 				string(u.User),

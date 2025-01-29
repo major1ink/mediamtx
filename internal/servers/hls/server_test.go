@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bluenviron/gohlslib"
-	"github.com/bluenviron/gohlslib/pkg/codecs"
+	"github.com/bluenviron/gohlslib/v2"
+	"github.com/bluenviron/gohlslib/v2/pkg/codecs"
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
@@ -24,7 +24,7 @@ import (
 type dummyPath struct{}
 
 func (pa *dummyPath) Name() string {
-	return "mystream"
+	return "teststream"
 }
 
 func (pa *dummyPath) SafeConf() *conf.Path {
@@ -48,24 +48,11 @@ func (pa *dummyPath) RemovePublisher(_ defs.PathRemovePublisherReq) {
 func (pa *dummyPath) RemoveReader(_ defs.PathRemoveReaderReq) {
 }
 
-type dummyPathManager struct {
-	findPathConf func(req defs.PathFindPathConfReq) (*conf.Path, error)
-	addReader    func(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error)
-}
-
-func (pm *dummyPathManager) FindPathConf(req defs.PathFindPathConfReq) (*conf.Path, error) {
-	return pm.findPathConf(req)
-}
-
-func (pm *dummyPathManager) AddReader(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
-	return pm.addReader(req)
-}
-
 func TestPreflightRequest(t *testing.T) {
 	s := &Server{
 		Address:     "127.0.0.1:8888",
 		AllowOrigin: "*",
-		ReadTimeout: conf.StringDuration(10 * time.Second),
+		ReadTimeout: conf.Duration(10 * time.Second),
 		Parent:      test.NilLogger,
 	}
 	err := s.Initialize()
@@ -103,14 +90,12 @@ func TestServerNotFound(t *testing.T) {
 		"always remux on",
 	} {
 		t.Run(ca, func(t *testing.T) {
-			pm := &dummyPathManager{
-				findPathConf: func(req defs.PathFindPathConfReq) (*conf.Path, error) {
+			pm := &test.PathManager{
+				FindPathConfImpl: func(req defs.PathFindPathConfReq) (*conf.Path, error) {
 					require.Equal(t, "nonexisting", req.AccessRequest.Name)
-					require.Equal(t, "myuser", req.AccessRequest.User)
-					require.Equal(t, "mypass", req.AccessRequest.Pass)
 					return &conf.Path{}, nil
 				},
-				addReader: func(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+				AddReaderImpl: func(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
 					require.Equal(t, "nonexisting", req.AccessRequest.Name)
 					return nil, nil, fmt.Errorf("not found")
 				},
@@ -124,14 +109,13 @@ func TestServerNotFound(t *testing.T) {
 				AlwaysRemux:     ca == "always remux on",
 				Variant:         conf.HLSVariant(gohlslib.MuxerVariantMPEGTS),
 				SegmentCount:    7,
-				SegmentDuration: conf.StringDuration(1 * time.Second),
-				PartDuration:    conf.StringDuration(200 * time.Millisecond),
+				SegmentDuration: conf.Duration(1 * time.Second),
+				PartDuration:    conf.Duration(200 * time.Millisecond),
 				SegmentMaxSize:  50 * 1024 * 1024,
 				AllowOrigin:     "",
 				TrustedProxies:  conf.IPNetworks{},
 				Directory:       "",
-				ReadTimeout:     conf.StringDuration(10 * time.Second),
-				WriteQueueSize:  512,
+				ReadTimeout:     conf.Duration(10 * time.Second),
 				PathManager:     pm,
 				Parent:          test.NilLogger,
 			}
@@ -171,6 +155,7 @@ func TestServerRead(t *testing.T) {
 		desc := &description.Session{Medias: []*description.Media{test.MediaH264}}
 
 		str, err := stream.New(
+			512,
 			1460,
 			desc,
 			true,
@@ -178,15 +163,17 @@ func TestServerRead(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		pm := &dummyPathManager{
-			findPathConf: func(req defs.PathFindPathConfReq) (*conf.Path, error) {
-				require.Equal(t, "mystream", req.AccessRequest.Name)
+		pm := &test.PathManager{
+			FindPathConfImpl: func(req defs.PathFindPathConfReq) (*conf.Path, error) {
+				require.Equal(t, "teststream", req.AccessRequest.Name)
+				require.Equal(t, "param=value", req.AccessRequest.Query)
 				require.Equal(t, "myuser", req.AccessRequest.User)
 				require.Equal(t, "mypass", req.AccessRequest.Pass)
 				return &conf.Path{}, nil
 			},
-			addReader: func(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
-				require.Equal(t, "mystream", req.AccessRequest.Name)
+			AddReaderImpl: func(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+				require.Equal(t, "teststream", req.AccessRequest.Name)
+				require.Equal(t, "param=value", req.AccessRequest.Query)
 				return &dummyPath{}, str, nil
 			},
 		}
@@ -199,14 +186,13 @@ func TestServerRead(t *testing.T) {
 			AlwaysRemux:     false,
 			Variant:         conf.HLSVariant(gohlslib.MuxerVariantMPEGTS),
 			SegmentCount:    7,
-			SegmentDuration: conf.StringDuration(1 * time.Second),
-			PartDuration:    conf.StringDuration(200 * time.Millisecond),
+			SegmentDuration: conf.Duration(1 * time.Second),
+			PartDuration:    conf.Duration(200 * time.Millisecond),
 			SegmentMaxSize:  50 * 1024 * 1024,
 			AllowOrigin:     "",
 			TrustedProxies:  conf.IPNetworks{},
 			Directory:       "",
-			ReadTimeout:     conf.StringDuration(10 * time.Second),
-			WriteQueueSize:  512,
+			ReadTimeout:     conf.Duration(10 * time.Second),
 			PathManager:     pm,
 			Parent:          test.NilLogger,
 		}
@@ -215,19 +201,20 @@ func TestServerRead(t *testing.T) {
 		defer s.Close()
 
 		c := &gohlslib.Client{
-			URI: "http://myuser:mypass@127.0.0.1:8888/mystream/index.m3u8",
+			URI: "http://myuser:mypass@127.0.0.1:8888/teststream/index.m3u8?param=value",
 		}
 
 		recv := make(chan struct{})
 
 		c.OnTracks = func(tracks []*gohlslib.Track) error {
 			require.Equal(t, []*gohlslib.Track{{
-				Codec: &codecs.H264{},
+				Codec:     &codecs.H264{},
+				ClockRate: 90000,
 			}}, tracks)
 
-			c.OnDataH26x(tracks[0], func(pts, dts time.Duration, au [][]byte) {
-				require.Equal(t, time.Duration(0), pts)
-				require.Equal(t, time.Duration(0), dts)
+			c.OnDataH26x(tracks[0], func(pts, dts int64, au [][]byte) {
+				require.Equal(t, int64(0), pts)
+				require.Equal(t, int64(0), dts)
 				require.Equal(t, [][]byte{
 					test.FormatH264.SPS,
 					test.FormatH264.PPS,
@@ -241,6 +228,7 @@ func TestServerRead(t *testing.T) {
 
 		err = c.Start()
 		require.NoError(t, err)
+
 		defer func() { <-c.Wait() }()
 		defer c.Close()
 
@@ -250,7 +238,7 @@ func TestServerRead(t *testing.T) {
 				str.WriteUnit(test.MediaH264, test.FormatH264, &unit.H264{
 					Base: unit.Base{
 						NTP: time.Time{},
-						PTS: time.Duration(i) * time.Second,
+						PTS: int64(i) * 90000,
 					},
 					AU: [][]byte{
 						{5, 1}, // IDR
@@ -266,6 +254,7 @@ func TestServerRead(t *testing.T) {
 		desc := &description.Session{Medias: []*description.Media{test.MediaH264}}
 
 		str, err := stream.New(
+			512,
 			1460,
 			desc,
 			true,
@@ -273,15 +262,17 @@ func TestServerRead(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		pm := &dummyPathManager{
-			findPathConf: func(req defs.PathFindPathConfReq) (*conf.Path, error) {
-				require.Equal(t, "mystream", req.AccessRequest.Name)
+		pm := &test.PathManager{
+			FindPathConfImpl: func(req defs.PathFindPathConfReq) (*conf.Path, error) {
+				require.Equal(t, "teststream", req.AccessRequest.Name)
+				require.Equal(t, "param=value", req.AccessRequest.Query)
 				require.Equal(t, "myuser", req.AccessRequest.User)
 				require.Equal(t, "mypass", req.AccessRequest.Pass)
 				return &conf.Path{}, nil
 			},
-			addReader: func(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
-				require.Equal(t, "mystream", req.AccessRequest.Name)
+			AddReaderImpl: func(req defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+				require.Equal(t, "teststream", req.AccessRequest.Name)
+				require.Equal(t, "", req.AccessRequest.Query)
 				return &dummyPath{}, str, nil
 			},
 		}
@@ -294,14 +285,13 @@ func TestServerRead(t *testing.T) {
 			AlwaysRemux:     true,
 			Variant:         conf.HLSVariant(gohlslib.MuxerVariantMPEGTS),
 			SegmentCount:    7,
-			SegmentDuration: conf.StringDuration(1 * time.Second),
-			PartDuration:    conf.StringDuration(200 * time.Millisecond),
+			SegmentDuration: conf.Duration(1 * time.Second),
+			PartDuration:    conf.Duration(200 * time.Millisecond),
 			SegmentMaxSize:  50 * 1024 * 1024,
 			AllowOrigin:     "",
 			TrustedProxies:  conf.IPNetworks{},
 			Directory:       "",
-			ReadTimeout:     conf.StringDuration(10 * time.Second),
-			WriteQueueSize:  512,
+			ReadTimeout:     conf.Duration(10 * time.Second),
 			PathManager:     pm,
 			Parent:          test.NilLogger,
 		}
@@ -311,13 +301,13 @@ func TestServerRead(t *testing.T) {
 
 		s.PathReady(&dummyPath{})
 
-		time.Sleep(100 * time.Millisecond)
+		str.WaitRunningReader()
 
 		for i := 0; i < 4; i++ {
 			str.WriteUnit(test.MediaH264, test.FormatH264, &unit.H264{
 				Base: unit.Base{
 					NTP: time.Time{},
-					PTS: time.Duration(i) * time.Second,
+					PTS: int64(i) * 90000,
 				},
 				AU: [][]byte{
 					{5, 1}, // IDR
@@ -326,19 +316,20 @@ func TestServerRead(t *testing.T) {
 		}
 
 		c := &gohlslib.Client{
-			URI: "http://myuser:mypass@127.0.0.1:8888/mystream/index.m3u8",
+			URI: "http://myuser:mypass@127.0.0.1:8888/teststream/index.m3u8?param=value",
 		}
 
 		recv := make(chan struct{})
 
 		c.OnTracks = func(tracks []*gohlslib.Track) error {
 			require.Equal(t, []*gohlslib.Track{{
-				Codec: &codecs.H264{},
+				Codec:     &codecs.H264{},
+				ClockRate: 90000,
 			}}, tracks)
 
-			c.OnDataH26x(tracks[0], func(pts, dts time.Duration, au [][]byte) {
-				require.Equal(t, time.Duration(0), pts)
-				require.Equal(t, time.Duration(0), dts)
+			c.OnDataH26x(tracks[0], func(pts, dts int64, au [][]byte) {
+				require.Equal(t, int64(0), pts)
+				require.Equal(t, int64(0), dts)
 				require.Equal(t, [][]byte{
 					test.FormatH264.SPS,
 					test.FormatH264.PPS,
@@ -359,102 +350,6 @@ func TestServerRead(t *testing.T) {
 	})
 }
 
-func TestServerReadAuthorizationHeader(t *testing.T) {
-	desc := &description.Session{Medias: []*description.Media{test.MediaH264}}
-
-	str, err := stream.New(
-		1460,
-		desc,
-		true,
-		test.NilLogger,
-	)
-	require.NoError(t, err)
-
-	pm := &dummyPathManager{
-		findPathConf: func(req defs.PathFindPathConfReq) (*conf.Path, error) {
-			require.Equal(t, "jwt=testing", req.AccessRequest.Query)
-			return &conf.Path{}, nil
-		},
-		addReader: func(_ defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
-			return &dummyPath{}, str, nil
-		},
-	}
-
-	s := &Server{
-		Address:         "127.0.0.1:8888",
-		Encryption:      false,
-		ServerKey:       "",
-		ServerCert:      "",
-		AlwaysRemux:     true,
-		Variant:         conf.HLSVariant(gohlslib.MuxerVariantMPEGTS),
-		SegmentCount:    7,
-		SegmentDuration: conf.StringDuration(1 * time.Second),
-		PartDuration:    conf.StringDuration(200 * time.Millisecond),
-		SegmentMaxSize:  50 * 1024 * 1024,
-		AllowOrigin:     "",
-		TrustedProxies:  conf.IPNetworks{},
-		Directory:       "",
-		ReadTimeout:     conf.StringDuration(10 * time.Second),
-		WriteQueueSize:  512,
-		PathManager:     pm,
-		Parent:          test.NilLogger,
-	}
-	err = s.Initialize()
-	require.NoError(t, err)
-	defer s.Close()
-
-	s.PathReady(&dummyPath{})
-
-	time.Sleep(100 * time.Millisecond)
-
-	for i := 0; i < 4; i++ {
-		str.WriteUnit(test.MediaH264, test.FormatH264, &unit.H264{
-			Base: unit.Base{
-				NTP: time.Time{},
-				PTS: time.Duration(i) * time.Second,
-			},
-			AU: [][]byte{
-				{5, 1}, // IDR
-			},
-		})
-	}
-
-	c := &gohlslib.Client{
-		URI: "http://127.0.0.1:8888/mystream/index.m3u8",
-		OnRequest: func(r *http.Request) {
-			r.Header.Set("Authorization", "Bearer testing")
-		},
-	}
-
-	recv := make(chan struct{})
-
-	c.OnTracks = func(tracks []*gohlslib.Track) error {
-		require.Equal(t, []*gohlslib.Track{{
-			Codec: &codecs.H264{},
-		}}, tracks)
-
-		c.OnDataH26x(tracks[0], func(pts, dts time.Duration, au [][]byte) {
-			require.Equal(t, time.Duration(0), pts)
-			require.Equal(t, time.Duration(0), dts)
-			require.Equal(t, [][]byte{
-				test.FormatH264.SPS,
-				test.FormatH264.PPS,
-				{5, 1},
-			}, au)
-			close(recv)
-		})
-
-		return nil
-	}
-
-	err = c.Start()
-	require.NoError(t, err)
-	defer func() { <-c.Wait() }()
-	defer c.Close()
-
-	<-recv
-}
-
 func TestDirectory(t *testing.T) {
 	dir, err := os.MkdirTemp("", "mediamtx-playback")
 	require.NoError(t, err)
@@ -463,6 +358,7 @@ func TestDirectory(t *testing.T) {
 	desc := &description.Session{Medias: []*description.Media{test.MediaH264}}
 
 	str, err := stream.New(
+		512,
 		1460,
 		desc,
 		true,
@@ -470,8 +366,8 @@ func TestDirectory(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	pm := &dummyPathManager{
-		addReader: func(_ defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
+	pm := &test.PathManager{
+		AddReaderImpl: func(_ defs.PathAddReaderReq) (defs.Path, *stream.Stream, error) {
 			return &dummyPath{}, str, nil
 		},
 	}
@@ -484,14 +380,13 @@ func TestDirectory(t *testing.T) {
 		AlwaysRemux:     true,
 		Variant:         conf.HLSVariant(gohlslib.MuxerVariantMPEGTS),
 		SegmentCount:    7,
-		SegmentDuration: conf.StringDuration(1 * time.Second),
-		PartDuration:    conf.StringDuration(200 * time.Millisecond),
+		SegmentDuration: conf.Duration(1 * time.Second),
+		PartDuration:    conf.Duration(200 * time.Millisecond),
 		SegmentMaxSize:  50 * 1024 * 1024,
 		AllowOrigin:     "",
 		TrustedProxies:  conf.IPNetworks{},
 		Directory:       filepath.Join(dir, "mydir"),
-		ReadTimeout:     conf.StringDuration(10 * time.Second),
-		WriteQueueSize:  512,
+		ReadTimeout:     conf.Duration(10 * time.Second),
 		PathManager:     pm,
 		Parent:          test.NilLogger,
 	}
@@ -503,6 +398,6 @@ func TestDirectory(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	_, err = os.Stat(filepath.Join(dir, "mydir", "mystream"))
+	_, err = os.Stat(filepath.Join(dir, "mydir", "teststream"))
 	require.NoError(t, err)
 }

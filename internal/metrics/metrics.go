@@ -48,11 +48,11 @@ type Metrics struct {
 	ServerCert     string
 	AllowOrigin    string
 	TrustedProxies conf.IPNetworks
-	ReadTimeout    conf.StringDuration
+	ReadTimeout    conf.Duration
 	AuthManager    metricsAuthManager
 	Parent         metricsParent
 
-	httpServer   *httpp.WrappedServer
+	httpServer   *httpp.Server
 	mutex        sync.Mutex
 	pathManager  api.PathManager
 	rtspServer   api.RTSPServer
@@ -68,11 +68,15 @@ type Metrics struct {
 func (m *Metrics) Initialize() error {
 	router := gin.New()
 	router.SetTrustedProxies(m.TrustedProxies.ToTrustedProxies()) //nolint:errcheck
-	router.NoRoute(m.onRequest)
+
+	router.Use(m.middlewareOrigin)
+	router.Use(m.middlewareAuth)
+
+	router.GET("/metrics", m.onMetrics)
 
 	network, address := restrictnetwork.Restrict("tcp", m.Address)
 
-	m.httpServer = &httpp.WrappedServer{
+	m.httpServer = &httpp.Server{
 		Network:     network,
 		Address:     address,
 		ReadTimeout: time.Duration(m.ReadTimeout),
@@ -103,34 +107,30 @@ func (m *Metrics) Log(level logger.Level, format string, args ...interface{}) {
 	m.Parent.Log(level, "[metrics] "+format, args...)
 }
 
-func (m *Metrics) onRequest(ctx *gin.Context) {
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", m.AllowOrigin)
-	ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+func (m *Metrics) middlewareOrigin(ctx *gin.Context) {
+	ctx.Header("Access-Control-Allow-Origin", m.AllowOrigin)
+	ctx.Header("Access-Control-Allow-Credentials", "true")
 
 	// preflight requests
 	if ctx.Request.Method == http.MethodOptions &&
 		ctx.Request.Header.Get("Access-Control-Request-Method") != "" {
-		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET")
-		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization")
-		ctx.Writer.WriteHeader(http.StatusNoContent)
+		ctx.Header("Access-Control-Allow-Methods", "OPTIONS, GET")
+		ctx.Header("Access-Control-Allow-Headers", "Authorization")
+		ctx.AbortWithStatus(http.StatusNoContent)
 		return
 	}
+}
 
-	if ctx.Request.URL.Path != "/metrics" || ctx.Request.Method != http.MethodGet {
-		return
-	}
-
-	user, pass, hasCredentials := ctx.Request.BasicAuth()
-
-	err := m.AuthManager.Authenticate(&auth.Request{
-		User:   user,
-		Pass:   pass,
-		Query:  ctx.Request.URL.RawQuery,
+func (m *Metrics) middlewareAuth(ctx *gin.Context) {
+	req := &auth.Request{
 		IP:     net.ParseIP(ctx.ClientIP()),
 		Action: conf.AuthActionMetrics,
-	})
+	}
+	req.FillFromHTTPRequest(ctx.Request)
+
+	err := m.AuthManager.Authenticate(req)
 	if err != nil {
-		if !hasCredentials {
+		if err.(*auth.Error).AskCredentials { //nolint:errorlint
 			ctx.Header("WWW-Authenticate", `Basic realm="mediamtx"`)
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
@@ -139,10 +139,12 @@ func (m *Metrics) onRequest(ctx *gin.Context) {
 		// wait some seconds to mitigate brute force attacks
 		<-time.After(auth.PauseAfterError)
 
-		ctx.Writer.WriteHeader(http.StatusUnauthorized)
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
+}
 
+func (m *Metrics) onMetrics(ctx *gin.Context) {
 	out := ""
 
 	data, err := m.pathManager.APIPathsList()
@@ -203,11 +205,27 @@ func (m *Metrics) onRequest(ctx *gin.Context) {
 					out += metric("rtsp_sessions", tags, 1)
 					out += metric("rtsp_sessions_bytes_received", tags, int64(i.BytesReceived))
 					out += metric("rtsp_sessions_bytes_sent", tags, int64(i.BytesSent))
+					out += metric("rtsp_sessions_rtp_packets_received", tags, int64(i.RTPPacketsReceived))
+					out += metric("rtsp_sessions_rtp_packets_sent", tags, int64(i.RTPPacketsSent))
+					out += metric("rtsp_sessions_rtp_packets_lost", tags, int64(i.RTPPacketsLost))
+					out += metric("rtsp_sessions_rtp_packets_in_error", tags, int64(i.RTPPacketsInError))
+					out += metricFloat("rtsp_sessions_rtp_packets_jitter", tags, i.RTPPacketsJitter)
+					out += metric("rtsp_sessions_rtcp_packets_received", tags, int64(i.RTCPPacketsReceived))
+					out += metric("rtsp_sessions_rtcp_packets_sent", tags, int64(i.RTCPPacketsSent))
+					out += metric("rtsp_sessions_rtcp_packets_in_error", tags, int64(i.RTCPPacketsInError))
 				}
 			} else {
 				out += metric("rtsp_sessions", "", 0)
 				out += metric("rtsp_sessions_bytes_received", "", 0)
 				out += metric("rtsp_sessions_bytes_sent", "", 0)
+				out += metric("rtsp_sessions_rtp_packets_received", "", 0)
+				out += metric("rtsp_sessions_rtp_packets_sent", "", 0)
+				out += metric("rtsp_sessions_rtp_packets_lost", "", 0)
+				out += metric("rtsp_sessions_rtp_packets_in_error", "", 0)
+				out += metricFloat("rtsp_sessions_rtp_packets_jitter", "", 0)
+				out += metric("rtsp_sessions_rtcp_packets_received", "", 0)
+				out += metric("rtsp_sessions_rtcp_packets_sent", "", 0)
+				out += metric("rtsp_sessions_rtcp_packets_in_error", "", 0)
 			}
 		}()
 	}
@@ -237,11 +255,27 @@ func (m *Metrics) onRequest(ctx *gin.Context) {
 					out += metric("rtsps_sessions", tags, 1)
 					out += metric("rtsps_sessions_bytes_received", tags, int64(i.BytesReceived))
 					out += metric("rtsps_sessions_bytes_sent", tags, int64(i.BytesSent))
+					out += metric("rtsps_sessions_rtp_packets_received", tags, int64(i.RTPPacketsReceived))
+					out += metric("rtsps_sessions_rtp_packets_sent", tags, int64(i.RTPPacketsSent))
+					out += metric("rtsps_sessions_rtp_packets_lost", tags, int64(i.RTPPacketsLost))
+					out += metric("rtsps_sessions_rtp_packets_in_error", tags, int64(i.RTPPacketsInError))
+					out += metricFloat("rtsps_sessions_rtp_packets_jitter", tags, i.RTPPacketsJitter)
+					out += metric("rtsps_sessions_rtcp_packets_received", tags, int64(i.RTCPPacketsReceived))
+					out += metric("rtsps_sessions_rtcp_packets_sent", tags, int64(i.RTCPPacketsSent))
+					out += metric("rtsps_sessions_rtcp_packets_in_error", tags, int64(i.RTCPPacketsInError))
 				}
 			} else {
 				out += metric("rtsps_sessions", "", 0)
 				out += metric("rtsps_sessions_bytes_received", "", 0)
 				out += metric("rtsps_sessions_bytes_sent", "", 0)
+				out += metric("rtsps_sessions_rtp_packets_received", "", 0)
+				out += metric("rtsps_sessions_rtp_packets_sent", "", 0)
+				out += metric("rtsps_sessions_rtp_packets_lost", "", 0)
+				out += metric("rtsps_sessions_rtp_packets_in_error", "", 0)
+				out += metricFloat("rtsps_sessions_rtp_packets_jitter", "", 0)
+				out += metric("rtsps_sessions_rtcp_packets_received", "", 0)
+				out += metric("rtsps_sessions_rtcp_packets_sent", "", 0)
+				out += metric("rtsps_sessions_rtcp_packets_in_error", "", 0)
 			}
 		}()
 	}
@@ -338,8 +372,57 @@ func (m *Metrics) onRequest(ctx *gin.Context) {
 			}
 		} else {
 			out += metric("srt_conns", "", 0)
-			out += metric("srt_conns_bytes_received", "", 0)
+			out += metric("srt_conns_packets_sent", "", 0)
+			out += metric("srt_conns_packets_received", "", 0)
+			out += metric("srt_conns_packets_sent_unique", "", 0)
+			out += metric("srt_conns_packets_received_unique", "", 0)
+			out += metric("srt_conns_packets_send_loss", "", 0)
+			out += metric("srt_conns_packets_received_loss", "", 0)
+			out += metric("srt_conns_packets_retrans", "", 0)
+			out += metric("srt_conns_packets_received_retrans", "", 0)
+			out += metric("srt_conns_packets_sent_ack", "", 0)
+			out += metric("srt_conns_packets_received_ack", "", 0)
+			out += metric("srt_conns_packets_sent_nak", "", 0)
+			out += metric("srt_conns_packets_received_nak", "", 0)
+			out += metric("srt_conns_packets_sent_km", "", 0)
+			out += metric("srt_conns_packets_received_km", "", 0)
+			out += metric("srt_conns_us_snd_duration", "", 0)
+			out += metric("srt_conns_packets_send_drop", "", 0)
+			out += metric("srt_conns_packets_received_drop", "", 0)
+			out += metric("srt_conns_packets_received_undecrypt", "", 0)
 			out += metric("srt_conns_bytes_sent", "", 0)
+			out += metric("srt_conns_bytes_received", "", 0)
+			out += metric("srt_conns_bytes_sent_unique", "", 0)
+			out += metric("srt_conns_bytes_received_unique", "", 0)
+			out += metric("srt_conns_bytes_received_loss", "", 0)
+			out += metric("srt_conns_bytes_retrans", "", 0)
+			out += metric("srt_conns_bytes_received_retrans", "", 0)
+			out += metric("srt_conns_bytes_send_drop", "", 0)
+			out += metric("srt_conns_bytes_received_drop", "", 0)
+			out += metric("srt_conns_bytes_received_undecrypt", "", 0)
+			out += metricFloat("srt_conns_us_packets_send_period", "", 0)
+			out += metric("srt_conns_packets_flow_window", "", 0)
+			out += metric("srt_conns_packets_flight_size", "", 0)
+			out += metricFloat("srt_conns_ms_rtt", "", 0)
+			out += metricFloat("srt_conns_mbps_send_rate", "", 0)
+			out += metricFloat("srt_conns_mbps_receive_rate", "", 0)
+			out += metricFloat("srt_conns_mbps_link_capacity", "", 0)
+			out += metric("srt_conns_bytes_avail_send_buf", "", 0)
+			out += metric("srt_conns_bytes_avail_receive_buf", "", 0)
+			out += metricFloat("srt_conns_mbps_max_bw", "", 0)
+			out += metric("srt_conns_bytes_mss", "", 0)
+			out += metric("srt_conns_packets_send_buf", "", 0)
+			out += metric("srt_conns_bytes_send_buf", "", 0)
+			out += metric("srt_conns_ms_send_buf", "", 0)
+			out += metric("srt_conns_ms_send_tsb_pd_delay", "", 0)
+			out += metric("srt_conns_packets_receive_buf", "", 0)
+			out += metric("srt_conns_bytes_receive_buf", "", 0)
+			out += metric("srt_conns_ms_receive_buf", "", 0)
+			out += metric("srt_conns_ms_receive_tsb_pd_delay", "", 0)
+			out += metric("srt_conns_packets_reorder_tolerance", "", 0)
+			out += metric("srt_conns_packets_received_avg_belated_time", "", 0)
+			out += metricFloat("srt_conns_packets_send_loss_rate", "", 0)
+			out += metricFloat("srt_conns_packets_received_loss_rate", "", 0)
 		}
 	}
 

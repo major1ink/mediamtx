@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pion/ice/v2"
+	"github.com/pion/ice/v4"
 	"github.com/pion/logging"
-	pwebrtc "github.com/pion/webrtc/v3"
+	pwebrtc "github.com/pion/webrtc/v4"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
@@ -65,14 +65,14 @@ func randInt63n(n int64) (int64, error) {
 		return r & (n - 1), nil
 	}
 
-	max := int64((1 << 63) - 1 - (1<<63)%uint64(n))
+	maxVal := int64((1 << 63) - 1 - (1<<63)%uint64(n))
 
 	v, err := randInt63()
 	if err != nil {
 		return 0, err
 	}
 
-	for v > max {
+	for v > maxVal {
 		v, err = randInt63()
 		if err != nil {
 			return 0, err
@@ -133,14 +133,12 @@ type webRTCNewSessionRes struct {
 }
 
 type webRTCNewSessionReq struct {
-	pathName   string
-	remoteAddr string
-	query      string
-	user       string
-	pass       string
-	offer      []byte
-	publish    bool
-	res        chan webRTCNewSessionRes
+	pathName    string
+	remoteAddr  string
+	offer       []byte
+	publish     bool
+	httpRequest *http.Request
+	res         chan webRTCNewSessionRes
 }
 
 type webRTCAddSessionCandidatesRes struct {
@@ -183,16 +181,15 @@ type Server struct {
 	ServerCert            string
 	AllowOrigin           string
 	TrustedProxies        conf.IPNetworks
-	ReadTimeout           conf.StringDuration
-	WriteQueueSize        int
+	ReadTimeout           conf.Duration
 	LocalUDPAddress       string
 	LocalTCPAddress       string
 	IPsFromInterfaces     bool
 	IPsFromInterfacesList []string
 	AdditionalHosts       []string
 	ICEServers            []conf.WebRTCICEServer
-	HandshakeTimeout      conf.StringDuration
-	TrackGatherTimeout    conf.StringDuration
+	HandshakeTimeout      conf.Duration
+	TrackGatherTimeout    conf.Duration
 	ExternalCmdPool       *externalcmd.Pool
 	PathManager           serverPathManager
 	Parent                serverParent
@@ -312,7 +309,6 @@ outer:
 		case req := <-s.chNewSession:
 			sx := &session{
 				parentCtx:             s.ctx,
-				writeQueueSize:        s.WriteQueueSize,
 				ipsFromInterfaces:     s.IPsFromInterfaces,
 				ipsFromInterfacesList: s.IPsFromInterfacesList,
 				additionalHosts:       s.AdditionalHosts,

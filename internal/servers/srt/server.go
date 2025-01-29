@@ -67,9 +67,8 @@ type serverParent interface {
 type Server struct {
 	Address             string
 	RTSPAddress         string
-	ReadTimeout         conf.StringDuration
-	WriteTimeout        conf.StringDuration
-	WriteQueueSize      int
+	ReadTimeout         conf.Duration
+	WriteTimeout        conf.Duration
 	UDPMaxPayloadSize   int
 	RunOnConnect        string
 	RunOnConnectRestart bool
@@ -158,7 +157,6 @@ outer:
 				rtspAddress:         s.RTSPAddress,
 				readTimeout:         s.ReadTimeout,
 				writeTimeout:        s.WriteTimeout,
-				writeQueueSize:      s.WriteQueueSize,
 				udpMaxPayloadSize:   s.UDPMaxPayloadSize,
 				connReq:             req,
 				runOnConnect:        s.RunOnConnect,
